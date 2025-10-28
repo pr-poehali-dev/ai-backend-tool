@@ -51,19 +51,23 @@ export const useAssistantsState = () => {
         body: JSON.stringify(newAssistantConfig)
       });
       const newAssistant = await response.json();
-      setAssistants([...assistants, newAssistant]);
-      toast.success('Ассистент создан');
+      
       setCreateAssistantOpen(false);
-      setNewAssistantConfig({
-        name: '',
-        firstMessage: '',
-        instructions: '',
-        model: 'gpt-4o',
-        contextLength: 5,
-        humanEmulation: 5,
-        creativity: 0.7,
-        voiceRecognition: false
-      });
+      
+      setTimeout(() => {
+        setAssistants([...assistants, newAssistant]);
+        setNewAssistantConfig({
+          name: '',
+          firstMessage: '',
+          instructions: '',
+          model: 'gpt-4o',
+          contextLength: 5,
+          humanEmulation: 5,
+          creativity: 0.7,
+          voiceRecognition: false
+        });
+        toast.success('Ассистент создан');
+      }, 300);
     } catch (error) {
       toast.error('Ошибка создания ассистента');
     }
