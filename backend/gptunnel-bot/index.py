@@ -217,6 +217,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 # Extract results array from response if it exists
                                 results = api_data.get('results', []) if isinstance(api_data, dict) else api_data
                                 
+                                # Log first item structure for debugging
+                                if results and len(results) > 0:
+                                    print(f"First item keys: {results[0].keys() if isinstance(results[0], dict) else 'not a dict'}")
+                                    print(f"First item sample: {json.dumps(results[0], ensure_ascii=False)[:500]}")
+                                
                                 # Return raw JSON data directly
                                 return {
                                     'statusCode': 200,
