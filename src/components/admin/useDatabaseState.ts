@@ -15,12 +15,12 @@ export const useDatabaseState = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [createDatabaseOpen, setCreateDatabaseOpen] = useState(false);
 
-  const getApiKey = () => localStorage.getItem('gptunnel_default_key') || '';
+  const getApiKey = () => localStorage.getItem('gptunnel_api_key') || '';
 
   const fetchDatabases = async () => {
     const GPTUNNEL_API_KEY = getApiKey();
     if (!GPTUNNEL_API_KEY) {
-      toast.error('API ключ не найден. Создайте ключ во вкладке "API Ключи"');
+      toast.error('Введите API ключ GPTunnel в поле сверху');
       return;
     }
 
@@ -55,7 +55,7 @@ export const useDatabaseState = () => {
   }) => {
     const GPTUNNEL_API_KEY = getApiKey();
     if (!GPTUNNEL_API_KEY) {
-      toast.error('API ключ не найден. Создайте ключ во вкладке "API Ключи"');
+      toast.error('Введите API ключ GPTunnel в поле сверху');
       return;
     }
 
@@ -96,7 +96,7 @@ export const useDatabaseState = () => {
   const deleteDatabase = async (databaseId: string) => {
     const GPTUNNEL_API_KEY = getApiKey();
     if (!GPTUNNEL_API_KEY) {
-      toast.error('API ключ не найден. Создайте ключ во вкладке "API Ключи"');
+      toast.error('Введите API ключ GPTunnel в поле сверху');
       return;
     }
 
