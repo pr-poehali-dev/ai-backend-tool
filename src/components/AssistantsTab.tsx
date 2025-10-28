@@ -27,7 +27,7 @@ interface Assistant {
 interface AssistantsTabProps {
   assistants: Assistant[];
   onCreateAssistant: () => void;
-  onEditAssistant: (id: string, name: string) => void;
+  onEditAssistant: (assistant: Assistant) => void;
   onDeleteAssistant: (id: string, name: string) => void;
   onTestAssistant: (id: string, name: string) => void;
 }
@@ -138,7 +138,7 @@ export const AssistantsTab = ({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onEditAssistant(assistant.id, assistant.name)}
+                          onClick={() => onEditAssistant(assistant)}
                         >
                           <Icon name="Settings" size={16} />
                         </Button>
