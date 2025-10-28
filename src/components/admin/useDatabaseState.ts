@@ -8,18 +8,19 @@ interface Database {
   filesCount?: number;
 }
 
-type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel';
+type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel' | 'json';
 
 export const useDatabaseState = () => {
   const [databases, setDatabases] = useState<Database[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [createDatabaseOpen, setCreateDatabaseOpen] = useState(false);
 
-  const GPTUNNEL_API_KEY = localStorage.getItem('gptunnel_default_key') || '';
+  const getApiKey = () => localStorage.getItem('gptunnel_default_key') || '';
 
   const fetchDatabases = async () => {
+    const GPTUNNEL_API_KEY = getApiKey();
     if (!GPTUNNEL_API_KEY) {
-      toast.error('API ключ не найден');
+      toast.error('API ключ не найден. Создайте ключ во вкладке "API Ключи"');
       return;
     }
 
@@ -52,8 +53,9 @@ export const useDatabaseState = () => {
     sourceType: SourceType;
     sourceContent: string | File;
   }) => {
+    const GPTUNNEL_API_KEY = getApiKey();
     if (!GPTUNNEL_API_KEY) {
-      toast.error('API ключ не найден');
+      toast.error('API ключ не найден. Создайте ключ во вкладке "API Ключи"');
       return;
     }
 
@@ -92,8 +94,9 @@ export const useDatabaseState = () => {
   };
 
   const deleteDatabase = async (databaseId: string) => {
+    const GPTUNNEL_API_KEY = getApiKey();
     if (!GPTUNNEL_API_KEY) {
-      toast.error('API ключ не найден');
+      toast.error('API ключ не найден. Создайте ключ во вкладке "API Ключи"');
       return;
     }
 
