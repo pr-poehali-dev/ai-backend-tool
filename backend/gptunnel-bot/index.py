@@ -183,8 +183,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'temperature': float(creativity) if creativity else 0.7
         }
         
-        if rag_database_ids and len(rag_database_ids) > 0:
-            gptunnel_payload['databaseIds'] = rag_database_ids
+        # TODO: GPTunnel не поддерживает передачу RAG баз через Chat Completions API
+        # Нужно использовать Assistants API для работы с базами знаний
+        # if rag_database_ids and len(rag_database_ids) > 0:
+        #     gptunnel_payload['databaseIds'] = rag_database_ids
+        
+        print(f"[DEBUG] RAG databases configured: {rag_database_ids if rag_database_ids else 'None'}")
         
         if tools:
             gptunnel_payload['tools'] = tools
