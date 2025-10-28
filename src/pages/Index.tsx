@@ -1,29 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
+import { ApiKeysTab } from '@/components/ApiKeysTab';
+import { MonitoringTab } from '@/components/MonitoringTab';
+import { SettingsTab } from '@/components/SettingsTab';
+import { DeleteKeyDialog } from '@/components/dialogs/DeleteKeyDialog';
+import { EditKeyDialog } from '@/components/dialogs/EditKeyDialog';
+import { GptunnelSettingsDialog } from '@/components/dialogs/GptunnelSettingsDialog';
 
 const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
 const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
 const GPTUNNEL_SETTINGS_URL = 'https://functions.poehali.dev/02fd2adf-54b4-4476-9f64-6c552acacfc1';
-const GPTUNNEL_API_URL = 'https://functions.poehali.dev/e841d4e2-de13-41cb-bc7b-d3055e3c42c0';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
@@ -39,7 +29,13 @@ const Index = () => {
   const [keyToEdit, setKeyToEdit] = useState<{id: number, name: string} | null>(null);
   const [newKeyName, setNewKeyName] = useState('');
 
-
+  const [monitoringData, setMonitoringData] = useState({
+    totalRequests: 0,
+    successRate: 0,
+    avgLatency: 0,
+    activeKeys: 0,
+    dailyRequests: [] as { date: string; count: number }[],
+  });
 
   useEffect(() => {
     if (activeTab === 'keys') {
@@ -190,15 +186,6 @@ const Index = () => {
     }
   };
 
-
-  const [monitoringData, setMonitoringData] = useState({
-    totalRequests: 0,
-    successRate: 0,
-    avgLatency: 0,
-    activeKeys: 0,
-    dailyRequests: [] as { date: string; count: number }[],
-  });
-
   const fetchMonitoring = async () => {
     try {
       const response = await fetch(MONITORING_URL);
@@ -208,8 +195,6 @@ const Index = () => {
       toast.error('Ошибка загрузки мониторинга');
     }
   };
-
-  const maxRequests = Math.max(...monitoringData.dailyRequests.map(d => d.count));
 
   return (
     <div className="min-h-screen bg-background">
@@ -254,372 +239,54 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
 
-
-
-          <TabsContent value="keys" className="space-y-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold">API Ключи</h2>
-                <p className="text-muted-foreground">Управление ключами доступа к API</p>
-              </div>
-              <Button onClick={generateNewKey} className="bg-primary hover:bg-primary/90">
-                <Icon name="Plus" size={16} className="mr-2" />
-                Создать ключ
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              {apiKeys.map((key) => (
-                <Card key={key.id} className="border-border bg-card hover:border-primary/50 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold text-lg">{key.name}</h3>
-                          <Badge variant={key.active ? "default" : "secondary"} className={key.active ? "bg-secondary/10 text-secondary border-secondary/30" : ""}>
-                            {key.active ? 'Активен' : 'Отключен'}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <Icon name="Key" size={14} />
-                            <code className="bg-[hsl(var(--code-bg))] px-2 py-1 rounded font-mono text-xs">{key.key}</code>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-6 w-6 p-0"
-                              onClick={() => copyToClipboard(key.key)}
-                            >
-                              <Icon name="Copy" size={12} />
-                            </Button>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Icon name="Calendar" size={14} />
-                            {key.created}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Icon name="Activity" size={14} />
-                            {key.requests.toLocaleString()} запросов
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2">
-                          <Label htmlFor={`switch-${key.id}`} className="text-sm">Активен</Label>
-                          <Switch 
-                            id={`switch-${key.id}`}
-                            checked={key.active} 
-                            onCheckedChange={() => toggleKeyStatus(key.id, key.active)}
-                          />
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => openEditDialog(key.id, key.name)}
-                        >
-                          <Icon name="Settings" size={16} />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => openDeleteDialog(key.id, key.name)}
-                        >
-                          <Icon name="Trash2" size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          <TabsContent value="keys">
+            <ApiKeysTab
+              apiKeys={apiKeys}
+              onGenerateKey={generateNewKey}
+              onCopyKey={copyToClipboard}
+              onToggleStatus={toggleKeyStatus}
+              onEditKey={openEditDialog}
+              onDeleteKey={openDeleteDialog}
+            />
           </TabsContent>
 
-          <TabsContent value="monitoring" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-              <Card className="border-border bg-card">
-                <CardHeader className="pb-3">
-                  <CardDescription>Всего запросов</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">{monitoringData.totalRequests.toLocaleString()}</span>
-                    <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/30">
-                      <Icon name="TrendingUp" size={12} className="mr-1" />
-                      +12%
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border bg-card">
-                <CardHeader className="pb-3">
-                  <CardDescription>Успешность</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">{monitoringData.successRate}%</span>
-                    <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/30">
-                      <Icon name="CheckCircle2" size={12} className="mr-1" />
-                      Отлично
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border bg-card">
-                <CardHeader className="pb-3">
-                  <CardDescription>Средняя задержка</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">{monitoringData.avgLatency}ms</span>
-                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                      <Icon name="Zap" size={12} className="mr-1" />
-                      Быстро
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border bg-card">
-                <CardHeader className="pb-3">
-                  <CardDescription>Активных ключей</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">{monitoringData.activeKeys}</span>
-                    <span className="text-sm text-muted-foreground">из {apiKeys.length}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="border-border bg-card">
-              <CardHeader>
-                <CardTitle>Активность API за последние 7 дней</CardTitle>
-                <CardDescription>Количество запросов по дням</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {monitoringData.dailyRequests.map((day, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground font-mono">{day.date}</span>
-                        <span className="font-semibold">{day.count.toLocaleString()} запросов</span>
-                      </div>
-                      <div className="relative h-8 bg-muted rounded-lg overflow-hidden">
-                        <div 
-                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary to-primary/60 transition-all duration-500 rounded-lg"
-                          style={{ width: `${(day.count / maxRequests) * 100}%` }}
-                        >
-                          <div className="h-full w-full bg-gradient-to-t from-transparent to-white/10" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="monitoring">
+            <MonitoringTab data={monitoringData} />
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold">Настройки интеграций</h2>
-              <p className="text-muted-foreground">Подключение внешних сервисов</p>
-            </div>
-
-            <Card className="border-border bg-card">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Icon name="Zap" size={20} className="text-primary" />
-                      GPTunnel API
-                    </CardTitle>
-                    <CardDescription>Интеграция с GPTunnel для доступа к AI моделям</CardDescription>
-                  </div>
-                  <Badge variant={gptunnelStatus === 'connected' ? 'default' : 'secondary'} 
-                         className={gptunnelStatus === 'connected' ? 'bg-secondary/10 text-secondary border-secondary/30' : ''}>
-                    {gptunnelStatus === 'connected' ? 'Подключено' : 'Отключено'}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
-                  <Icon name="Info" size={20} className="text-primary mt-0.5" />
-                  <div className="flex-1 space-y-2 text-sm">
-                    <p className="text-foreground">
-                      GPTunnel предоставляет доступ к различным AI моделям через единый API.
-                    </p>
-                    <p className="text-muted-foreground">
-                      Документация: <a href="https://docs.gptunnel.ru" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://docs.gptunnel.ru</a>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button 
-                    onClick={() => setSettingsDialogOpen(true)}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    <Icon name="Key" size={16} className="mr-2" />
-                    {gptunnelStatus === 'connected' ? 'Изменить ключ' : 'Настроить интеграцию'}
-                  </Button>
-                  
-                  {gptunnelStatus === 'connected' && (
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.open('https://docs.gptunnel.ru', '_blank')}
-                    >
-                      <Icon name="ExternalLink" size={16} className="mr-2" />
-                      Документация API
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="settings">
+            <SettingsTab
+              gptunnelStatus={gptunnelStatus}
+              onOpenSettingsDialog={() => setSettingsDialogOpen(true)}
+            />
           </TabsContent>
         </Tabs>
       </main>
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-card border-border">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Icon name="AlertTriangle" size={20} className="text-destructive" />
-              Удалить API ключ?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-              Вы уверены, что хотите удалить ключ <span className="font-semibold text-foreground">"{keyToDelete?.name}"</span>?
-              <br />
-              Это действие деактивирует ключ и его нельзя будет использовать для API запросов.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-muted hover:bg-muted/80">
-              Отмена
-            </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={deleteApiKey}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              <Icon name="Trash2" size={16} className="mr-2" />
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteKeyDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        keyName={keyToDelete?.name || null}
+        onConfirm={deleteApiKey}
+      />
 
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="bg-card border-border sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Icon name="Settings" size={20} className="text-primary" />
-              Редактировать API ключ
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Измените название для удобной идентификации ключа
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="key-name">Название ключа</Label>
-              <Input
-                id="key-name"
-                value={newKeyName}
-                onChange={(e) => setNewKeyName(e.target.value)}
-                placeholder="Введите новое название"
-                className="bg-muted border-border"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    updateKeyName();
-                  }
-                }}
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setEditDialogOpen(false)}
-              className="bg-muted hover:bg-muted/80"
-            >
-              Отмена
-            </Button>
-            <Button 
-              onClick={updateKeyName}
-              disabled={!newKeyName.trim() || newKeyName === keyToEdit?.name}
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Icon name="Check" size={16} className="mr-2" />
-              Сохранить
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditKeyDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        keyName={newKeyName}
+        originalName={keyToEdit?.name || ''}
+        onKeyNameChange={setNewKeyName}
+        onConfirm={updateKeyName}
+      />
 
-      <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
-        <DialogContent className="bg-card border-border sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Icon name="Zap" size={20} className="text-primary" />
-              Настройка GPTunnel API
-            </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Введите API ключ для подключения к GPTunnel
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="gptunnel-key">API ключ GPTunnel</Label>
-              <Input
-                id="gptunnel-key"
-                type="password"
-                value={gptunnelApiKey}
-                onChange={(e) => setGptunnelApiKey(e.target.value)}
-                placeholder="Введите API ключ"
-                className="bg-muted border-border font-mono"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    saveGptunnelKey();
-                  }
-                }}
-              />
-              <p className="text-xs text-muted-foreground">
-                Ключ будет проверен и сохранен в защищенном хранилище
-              </p>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setSettingsDialogOpen(false)}
-              className="bg-muted hover:bg-muted/80"
-              disabled={isCheckingKey}
-            >
-              Отмена
-            </Button>
-            <Button 
-              onClick={saveGptunnelKey}
-              disabled={!gptunnelApiKey.trim() || isCheckingKey}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {isCheckingKey ? (
-                <>
-                  <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
-                  Проверка...
-                </>
-              ) : (
-                <>
-                  <Icon name="Check" size={16} className="mr-2" />
-                  Сохранить и проверить
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <GptunnelSettingsDialog
+        open={settingsDialogOpen}
+        onOpenChange={setSettingsDialogOpen}
+        apiKey={gptunnelApiKey}
+        onApiKeyChange={setGptunnelApiKey}
+        isChecking={isCheckingKey}
+        onConfirm={saveGptunnelKey}
+      />
     </div>
   );
 };
