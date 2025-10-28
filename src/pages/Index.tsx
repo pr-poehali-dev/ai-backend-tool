@@ -1,38 +1,22 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('playground');
+  const [activeTab, setActiveTab] = useState('keys');
   const [apiKeys, setApiKeys] = useState([
     { id: '1', name: 'Production Key', key: 'sk_live_...abc123', created: '2025-10-15', requests: 45678, active: true },
     { id: '2', name: 'Development Key', key: 'sk_test_...xyz789', created: '2025-10-20', requests: 12543, active: true },
     { id: '3', name: 'Testing Key', key: 'sk_test_...def456', created: '2025-10-25', requests: 3421, active: false },
   ]);
 
-  const [playgroundCode, setPlaygroundCode] = useState(`{
-  "model": "gpt-4",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Hello, AI!"
-    }
-  ],
-  "temperature": 0.7,
-  "max_tokens": 150
-}`);
 
-  const [playgroundResponse, setPlaygroundResponse] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -59,34 +43,7 @@ const Index = () => {
     toast.success('Статус ключа обновлен');
   };
 
-  const runPlayground = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setPlaygroundResponse(`{
-  "id": "chatcmpl-${Math.random().toString(36).substring(7)}",
-  "object": "chat.completion",
-  "created": ${Math.floor(Date.now() / 1000)},
-  "model": "gpt-4",
-  "choices": [
-    {
-      "index": 0,
-      "message": {
-        "role": "assistant",
-        "content": "Hello! I'm an AI assistant. How can I help you today?"
-      },
-      "finish_reason": "stop"
-    }
-  ],
-  "usage": {
-    "prompt_tokens": 12,
-    "completion_tokens": 15,
-    "total_tokens": 27
-  }
-}`);
-      setIsLoading(false);
-      toast.success('Запрос выполнен успешно');
-    }, 1500);
-  };
+
 
   const monitoringData = {
     totalRequests: 61642,
@@ -134,11 +91,7 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-card">
-            <TabsTrigger value="playground" className="data-[state=active]:bg-primary/10">
-              <Icon name="Code2" size={16} className="mr-2" />
-              Песочница
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-8 bg-card">
             <TabsTrigger value="keys" className="data-[state=active]:bg-primary/10">
               <Icon name="Key" size={16} className="mr-2" />
               API-ключи
@@ -149,118 +102,7 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="playground" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="border-border bg-card">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">Запрос</CardTitle>
-                      <CardDescription>Настройте параметры API запроса</CardDescription>
-                    </div>
-                    <Badge variant="outline" className="bg-muted">POST</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Endpoint</Label>
-                    <div className="flex gap-2">
-                      <Select defaultValue="chat">
-                        <SelectTrigger className="w-40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="chat">chat/completions</SelectItem>
-                          <SelectItem value="embeddings">embeddings</SelectItem>
-                          <SelectItem value="images">images/generations</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input 
-                        value="/v1/chat/completions" 
-                        readOnly 
-                        className="flex-1 bg-[hsl(var(--code-bg))] font-mono text-sm"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>Request Body</Label>
-                    <Textarea
-                      value={playgroundCode}
-                      onChange={(e) => setPlaygroundCode(e.target.value)}
-                      className="font-mono text-sm h-80 bg-[hsl(var(--code-bg))] resize-none"
-                      placeholder="Введите JSON запрос"
-                    />
-                  </div>
-
-                  <Button 
-                    onClick={runPlayground} 
-                    className="w-full bg-primary hover:bg-primary/90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
-                        Выполняется...
-                      </>
-                    ) : (
-                      <>
-                        <Icon name="Play" size={16} className="mr-2" />
-                        Выполнить запрос
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border bg-card">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">Ответ</CardTitle>
-                      <CardDescription>Результат выполнения запроса</CardDescription>
-                    </div>
-                    {playgroundResponse && (
-                      <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/30">
-                        <Icon name="CheckCircle2" size={14} className="mr-1" />
-                        200 OK
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {playgroundResponse ? (
-                    <>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <div className="flex gap-4">
-                          <span>Latency: 342ms</span>
-                          <span>Tokens: 27</span>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => copyToClipboard(playgroundResponse)}
-                        >
-                          <Icon name="Copy" size={14} className="mr-1" />
-                          Копировать
-                        </Button>
-                      </div>
-                      <pre className="p-4 rounded-lg bg-[hsl(var(--code-bg))] font-mono text-sm overflow-auto h-96 border border-border">
-                        <code>{playgroundResponse}</code>
-                      </pre>
-                    </>
-                  ) : (
-                    <div className="h-96 flex items-center justify-center text-muted-foreground border border-dashed border-border rounded-lg">
-                      <div className="text-center">
-                        <Icon name="Terminal" size={48} className="mx-auto mb-3 opacity-20" />
-                        <p>Выполните запрос для просмотра результата</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           <TabsContent value="keys" className="space-y-6">
             <div className="flex items-center justify-between mb-6">
