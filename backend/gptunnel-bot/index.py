@@ -4,6 +4,7 @@ from typing import Dict, Any
 import urllib.request
 import urllib.parse
 import urllib.error
+import psycopg2
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -86,6 +87,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         with urllib.request.urlopen(req, timeout=60) as response:
             response_data = response.read().decode('utf-8')
             bot_response = json.loads(response_data)
+            
+            tokens_estimate = len(message.split()) + len(bot_response.get('response', '').split())
+            
+            database_url = os.environ.get('DATABASE_URL')
+            if database_url:
+                try:
+                    conn = psycopg2.connect(database_url)
+                    cursor = conn.cursor()
+                    cursor.execute('''
+                        INSERT INTO assistant_usage (assistant_id, user_id, message_count, tokens_used)
+                        VALUES (%s, %s, %s, %s)
+                    ''', (assistant_id, user_id, 1, tokens_estimate))
+                    conn.commit()
+                    cursor.close()
+                    conn.close()
+                except:
+                    pass
             
             return {
                 'statusCode': 200,

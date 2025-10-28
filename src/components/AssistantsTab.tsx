@@ -17,6 +17,11 @@ interface Assistant {
   model: string;
   created_at: string;
   status: 'active' | 'inactive';
+  stats?: {
+    totalMessages: number;
+    totalTokens: number;
+    uniqueUsers: number;
+  };
 }
 
 interface AssistantsTabProps {
@@ -69,6 +74,7 @@ export const AssistantsTab = ({
                   <TableHead>Название</TableHead>
                   <TableHead>ID</TableHead>
                   <TableHead>Модель</TableHead>
+                  <TableHead>Статистика</TableHead>
                   <TableHead>Статус</TableHead>
                   <TableHead>Создан</TableHead>
                   <TableHead className="text-right">Действия</TableHead>
@@ -90,6 +96,18 @@ export const AssistantsTab = ({
                       <Badge variant="outline" className="bg-secondary/10 border-secondary/30">
                         {assistant.model}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Icon name="MessageCircle" size={12} className="text-muted-foreground" />
+                          <span>{assistant.stats?.totalMessages || 0} сообщений</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Icon name="Users" size={12} className="text-muted-foreground" />
+                          <span>{assistant.stats?.uniqueUsers || 0} пользователей</span>
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell>
                       {assistant.status === 'active' ? (
