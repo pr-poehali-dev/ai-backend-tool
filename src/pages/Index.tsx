@@ -7,6 +7,7 @@ import { MonitoringTab } from '@/components/MonitoringTab';
 import { SettingsTab } from '@/components/SettingsTab';
 import { AssistantsTab } from '@/components/AssistantsTab';
 import { UsageTab } from '@/components/UsageTab';
+import { DatabaseTab } from '@/components/DatabaseTab';
 import { DeleteKeyDialog } from '@/components/dialogs/DeleteKeyDialog';
 import { EditKeyDialog } from '@/components/dialogs/EditKeyDialog';
 import { CreateAssistantDialog } from '@/components/dialogs/CreateAssistantDialog';
@@ -14,11 +15,13 @@ import { EditAssistantDialog } from '@/components/dialogs/EditAssistantDialog';
 import { DeleteAssistantDialog } from '@/components/dialogs/DeleteAssistantDialog';
 import { TestAssistantDialog } from '@/components/dialogs/TestAssistantDialog';
 import { AddSecretDialog } from '@/components/dialogs/AddSecretDialog';
+import { CreateDatabaseDialog } from '@/components/dialogs/CreateDatabaseDialog';
 import { useApiKeysState } from '@/components/admin/useApiKeysState';
 import { useAssistantsState } from '@/components/admin/useAssistantsState';
 import { useSecretsState } from '@/components/admin/useSecretsState';
 import { useMonitoringState } from '@/components/admin/useMonitoringState';
 import { useUsageState } from '@/components/admin/useUsageState';
+import { useDatabaseState } from '@/components/admin/useDatabaseState';
 
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 
@@ -37,6 +40,7 @@ const Index = () => {
   const secretsState = useSecretsState();
   const monitoringState = useMonitoringState();
   const usageState = useUsageState();
+  const databaseState = useDatabaseState();
 
   useEffect(() => {
     if (activeTab === 'keys' && apiKeysState.apiKeys.length === 0) {
@@ -68,6 +72,12 @@ const Index = () => {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'database' && databaseState.databases.length === 0) {
+      databaseState.fetchDatabases();
+    }
+  }, [activeTab, databaseState.databases.length]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -80,6 +90,7 @@ const Index = () => {
           <TabsList>
             <TabsTrigger value="keys">API Ключи</TabsTrigger>
             <TabsTrigger value="assistants">Ассистенты</TabsTrigger>
+            <TabsTrigger value="database">База данных</TabsTrigger>
             <TabsTrigger value="monitoring">Мониторинг</TabsTrigger>
             <TabsTrigger value="usage">Статистика</TabsTrigger>
             <TabsTrigger value="settings">Настройки</TabsTrigger>
@@ -103,6 +114,16 @@ const Index = () => {
               onEditAssistant={assistantsState.openEditAssistant}
               onDeleteAssistant={assistantsState.openDeleteAssistant}
               onTestAssistant={assistantsState.openTestAssistant}
+            />
+          </TabsContent>
+
+          <TabsContent value="database">
+            <DatabaseTab
+              databases={databaseState.databases}
+              isLoading={databaseState.isLoading}
+              onCreateDatabase={() => databaseState.setCreateDatabaseOpen(true)}
+              onViewDatabase={databaseState.viewDatabase}
+              onDeleteDatabase={(db) => databaseState.deleteDatabase(db.id)}
             />
           </TabsContent>
 
@@ -178,6 +199,12 @@ const Index = () => {
         onSecretValueChange={secretsState.setNewSecretValue}
         isChecking={secretsState.isCheckingSecret}
         onConfirm={secretsState.addSecret}
+      />
+
+      <CreateDatabaseDialog
+        open={databaseState.createDatabaseOpen}
+        onOpenChange={databaseState.setCreateDatabaseOpen}
+        onConfirm={databaseState.createDatabase}
       />
     </div>
   );
