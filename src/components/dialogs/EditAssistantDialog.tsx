@@ -46,7 +46,7 @@ export const EditAssistantDialog = ({
     if (open && models.length === 0) {
       fetchModels();
     }
-  }, [open]);
+  }, [open, models.length]);
 
   const fetchModels = async () => {
     setLoadingModels(true);
