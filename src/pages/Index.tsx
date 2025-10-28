@@ -122,7 +122,7 @@ const Index = () => {
         onOpenChange={assistantsState.setCreateAssistantOpen}
         config={assistantsState.newAssistantConfig}
         onConfigChange={assistantsState.setNewAssistantConfig}
-        onCreate={assistantsState.createAssistant}
+        onConfirm={assistantsState.createAssistant}
       />
 
       <EditAssistantDialog
@@ -130,7 +130,7 @@ const Index = () => {
         onOpenChange={assistantsState.setEditAssistantOpen}
         config={assistantsState.editAssistantConfig}
         onConfigChange={assistantsState.setEditAssistantConfig}
-        onUpdate={assistantsState.updateAssistant}
+        onConfirm={assistantsState.updateAssistant}
       />
 
       <DeleteAssistantDialog
