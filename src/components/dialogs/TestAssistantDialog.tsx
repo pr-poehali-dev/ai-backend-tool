@@ -78,6 +78,10 @@ export const TestAssistantDialog = ({
         throw new Error(data.error || 'Ошибка отправки сообщения');
       }
 
+      console.log('Backend response:', data);
+      console.log('Response type:', typeof data.response);
+      console.log('Is array:', Array.isArray(data.response));
+
       const assistantMessage: Message = {
         role: 'assistant',
         content: data.response || data.message || 'Нет ответа',
