@@ -70,13 +70,13 @@ const Index = () => {
   const [assistantToDelete, setAssistantToDelete] = useState<{id: string, name: string} | null>(null);
 
   useEffect(() => {
-    if (activeTab === 'keys') {
+    if (activeTab === 'keys' && apiKeys.length === 0) {
       fetchApiKeys();
     } else if (activeTab === 'monitoring') {
       fetchMonitoring();
     } else if (activeTab === 'settings') {
       fetchGptunnelStatus();
-    } else if (activeTab === 'assistants') {
+    } else if (activeTab === 'assistants' && assistants.length === 0) {
       fetchAssistants();
     }
   }, [activeTab]);
