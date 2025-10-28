@@ -19,6 +19,7 @@ export const useDatabaseState = () => {
   const [hasFetched, setHasFetched] = useState(false);
 
   const fetchDatabases = async () => {
+    console.log('[useDatabaseState] fetchDatabases called');
     setIsLoading(true);
     try {
       const response = await fetch(RAG_API_URL, {
@@ -31,6 +32,7 @@ export const useDatabaseState = () => {
       }
 
       const data = await response.json();
+      console.log('[useDatabaseState] Fetched databases:', data);
       setDatabases(data);
       setHasFetched(true);
     } catch (error) {
@@ -79,7 +81,12 @@ export const useDatabaseState = () => {
   };
 
   const deleteDatabase = (databaseId: string) => {
-    setDatabases(prev => prev.filter(db => db.id !== databaseId));
+    console.log('[useDatabaseState] Deleting database:', databaseId);
+    setDatabases(prev => {
+      const newDatabases = prev.filter(db => db.id !== databaseId);
+      console.log('[useDatabaseState] New databases after delete:', newDatabases);
+      return newDatabases;
+    });
     toast.success('База данных удалена локально');
   };
 
