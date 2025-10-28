@@ -32,6 +32,7 @@ interface EditAssistantDialogProps {
 }
 
 const MODELS_URL = 'https://functions.poehali.dev/74151b51-97a6-4b7e-b229-d9020587c813';
+const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4';
 
 export const EditAssistantDialog = ({ 
   open, 
@@ -72,11 +73,8 @@ export const EditAssistantDialog = ({
   const fetchDatabases = async () => {
     setLoadingDatabases(true);
     try {
-      const apiKey = localStorage.getItem('gptunnel_default_key');
-      if (!apiKey) return;
-      
-      const response = await fetch('https://gptunnel.ru/v1/database/list', {
-        headers: { 'Authorization': apiKey }
+      const response = await fetch(RAG_API_URL, {
+        method: 'GET'
       });
       const data = await response.json();
       if (Array.isArray(data)) {
