@@ -181,6 +181,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             gptunnel_payload['tools'] = tools
             gptunnel_payload['tool_choice'] = 'auto'
         
+        print(f"[DEBUG] Sending to GPTunnel: {json.dumps(gptunnel_payload, ensure_ascii=False)[:1000]}")
+        
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
         
         req = urllib.request.Request(
