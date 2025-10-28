@@ -217,8 +217,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         with urllib.request.urlopen(search_req, timeout=30) as search_response:
                             search_data = json.loads(search_response.read().decode('utf-8'))
                             
-                            # Add function result to messages
-                            messages.append(message_obj)
+                            # Add assistant message with tool_calls
+                            messages.append({
+                                'role': 'assistant',
+                                'content': message_obj.get('content'),
+                                'tool_calls': tool_calls
+                            })
+                            
+                            # Add function result
                             messages.append({
                                 'role': 'tool',
                                 'tool_call_id': tool_call.get('id'),
