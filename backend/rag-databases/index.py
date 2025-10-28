@@ -84,14 +84,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif method == 'DELETE':
-            query_params = event.get('queryStringParameters', {})
+            query_params = event.get('queryStringParameters') or {}
             database_id = query_params.get('id')
             
             if not database_id:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'ID базы данных обязателен'}),
+                    'body': json.dumps({'error': f'ID базы данных обязателен. Query params: {query_params}'}),
                     'isBase64Encoded': False
                 }
             
