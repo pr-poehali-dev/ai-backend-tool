@@ -1,8 +1,6 @@
 import json
 import os
 from typing import Dict, Any
-import psycopg2
-from psycopg2.extras import RealDictCursor
 import requests
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -35,31 +33,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    database_url = os.environ.get('DATABASE_URL')
-    if not database_url:
+    api_key = os.environ.get('GPTUNNEL_API_KEY')
+    if not api_key:
         return {
-            'statusCode': 500,
+            'statusCode': 401,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Database not configured'}),
+            'body': json.dumps({'error': 'GPTunnel API не настроен'}),
             'isBase64Encoded': False
         }
     
-    conn = psycopg2.connect(database_url)
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    
     try:
-        cursor.execute("SELECT key_value FROM settings WHERE key_name = 'GPTUNNEL_API_KEY' LIMIT 1")
-        result = cursor.fetchone()
-        
-        if not result:
-            return {
-                'statusCode': 401,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'GPTunnel API не настроен'}),
-                'isBase64Encoded': False
-            }
-        
-        api_key = result['key_value']
         body_data = json.loads(event.get('body', '{}'))
         
         response = requests.post(
@@ -93,6 +76,3 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': str(e)}),
             'isBase64Encoded': False
         }
-    finally:
-        cursor.close()
-        conn.close()
