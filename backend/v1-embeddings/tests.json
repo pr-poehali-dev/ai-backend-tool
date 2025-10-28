@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "name": "Embeddings without API key",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "input": "Test text",
+        "model": "text-embedding-ada-002"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

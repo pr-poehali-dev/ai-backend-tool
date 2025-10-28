@@ -7,25 +7,31 @@ import requests
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Прокси для GPTunnel API - models, chat, moderations, embeddings
-    Args: event с httpMethod, body, queryStringParameters
+    Business: Создание embeddings через GPTunnel
+    Args: event с httpMethod, body
           context с request_id
-    Returns: HTTP response с данными от GPTunnel API
+    Returns: HTTP response с векторными представлениями
     '''
-    method: str = event.get('httpMethod', 'GET')
-    params = event.get('queryStringParameters', {})
-    endpoint = params.get('endpoint', 'models')
+    method: str = event.get('httpMethod', 'POST')
     
     if method == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
+            'isBase64Encoded': False
+        }
+    
+    if method != 'POST':
+        return {
+            'statusCode': 405,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Method not allowed'}),
             'isBase64Encoded': False
         }
     
@@ -54,41 +60,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         api_key = result['key_value']
+        body_data = json.loads(event.get('body', '{}'))
         
-        # Маршрутизация запросов
-        endpoint_map = {
-            'models': ('GET', 'https://gptunnel.ru/v1/models'),
-            'chat': ('POST', 'https://gptunnel.ru/v1/chat/completions'),
-            'moderations': ('POST', 'https://gptunnel.ru/v1/moderations'),
-            'embeddings': ('POST', 'https://gptunnel.ru/v1/embeddings')
-        }
-        
-        if endpoint not in endpoint_map:
-            return {
-                'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': f'Неизвестный endpoint: {endpoint}'}),
-                'isBase64Encoded': False
-            }
-        
-        expected_method, url = endpoint_map[endpoint]
-        
-        if method != expected_method:
-            return {
-                'statusCode': 405,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': f'Метод {method} не поддерживается для {endpoint}'}),
-                'isBase64Encoded': False
-            }
-        
-        headers = {'Authorization': f'Bearer {api_key}'}
-        
-        if method == 'GET':
-            response = requests.get(url, headers=headers, timeout=30)
-        else:
-            body_data = json.loads(event.get('body', '{}'))
-            headers['Content-Type'] = 'application/json'
-            response = requests.post(url, headers=headers, json=body_data, timeout=30)
+        response = requests.post(
+            'https://gptunnel.ru/v1/embeddings',
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            },
+            json=body_data,
+            timeout=30
+        )
         
         return {
             'statusCode': response.status_code,

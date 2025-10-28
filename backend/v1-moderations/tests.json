@@ -1,9 +1,12 @@
 {
   "tests": [
     {
-      "name": "Get models without API key",
-      "method": "GET",
-      "path": "/?endpoint=models",
+      "name": "Moderations without API key",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "input": "Test content"
+      },
       "expectedStatus": 401,
       "expectedBody": {
         "error": "string"
