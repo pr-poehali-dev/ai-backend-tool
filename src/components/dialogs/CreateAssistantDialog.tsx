@@ -8,6 +8,8 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface AssistantConfig {
   name: string;
@@ -28,6 +30,8 @@ interface CreateAssistantDialogProps {
   onConfirm: () => void;
 }
 
+const MODELS_URL = 'https://functions.poehali.dev/74151b51-97a6-4b7e-b229-d9020587c813';
+
 export const CreateAssistantDialog = ({ 
   open, 
   onOpenChange, 
@@ -35,6 +39,30 @@ export const CreateAssistantDialog = ({
   onConfigChange,
   onConfirm 
 }: CreateAssistantDialogProps) => {
+  const [models, setModels] = useState<Array<{id: string, name: string}>>([]);
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  useEffect(() => {
+    if (open && models.length === 0) {
+      fetchModels();
+    }
+  }, [open]);
+
+  const fetchModels = async () => {
+    setLoadingModels(true);
+    try {
+      const response = await fetch(MODELS_URL);
+      const data = await response.json();
+      if (data.data) {
+        setModels(data.data.map((m: any) => ({ id: m.id, name: m.id })));
+      }
+    } catch (error) {
+      toast.error('Ошибка загрузки моделей');
+    } finally {
+      setLoadingModels(false);
+    }
+  };
+
   const updateConfig = (field: keyof AssistantConfig, value: any) => {
     onConfigChange({ ...config, [field]: value });
   };
@@ -89,16 +117,14 @@ export const CreateAssistantDialog = ({
 
             <div className="space-y-2">
               <Label htmlFor="assistant-model">Модель ИИ</Label>
-              <Select value={config.model} onValueChange={(v) => updateConfig('model', v)}>
+              <Select value={config.model} onValueChange={(v) => updateConfig('model', v)} disabled={loadingModels}>
                 <SelectTrigger className="bg-muted border-border">
-                  <SelectValue placeholder="Выберите модель" />
+                  <SelectValue placeholder={loadingModels ? "Загрузка моделей..." : "Выберите модель"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                  <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                  <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                  <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
-                  <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+                  {models.map((model) => (
+                    <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
