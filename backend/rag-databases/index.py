@@ -58,6 +58,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body_str = event.get('body', '{}')
             body_data = json.loads(body_str)
             
+            print(f"[DEBUG] Received body: {json.dumps(body_data, ensure_ascii=False)}")
+            
             gptunnel_request = {
                 'name': body_data.get('name'),
                 'description': body_data.get('description'),
@@ -65,12 +67,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'content': body_data.get('content')
             }
             
+            print(f"[DEBUG] Sending to GPTunnel: {json.dumps(gptunnel_request, ensure_ascii=False)}")
+            
             response = requests.post(
                 'https://gptunnel.ru/v1/database/create',
                 headers=headers,
                 json=gptunnel_request,
                 timeout=60
             )
+            
+            print(f"[DEBUG] GPTunnel response status: {response.status_code}")
+            print(f"[DEBUG] GPTunnel response body: {response.text}")
             
             return {
                 'statusCode': response.status_code,
