@@ -55,24 +55,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif method == 'POST':
-            body = event.get('body', '{}')
+            body_str = event.get('body', '{}')
+            body_data = json.loads(body_str)
             
-            files = {}
-            data = {}
-            content_type = event.get('headers', {}).get('content-type', '')
-            
-            if 'multipart/form-data' in content_type:
-                return {
-                    'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Загрузка файлов через прокси не поддерживается'}),
-                    'isBase64Encoded': False
-                }
+            gptunnel_request = {
+                'name': body_data.get('name'),
+                'description': body_data.get('description'),
+                'sourceType': body_data.get('sourceType'),
+                'content': body_data.get('content')
+            }
             
             response = requests.post(
                 'https://gptunnel.ru/v1/database/create',
                 headers=headers,
-                data=body,
+                json=gptunnel_request,
                 timeout=60
             )
             
