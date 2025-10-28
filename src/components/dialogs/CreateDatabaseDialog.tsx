@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 
-type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel';
+type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel' | 'json';
 
 interface CreateDatabaseDialogProps {
   open: boolean;
@@ -74,7 +74,7 @@ export const CreateDatabaseDialog = ({
   const isValid = name.trim() && description.trim() && (
     (sourceType === 'text' && textContent.trim()) ||
     ((sourceType === 'api' || sourceType === 'xml') && url.trim()) ||
-    (['docx', 'pdf', 'csv', 'excel'].includes(sourceType) && file)
+    (['docx', 'pdf', 'csv', 'excel', 'json'].includes(sourceType) && file)
   );
 
   return (
@@ -112,8 +112,9 @@ export const CreateDatabaseDialog = ({
           <div className="space-y-2">
             <Label>Источник данных</Label>
             <Tabs value={sourceType} onValueChange={(v) => setSourceType(v as SourceType)}>
-              <TabsList className="grid grid-cols-3 lg:grid-cols-6">
+              <TabsList className="grid grid-cols-3 lg:grid-cols-7">
                 <TabsTrigger value="text">Текст</TabsTrigger>
+                <TabsTrigger value="json">JSON</TabsTrigger>
                 <TabsTrigger value="api">API</TabsTrigger>
                 <TabsTrigger value="xml">XML</TabsTrigger>
                 <TabsTrigger value="pdf">PDF</TabsTrigger>
@@ -203,6 +204,25 @@ export const CreateDatabaseDialog = ({
                     <span className="text-sm">{file.name}</span>
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="json" className="space-y-2 mt-4">
+                <Label htmlFor="json-file">JSON файл</Label>
+                <Input
+                  id="json-file"
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileChange}
+                />
+                {file && (
+                  <div className="flex items-center gap-2 p-2 bg-muted rounded">
+                    <Icon name="FileJson" size={16} />
+                    <span className="text-sm">{file.name}</span>
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Загрузите JSON файл с данными для индексации
+                </p>
               </TabsContent>
             </Tabs>
           </div>
