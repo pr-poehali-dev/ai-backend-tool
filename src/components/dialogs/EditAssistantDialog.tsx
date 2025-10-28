@@ -209,7 +209,7 @@ export const EditAssistantDialog = ({
           </Button>
           <Button 
             onClick={onConfirm}
-            disabled={!config.name.trim() || !config.model}
+            disabled={!config.name?.trim() || !config.model}
             className="bg-primary hover:bg-primary/90"
           >
             <Icon name="Check" size={16} className="mr-2" />
