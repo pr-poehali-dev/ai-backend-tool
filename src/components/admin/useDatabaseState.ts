@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 
 interface Database {
@@ -16,7 +16,7 @@ export const useDatabaseState = () => {
   const [databases, setDatabases] = useState<Database[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [createDatabaseOpen, setCreateDatabaseOpen] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
+  const hasFetchedRef = useRef(false);
 
   const fetchDatabases = async () => {
     console.log('[useDatabaseState] fetchDatabases called');
@@ -34,7 +34,7 @@ export const useDatabaseState = () => {
       const data = await response.json();
       console.log('[useDatabaseState] Fetched databases:', data);
       setDatabases(data);
-      setHasFetched(true);
+      hasFetchedRef.current = true;
     } catch (error) {
       console.error('Error fetching databases:', error);
       toast.error(error instanceof Error ? error.message : 'Не удалось загрузить базы данных');
@@ -103,6 +103,6 @@ export const useDatabaseState = () => {
     createDatabase,
     deleteDatabase,
     viewDatabase,
-    hasFetched,
+    hasFetched: hasFetchedRef.current,
   };
 };
