@@ -70,17 +70,20 @@ export const useAssistantsState = () => {
   };
 
   const openEditAssistant = (assistant: any) => {
+    console.log('Opening edit for assistant:', assistant);
     setAssistantToEdit(assistant.id);
-    setEditAssistantConfig({
-      name: assistant.name,
-      firstMessage: assistant.firstMessage,
-      instructions: assistant.instructions,
-      model: assistant.model,
-      contextLength: assistant.contextLength,
-      humanEmulation: assistant.humanEmulation,
-      creativity: assistant.creativity,
-      voiceRecognition: assistant.voiceRecognition
-    });
+    const config = {
+      name: assistant.name || '',
+      firstMessage: assistant.firstMessage || '',
+      instructions: assistant.instructions || '',
+      model: assistant.model || 'gpt-4o',
+      contextLength: assistant.contextLength || 5,
+      humanEmulation: assistant.humanEmulation || 5,
+      creativity: assistant.creativity || 0.7,
+      voiceRecognition: assistant.voiceRecognition || false
+    };
+    console.log('Setting edit config:', config);
+    setEditAssistantConfig(config);
     setEditAssistantOpen(true);
   };
 
