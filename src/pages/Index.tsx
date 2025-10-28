@@ -74,7 +74,7 @@ const Index = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'database' && databaseState.databases.length === 0 && !databaseState.hasFetched) {
+    if (activeTab === 'database') {
       databaseState.fetchDatabases();
     }
   }, [activeTab]);
