@@ -25,22 +25,36 @@ interface AssistantConfig {
 interface CreateAssistantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  config: AssistantConfig;
-  onConfigChange: (config: AssistantConfig) => void;
-  onConfirm: () => void;
+  onConfirm: (config: AssistantConfig) => void;
 }
 
 const MODELS_URL = 'https://functions.poehali.dev/74151b51-97a6-4b7e-b229-d9020587c813';
 
+const defaultConfig: AssistantConfig = {
+  name: '',
+  firstMessage: '',
+  instructions: '',
+  model: 'gpt-4o',
+  contextLength: 5,
+  humanEmulation: 5,
+  creativity: 0.7,
+  voiceRecognition: false
+};
+
 export const CreateAssistantDialog = ({ 
   open, 
   onOpenChange, 
-  config,
-  onConfigChange,
   onConfirm 
 }: CreateAssistantDialogProps) => {
+  const [config, setConfig] = useState<AssistantConfig>(defaultConfig);
   const [models, setModels] = useState<Array<{id: string, name: string}>>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+  
+  useEffect(() => {
+    if (!open) {
+      setConfig(defaultConfig);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open && models.length === 0) {
@@ -64,7 +78,11 @@ export const CreateAssistantDialog = ({
   };
 
   const updateConfig = (field: keyof AssistantConfig, value: any) => {
-    onConfigChange({ ...config, [field]: value });
+    setConfig({ ...config, [field]: value });
+  };
+  
+  const handleConfirm = () => {
+    onConfirm(config);
   };
 
   return (
@@ -208,7 +226,7 @@ export const CreateAssistantDialog = ({
             Отмена
           </Button>
           <Button 
-            onClick={onConfirm}
+            onClick={handleConfirm}
             disabled={!config.name?.trim() || !config.model}
             className="bg-primary hover:bg-primary/90"
           >

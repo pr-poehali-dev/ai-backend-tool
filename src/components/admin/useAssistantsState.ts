@@ -6,16 +6,6 @@ const ASSISTANTS_URL = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0c
 export const useAssistantsState = () => {
   const [assistants, setAssistants] = useState<any[]>([]);
   const [createAssistantOpen, setCreateAssistantOpen] = useState(false);
-  const [newAssistantConfig, setNewAssistantConfig] = useState({
-    name: '',
-    firstMessage: '',
-    instructions: '',
-    model: 'gpt-4o',
-    contextLength: 5,
-    humanEmulation: 5,
-    creativity: 0.7,
-    voiceRecognition: false
-  });
   const [editAssistantOpen, setEditAssistantOpen] = useState(false);
   const [editAssistantConfig, setEditAssistantConfig] = useState({
     name: '',
@@ -43,31 +33,17 @@ export const useAssistantsState = () => {
     }
   };
 
-  const createAssistant = async () => {
+  const createAssistant = async (config: any) => {
     try {
       const response = await fetch(ASSISTANTS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAssistantConfig)
+        body: JSON.stringify(config)
       });
       const newAssistant = await response.json();
-      
+      setAssistants([...assistants, newAssistant]);
       setCreateAssistantOpen(false);
-      
-      setTimeout(() => {
-        setAssistants([...assistants, newAssistant]);
-        setNewAssistantConfig({
-          name: '',
-          firstMessage: '',
-          instructions: '',
-          model: 'gpt-4o',
-          contextLength: 5,
-          humanEmulation: 5,
-          creativity: 0.7,
-          voiceRecognition: false
-        });
-        toast.success('Ассистент создан');
-      }, 300);
+      toast.success('Ассистент создан');
     } catch (error) {
       toast.error('Ошибка создания ассистента');
     }
@@ -144,7 +120,6 @@ export const useAssistantsState = () => {
   return {
     assistants,
     createAssistantOpen,
-    newAssistantConfig,
     editAssistantOpen,
     editAssistantConfig,
     assistantToEdit,
@@ -153,7 +128,6 @@ export const useAssistantsState = () => {
     testAssistantOpen,
     assistantToTest,
     setCreateAssistantOpen,
-    setNewAssistantConfig,
     setEditAssistantOpen,
     setEditAssistantConfig,
     setDeleteAssistantOpen,

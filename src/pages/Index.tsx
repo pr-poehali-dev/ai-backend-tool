@@ -125,8 +125,6 @@ const Index = () => {
       <CreateAssistantDialog
         open={assistantsState.createAssistantOpen}
         onOpenChange={assistantsState.setCreateAssistantOpen}
-        config={assistantsState.newAssistantConfig}
-        onConfigChange={assistantsState.setNewAssistantConfig}
         onConfirm={assistantsState.createAssistant}
       />
 
