@@ -77,10 +77,10 @@ const Index = () => {
           <TabsContent value="assistants">
             <AssistantsTab
               assistants={assistantsState.assistants}
-              onCreateNew={() => assistantsState.setCreateAssistantOpen(true)}
-              onEdit={assistantsState.openEditAssistant}
-              onDelete={assistantsState.openDeleteAssistant}
-              onTest={assistantsState.openTestAssistant}
+              onCreateAssistant={() => assistantsState.setCreateAssistantOpen(true)}
+              onEditAssistant={assistantsState.openEditAssistant}
+              onDeleteAssistant={assistantsState.openDeleteAssistant}
+              onTestAssistant={assistantsState.openTestAssistant}
             />
           </TabsContent>
 
