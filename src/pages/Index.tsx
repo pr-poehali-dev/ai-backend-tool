@@ -46,44 +46,20 @@ const Index = () => {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="bg-purple-500/20 p-3 rounded-xl">
-            <Icon name="Settings" className="w-8 h-8 text-purple-400" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-white">GPTunnel Admin</h1>
-            <p className="text-purple-300">Управление API ключами и ассистентами</p>
-          </div>
-          <Badge variant="secondary" className="ml-auto bg-green-500/20 text-green-300 border-green-500/30">
-            <Icon name="Activity" className="w-3 h-3 mr-1" />
-            Online
-          </Badge>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold">GPTunnel Admin</h1>
+          <p className="text-muted-foreground">Управление API ключами и ассистентами</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
-            <TabsTrigger value="keys" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
-              <Icon name="Key" className="w-4 h-4 mr-2" />
-              API Ключи
-            </TabsTrigger>
-            <TabsTrigger value="assistants" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
-              <Icon name="Bot" className="w-4 h-4 mr-2" />
-              Ассистенты
-            </TabsTrigger>
-            <TabsTrigger value="monitoring" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
-              <Icon name="BarChart3" className="w-4 h-4 mr-2" />
-              Мониторинг
-            </TabsTrigger>
-            <TabsTrigger value="usage" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
-              <Icon name="TrendingUp" className="w-4 h-4 mr-2" />
-              Статистика
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
-              <Icon name="Settings" className="w-4 h-4 mr-2" />
-              Настройки
-            </TabsTrigger>
+          <TabsList>
+            <TabsTrigger value="keys">API Ключи</TabsTrigger>
+            <TabsTrigger value="assistants">Ассистенты</TabsTrigger>
+            <TabsTrigger value="monitoring">Мониторинг</TabsTrigger>
+            <TabsTrigger value="usage">Статистика</TabsTrigger>
+            <TabsTrigger value="settings">Настройки</TabsTrigger>
           </TabsList>
 
           <TabsContent value="keys">
