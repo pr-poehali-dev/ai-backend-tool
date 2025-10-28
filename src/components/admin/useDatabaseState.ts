@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 interface Database {
@@ -12,11 +12,20 @@ type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel' | 'j
 
 const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4';
 
+const STORAGE_KEY = 'rag_databases_cache';
+
 export const useDatabaseState = () => {
-  const [databases, setDatabases] = useState<Database[]>([]);
+  const [databases, setDatabases] = useState<Database[]>(() => {
+    const cached = localStorage.getItem(STORAGE_KEY);
+    return cached ? JSON.parse(cached) : [];
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [createDatabaseOpen, setCreateDatabaseOpen] = useState(false);
   const hasFetchedRef = useRef(false);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(databases));
+  }, [databases]);
 
   const fetchDatabases = async () => {
     console.log('[useDatabaseState] fetchDatabases called');
@@ -34,6 +43,7 @@ export const useDatabaseState = () => {
       const data = await response.json();
       console.log('[useDatabaseState] Fetched databases:', data);
       setDatabases(data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       hasFetchedRef.current = true;
     } catch (error) {
       console.error('Error fetching databases:', error);
