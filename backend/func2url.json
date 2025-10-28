@@ -1,4 +1,5 @@
 {
+  "secrets": "https://functions.poehali.dev/1bfad5cb-d72a-4295-a5d5-c6e1211be804",
   "usage-stats": "https://functions.poehali.dev/3106619b-f815-4bcb-bbce-85e85edc9a8d",
   "gptunnel-bot": "https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d",
   "assistants": "https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d",

@@ -15,12 +15,14 @@ import { CreateAssistantDialog } from '@/components/dialogs/CreateAssistantDialo
 import { EditAssistantDialog } from '@/components/dialogs/EditAssistantDialog';
 import { DeleteAssistantDialog } from '@/components/dialogs/DeleteAssistantDialog';
 import { TestAssistantDialog } from '@/components/dialogs/TestAssistantDialog';
+import { AddSecretDialog } from '@/components/dialogs/AddSecretDialog';
 
 const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
 const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
 const ASSISTANTS_URL = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d';
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 const USAGE_STATS_URL = 'https://functions.poehali.dev/3106619b-f815-4bcb-bbce-85e85edc9a8d';
+const SECRETS_URL = 'https://functions.poehali.dev/1bfad5cb-d72a-4295-a5d5-c6e1211be804';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
@@ -72,6 +74,13 @@ const Index = () => {
   const [usageStats, setUsageStats] = useState<any[]>([]);
   const [isLoadingUsage, setIsLoadingUsage] = useState(false);
 
+  const [secrets, setSecrets] = useState<any[]>([]);
+  const [isLoadingSecrets, setIsLoadingSecrets] = useState(false);
+  const [addSecretOpen, setAddSecretOpen] = useState(false);
+  const [newSecretName, setNewSecretName] = useState('');
+  const [newSecretValue, setNewSecretValue] = useState('');
+  const [isCheckingSecret, setIsCheckingSecret] = useState(false);
+
   useEffect(() => {
     if (activeTab === 'keys' && apiKeys.length === 0) {
       fetchApiKeys();
@@ -81,6 +90,8 @@ const Index = () => {
       fetchAssistants();
     } else if (activeTab === 'usage') {
       fetchUsageStats();
+    } else if (activeTab === 'settings') {
+      fetchSecrets();
     }
   }, [activeTab]);
 
@@ -219,6 +230,67 @@ const Index = () => {
       toast.error('Ошибка загрузки статистики');
     } finally {
       setIsLoadingUsage(false);
+    }
+  };
+
+  const fetchSecrets = async () => {
+    setIsLoadingSecrets(true);
+    try {
+      const response = await fetch(SECRETS_URL);
+      const data = await response.json();
+      setSecrets(data);
+    } catch (error) {
+      toast.error('Ошибка загрузки секретов');
+    } finally {
+      setIsLoadingSecrets(false);
+    }
+  };
+
+  const addSecret = async () => {
+    if (!newSecretName.trim() || !newSecretValue.trim()) return;
+
+    setIsCheckingSecret(true);
+    try {
+      const response = await fetch(SECRETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newSecretName, value: newSecretValue })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        toast.success('Секрет добавлен');
+        setAddSecretOpen(false);
+        setNewSecretName('');
+        setNewSecretValue('');
+        fetchSecrets();
+      } else {
+        toast.error(result.error || 'Ошибка добавления секрета');
+      }
+    } catch (error) {
+      toast.error('Ошибка подключения к API');
+    } finally {
+      setIsCheckingSecret(false);
+    }
+  };
+
+  const deleteSecret = async (name: string) => {
+    try {
+      const response = await fetch(`${SECRETS_URL}?name=${encodeURIComponent(name)}`, {
+        method: 'DELETE'
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        toast.success('Секрет удалён');
+        fetchSecrets();
+      } else {
+        toast.error(result.error || 'Ошибка удаления секрета');
+      }
+    } catch (error) {
+      toast.error('Ошибка подключения к API');
     }
   };
 
@@ -401,7 +473,12 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="settings">
-            <SettingsTab />
+            <SettingsTab
+              secrets={secrets}
+              isLoading={isLoadingSecrets}
+              onAddSecret={() => setAddSecretOpen(true)}
+              onDeleteSecret={deleteSecret}
+            />
           </TabsContent>
         </Tabs>
       </main>
@@ -451,6 +528,17 @@ const Index = () => {
         assistantId={assistantToTest?.id || ''}
         assistantName={assistantToTest?.name || ''}
         gptunnelBotUrl={GPTUNNEL_BOT_URL}
+      />
+
+      <AddSecretDialog
+        open={addSecretOpen}
+        onOpenChange={setAddSecretOpen}
+        secretName={newSecretName}
+        secretValue={newSecretValue}
+        onSecretNameChange={setNewSecretName}
+        onSecretValueChange={setNewSecretValue}
+        isChecking={isCheckingSecret}
+        onConfirm={addSecret}
       />
     </div>
   );
