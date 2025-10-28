@@ -10,38 +10,30 @@ interface Database {
 
 type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel' | 'json';
 
+const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4';
+
 export const useDatabaseState = () => {
   const [databases, setDatabases] = useState<Database[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [createDatabaseOpen, setCreateDatabaseOpen] = useState(false);
 
-  const getApiKey = () => localStorage.getItem('gptunnel_api_key') || '';
-
   const fetchDatabases = async () => {
-    const GPTUNNEL_API_KEY = getApiKey();
-    if (!GPTUNNEL_API_KEY) {
-      toast.error('Введите API ключ GPTunnel в поле сверху');
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const response = await fetch('https://gptunnel.ru/v1/database/list', {
+      const response = await fetch(RAG_API_URL, {
         method: 'GET',
-        headers: {
-          'Authorization': GPTUNNEL_API_KEY,
-        },
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка загрузки баз данных');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка загрузки баз данных');
       }
 
       const data = await response.json();
       setDatabases(data);
     } catch (error) {
       console.error('Error fetching databases:', error);
-      toast.error('Не удалось загрузить базы данных');
+      toast.error(error instanceof Error ? error.message : 'Не удалось загрузить базы данных');
     } finally {
       setIsLoading(false);
     }
@@ -53,12 +45,6 @@ export const useDatabaseState = () => {
     sourceType: SourceType;
     sourceContent: string | File;
   }) => {
-    const GPTUNNEL_API_KEY = getApiKey();
-    if (!GPTUNNEL_API_KEY) {
-      toast.error('Введите API ключ GPTunnel в поле сверху');
-      return;
-    }
-
     try {
       const formData = new FormData();
       formData.append('name', data.name);
@@ -71,17 +57,14 @@ export const useDatabaseState = () => {
         formData.append('content', data.sourceContent);
       }
 
-      const response = await fetch('https://gptunnel.ru/v1/database/create', {
+      const response = await fetch(RAG_API_URL, {
         method: 'POST',
-        headers: {
-          'Authorization': GPTUNNEL_API_KEY,
-        },
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Ошибка создания базы');
+        throw new Error(errorData.error || 'Ошибка создания базы');
       }
 
       toast.success('База данных создана успешно');
@@ -94,29 +77,21 @@ export const useDatabaseState = () => {
   };
 
   const deleteDatabase = async (databaseId: string) => {
-    const GPTUNNEL_API_KEY = getApiKey();
-    if (!GPTUNNEL_API_KEY) {
-      toast.error('Введите API ключ GPTunnel в поле сверху');
-      return;
-    }
-
     try {
-      const response = await fetch(`https://gptunnel.ru/v1/database/${databaseId}`, {
+      const response = await fetch(`${RAG_API_URL}?id=${databaseId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': GPTUNNEL_API_KEY,
-        },
       });
 
       if (!response.ok) {
-        throw new Error('Ошибка удаления базы');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка удаления базы');
       }
 
       toast.success('База данных удалена');
       fetchDatabases();
     } catch (error) {
       console.error('Error deleting database:', error);
-      toast.error('Не удалось удалить базу данных');
+      toast.error(error instanceof Error ? error.message : 'Не удалось удалить базу данных');
     }
   };
 

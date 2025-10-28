@@ -3,9 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useState, useEffect } from 'react';
 
 interface Database {
   id: string;
@@ -29,18 +26,6 @@ export const DatabaseTab = ({
   onViewDatabase,
   onDeleteDatabase,
 }: DatabaseTabProps) => {
-  const [apiKey, setApiKey] = useState('');
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem('gptunnel_api_key') || '';
-    setApiKey(savedKey);
-  }, []);
-
-  const handleApiKeyChange = (value: string) => {
-    setApiKey(value);
-    localStorage.setItem('gptunnel_api_key', value);
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -58,43 +43,15 @@ export const DatabaseTab = ({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">API ключ GPTunnel</CardTitle>
-          <CardDescription>
-            Получите ключ на{' '}
-            <a href="https://gptunnel.ru" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-              gptunnel.ru
-            </a>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <Input
-                type="password"
-                placeholder="Введите API ключ GPTunnel..."
-                value={apiKey}
-                onChange={(e) => handleApiKeyChange(e.target.value)}
-              />
-            </div>
-            <Button 
-              variant={apiKey ? "default" : "outline"}
-              onClick={onCreateDatabase}
-              disabled={!apiKey}
-            >
-              <Icon name="Plus" size={16} className="mr-2" />
-              Создать базу
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Векторные базы данных (RAG)</h2>
           <p className="text-muted-foreground">Управление базами знаний для AI ассистентов</p>
         </div>
+        <Button onClick={onCreateDatabase}>
+          <Icon name="Plus" size={16} className="mr-2" />
+          Создать базу
+        </Button>
       </div>
 
       {databases.length === 0 ? (
