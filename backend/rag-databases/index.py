@@ -47,6 +47,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 timeout=30
             )
             
+            print(f"[DEBUG] GET /v1/database/list - Status: {response.status_code}")
+            print(f"[DEBUG] Response body: {response.text}")
+            
             return {
                 'statusCode': response.status_code,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
