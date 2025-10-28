@@ -1,4 +1,5 @@
 {
+  "external-endpoints": "https://functions.poehali.dev/01656c08-1cc0-472d-b64b-94b8c7a186dc",
   "qqrenta-search": "https://functions.poehali.dev/3fa1b9a8-41d1-4576-bf83-b9dad01836b2",
   "secrets": "https://functions.poehali.dev/1bfad5cb-d72a-4295-a5d5-c6e1211be804",
   "usage-stats": "https://functions.poehali.dev/3106619b-f815-4bcb-bbce-85e85edc9a8d",
