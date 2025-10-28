@@ -34,16 +34,14 @@ const Index = () => {
   useEffect(() => {
     if (activeTab === 'keys' && apiKeysState.apiKeys.length === 0) {
       apiKeysState.fetchApiKeys();
-    } else if (activeTab === 'monitoring') {
-      monitoringState.fetchMonitoring();
-    } else if (activeTab === 'assistants' && assistantsState.assistants.length === 0) {
-      assistantsState.fetchAssistants();
-    } else if (activeTab === 'usage') {
-      usageState.fetchUsageStats();
-    } else if (activeTab === 'settings') {
-      secretsState.fetchSecrets();
     }
-  }, [activeTab]);
+  }, [activeTab, apiKeysState.apiKeys.length]);
+
+  useEffect(() => {
+    if (activeTab === 'assistants' && assistantsState.assistants.length === 0) {
+      assistantsState.fetchAssistants();
+    }
+  }, [activeTab, assistantsState.assistants.length]);
 
   return (
     <div className="min-h-screen bg-background">
