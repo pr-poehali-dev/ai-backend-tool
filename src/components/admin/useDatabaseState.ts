@@ -18,6 +18,7 @@ const FETCHED_KEY = 'rag_databases_fetched';
 export const useDatabaseState = () => {
   const [databases, setDatabases] = useState<Database[]>(() => {
     const cached = localStorage.getItem(STORAGE_KEY);
+    console.log('[useDatabaseState] Loading from localStorage:', cached);
     return cached ? JSON.parse(cached) : [];
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +26,7 @@ export const useDatabaseState = () => {
   const hasFetchedRef = useRef(localStorage.getItem(FETCHED_KEY) === 'true');
 
   useEffect(() => {
+    console.log('[useDatabaseState] Saving to localStorage:', databases);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(databases));
   }, [databases]);
 
