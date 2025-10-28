@@ -65,12 +65,11 @@ const Index = () => {
           <TabsContent value="keys">
             <ApiKeysTab
               apiKeys={apiKeysState.apiKeys}
-              isLoading={apiKeysState.isLoadingKeys}
-              onCopy={apiKeysState.copyToClipboard}
-              onGenerateNew={apiKeysState.generateNewKey}
+              onGenerateKey={apiKeysState.generateNewKey}
+              onCopyKey={apiKeysState.copyToClipboard}
               onToggleStatus={apiKeysState.toggleKeyStatus}
-              onEdit={apiKeysState.openEditDialog}
-              onDelete={apiKeysState.openDeleteDialog}
+              onEditKey={apiKeysState.openEditDialog}
+              onDeleteKey={apiKeysState.openDeleteDialog}
             />
           </TabsContent>
 
