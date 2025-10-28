@@ -47,12 +47,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if database_id:
                 print(f"[DEBUG] Getting files for database: {database_id}")
                 response = requests.get(
-                    f'https://gptunnel.ru/v1/database/{database_id}/file/list',
+                    'https://gptunnel.ru/v1/database/file/list',
+                    params={'databaseId': database_id},
                     headers={'Authorization': gptunnel_api_key},
                     timeout=30
                 )
                 
-                print(f"[DEBUG] GET /v1/database/{database_id}/file/list - Status: {response.status_code}")
+                print(f"[DEBUG] GET /v1/database/file/list?databaseId={database_id} - Status: {response.status_code}")
                 print(f"[DEBUG] Response body: {response.text[:500]}")
                 
                 return {
