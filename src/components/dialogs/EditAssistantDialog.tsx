@@ -142,10 +142,10 @@ export const EditAssistantDialog = ({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Креативность</Label>
-                <span className="text-sm text-muted-foreground">{config.creativity.toFixed(1)}</span>
+                <span className="text-sm text-muted-foreground">{(config.creativity ?? 0.7).toFixed(1)}</span>
               </div>
               <Slider
-                value={[config.creativity * 10]}
+                value={[(config.creativity ?? 0.7) * 10]}
                 onValueChange={(v) => updateConfig('creativity', v[0] / 10)}
                 min={0}
                 max={10}
