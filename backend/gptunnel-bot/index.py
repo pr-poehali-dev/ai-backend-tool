@@ -183,12 +183,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'temperature': float(creativity) if creativity else 0.7
         }
         
-        # TODO: GPTunnel не поддерживает передачу RAG баз через Chat Completions API
-        # Нужно использовать Assistants API для работы с базами знаний
-        # if rag_database_ids and len(rag_database_ids) > 0:
-        #     gptunnel_payload['databaseIds'] = rag_database_ids
+        # Если у ассистента настроены RAG базы, используем Assistant API endpoint
+        use_assistant_api = rag_database_ids and len(rag_database_ids) > 0
         
-        print(f"[DEBUG] RAG databases configured: {rag_database_ids if rag_database_ids else 'None'}")
+        if use_assistant_api:
+            gptunnel_payload['databaseIds'] = rag_database_ids
+        
+        print(f"[DEBUG] Using {'Assistant' if use_assistant_api else 'Chat Completions'} API, RAG: {rag_database_ids if rag_database_ids else 'None'}")
         
         if tools:
             gptunnel_payload['tools'] = tools
@@ -198,8 +199,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
         
+        # Выбираем endpoint в зависимости от наличия RAG баз
+        endpoint = 'https://gptunnel.ru/api/assistant/chat' if use_assistant_api else 'https://gptunnel.ru/v1/chat/completions'
+        
         req = urllib.request.Request(
-            'https://gptunnel.ru/v1/chat/completions',
+            endpoint,
             data=request_data,
             headers={
                 'Content-Type': 'application/json',
@@ -266,8 +270,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 }
                                 
                                 second_request_data = json.dumps(second_payload).encode('utf-8')
+                                # Для второго запроса используем тот же endpoint
                                 second_req = urllib.request.Request(
-                                    'https://gptunnel.ru/v1/chat/completions',
+                                    endpoint,
                                     data=second_request_data,
                                     headers={
                                         'Content-Type': 'application/json',
