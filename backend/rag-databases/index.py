@@ -70,7 +70,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f"[DEBUG] Sending to GPTunnel: {json.dumps(gptunnel_request, ensure_ascii=False)}")
             
             response = requests.post(
-                'https://gptunnel.ru/v1/database/file',
+                'https://gptunnel.ru/v1/database/file/add',
                 headers=headers,
                 json=gptunnel_request,
                 timeout=60
