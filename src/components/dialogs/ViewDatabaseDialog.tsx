@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Icon from '@/components/ui/icon';
 import { useState, useEffect } from 'react';
+import { AddFileToDatabaseDialog } from './AddFileToDatabaseDialog';
 
 interface DatabaseFile {
   id: string;
@@ -28,6 +29,7 @@ const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37
 export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabaseDialogProps) => {
   const [files, setFiles] = useState<DatabaseFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [addFileOpen, setAddFileOpen] = useState(false);
 
   useEffect(() => {
     if (open && database) {
@@ -96,7 +98,13 @@ export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabas
           </div>
 
           <div>
-            <h3 className="font-semibold mb-3">Файлы в базе данных</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold">Файлы в базе данных</h3>
+              <Button onClick={() => setAddFileOpen(true)} size="sm">
+                <Icon name="Plus" className="h-4 w-4 mr-1" />
+                Добавить файл
+              </Button>
+            </div>
             
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -146,6 +154,16 @@ export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabas
           </div>
         </div>
       </DialogContent>
+      
+      {database && (
+        <AddFileToDatabaseDialog
+          open={addFileOpen}
+          onOpenChange={setAddFileOpen}
+          databaseId={database.id}
+          databaseName={database.name}
+          onSuccess={fetchDatabaseFiles}
+        />
+      )}
     </Dialog>
   );
 };
