@@ -92,28 +92,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        import time
         gptunnel_payload = {
-            'event': 'CLIENT_MESSAGE',
-            'id': assistant_id,
-            'chat_id': user_id,
-            'client_id': user_id,
-            'message': {
-                'type': 'TEXT',
-                'text': message,
-                'timestamp': int(time.time())
-            },
-            'agents_online': False
+            'model': 'gpt-4o-mini',
+            'messages': [
+                {'role': 'user', 'content': message}
+            ]
         }
         
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
         
         req = urllib.request.Request(
-            'https://gptunnel.ru/api/bot',
+            'https://gptunnel.ru/v1/chat/completions',
             data=request_data,
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': gptunnel_api_key
+                'Authorization': f'Bearer {gptunnel_api_key}'
             },
             method='POST'
         )
@@ -122,8 +115,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             response_data = response.read().decode('utf-8')
             bot_response = json.loads(response_data)
             
-            response_text = bot_response.get('message', {}).get('text', '') if isinstance(bot_response.get('message'), dict) else str(bot_response)
-            tokens_estimate = len(message.split()) + len(response_text.split())
+            response_text = bot_response.get('choices', [{}])[0].get('message', {}).get('content', 'Нет ответа')
+            
+            usage = bot_response.get('usage', {})
+            tokens_estimate = usage.get('total_tokens', len(message.split()) + len(response_text.split()))
             
             try:
                 conn = psycopg2.connect(database_url)
