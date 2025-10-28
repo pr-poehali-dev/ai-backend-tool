@@ -224,9 +224,16 @@ const Index = () => {
     try {
       const response = await fetch(MONITORING_URL);
       const data = await response.json();
+      
+      if (!response.ok) {
+        toast.error(data.error || 'Ошибка загрузки мониторинга');
+        return;
+      }
+      
       setMonitoringData(data);
     } catch (error) {
       toast.error('Ошибка загрузки мониторинга');
+      console.error('Monitoring error:', error);
     }
   };
 
