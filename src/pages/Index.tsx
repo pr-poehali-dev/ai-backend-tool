@@ -123,6 +123,7 @@ const Index = () => {
               isLoading={databaseState.isLoading}
               onCreateDatabase={() => databaseState.setCreateDatabaseOpen(true)}
               onViewDatabase={databaseState.viewDatabase}
+              onDeleteDatabase={(db) => databaseState.deleteDatabase(db.id)}
             />
           </TabsContent>
 

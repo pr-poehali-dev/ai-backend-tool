@@ -16,6 +16,7 @@ interface DatabaseTabProps {
   isLoading: boolean;
   onCreateDatabase: () => void;
   onViewDatabase: (database: Database) => void;
+  onDeleteDatabase: (database: Database) => void;
 }
 
 export const DatabaseTab = ({
@@ -23,6 +24,7 @@ export const DatabaseTab = ({
   isLoading,
   onCreateDatabase,
   onViewDatabase,
+  onDeleteDatabase,
 }: DatabaseTabProps) => {
   if (isLoading) {
     return (
@@ -84,15 +86,22 @@ export const DatabaseTab = ({
                   Создано: {new Date(database.createDate).toLocaleDateString('ru-RU')}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full"
+                  className="flex-1"
                   onClick={() => onViewDatabase(database)}
                 >
                   <Icon name="FolderOpen" size={14} className="mr-2" />
                   Открыть
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onDeleteDatabase(database)}
+                >
+                  <Icon name="Trash2" size={14} />
                 </Button>
               </CardContent>
             </Card>

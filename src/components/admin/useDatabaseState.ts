@@ -76,6 +76,11 @@ export const useDatabaseState = () => {
     }
   };
 
+  const deleteDatabase = (databaseId: string) => {
+    setDatabases(prev => prev.filter(db => db.id !== databaseId));
+    toast.success('База данных удалена локально');
+  };
+
   const viewDatabase = (database: Database) => {
     toast.info(`Просмотр базы: ${database.name}`);
   };
@@ -87,6 +92,7 @@ export const useDatabaseState = () => {
     setCreateDatabaseOpen,
     fetchDatabases,
     createDatabase,
+    deleteDatabase,
     viewDatabase,
   };
 };
