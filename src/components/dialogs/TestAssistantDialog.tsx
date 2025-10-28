@@ -124,6 +124,7 @@ export const TestAssistantDialog = ({
 
   const clearChat = () => {
     setMessages([]);
+    localStorage.removeItem(storageKey);
   };
 
   return (
