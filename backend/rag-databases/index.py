@@ -61,7 +61,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body_str = event.get('body', '{}')
             body_data = json.loads(body_str)
             
+            print(f"[DEBUG] Received from frontend: {json.dumps(body_data, ensure_ascii=False)[:300]}")
+            
             database_id = body_data.get('databaseId')
+            source_type = body_data.get('sourceType', 'text')
+            content = body_data.get('content', '')
+            name = body_data.get('name', 'Без названия')
             
             if not database_id:
                 return {
@@ -71,14 +76,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            add_file_payload = {
-                'databaseId': database_id,
-                'name': body_data.get('name'),
-                'sourceType': body_data.get('sourceType'),
-                'text': body_data.get('content')
+            # Конвертация типов источников из нашего формата в формат GPTunnel
+            source_type_mapping = {
+                'text': 'text',
+                'json': 'text',  # JSON передаём как текст
+                'xml': 'text',   # XML передаём как текст
+                'api': 'url',    # API URL
+                'pdf': 'file',
+                'docx': 'file',
+                'csv': 'file',
+                'excel': 'file'
             }
             
-            print(f"[DEBUG] Adding file to database {database_id}: {json.dumps(add_file_payload, ensure_ascii=False)[:200]}")
+            gptunnel_source_type = source_type_mapping.get(source_type, 'text')
+            
+            # Формируем payload для GPTunnel
+            add_file_payload = {
+                'databaseId': database_id,
+                'name': name,
+                'sourceType': gptunnel_source_type
+            }
+            
+            # Добавляем content в зависимости от типа
+            if gptunnel_source_type == 'url':
+                add_file_payload['url'] = content
+            elif gptunnel_source_type == 'text':
+                add_file_payload['text'] = content
+            elif gptunnel_source_type == 'file':
+                # Для файлов нужна base64 или URL
+                add_file_payload['text'] = content  # Временно как текст
+            
+            print(f"[DEBUG] Sending to GPTunnel: {json.dumps(add_file_payload, ensure_ascii=False)[:300]}")
             
             response = requests.post(
                 'https://gptunnel.ru/v1/database/file/add',
@@ -87,8 +115,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 timeout=60
             )
             
-            print(f"[DEBUG] Response status: {response.status_code}")
-            print(f"[DEBUG] Response body: {response.text}")
+            print(f"[DEBUG] GPTunnel response status: {response.status_code}")
+            print(f"[DEBUG] GPTunnel response body: {response.text[:500]}")
             
             return {
                 'statusCode': response.status_code,
