@@ -60,29 +60,75 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             print(f"[DEBUG] Received body: {json.dumps(body_data, ensure_ascii=False)}")
             
-            gptunnel_request = {
+            # Шаг 1: Попробуем создать базу данных
+            create_db_payload = {
                 'name': body_data.get('name'),
-                'description': body_data.get('description'),
+                'description': body_data.get('description')
+            }
+            
+            print(f"[DEBUG] Step 1: Creating database with: {json.dumps(create_db_payload, ensure_ascii=False)}")
+            
+            # Попробуем разные endpoint'ы для создания базы
+            endpoints_to_try = [
+                'https://gptunnel.ru/v1/database/create',
+                'https://gptunnel.ru/v1/database/add',
+                'https://gptunnel.ru/v1/database'
+            ]
+            
+            database_id = None
+            for endpoint in endpoints_to_try:
+                try:
+                    print(f"[DEBUG] Trying endpoint: {endpoint}")
+                    create_response = requests.post(
+                        endpoint,
+                        headers=headers,
+                        json=create_db_payload,
+                        timeout=30
+                    )
+                    print(f"[DEBUG] Response status: {create_response.status_code}")
+                    print(f"[DEBUG] Response body: {create_response.text}")
+                    
+                    if create_response.status_code == 200:
+                        response_data = create_response.json()
+                        database_id = response_data.get('id') or response_data.get('databaseId')
+                        print(f"[DEBUG] Database created with ID: {database_id}")
+                        break
+                except Exception as e:
+                    print(f"[DEBUG] Endpoint {endpoint} failed: {str(e)}")
+                    continue
+            
+            if not database_id:
+                return {
+                    'statusCode': 500,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Не удалось создать базу данных. Проверьте логи для деталей.'}),
+                    'isBase64Encoded': False
+                }
+            
+            # Шаг 2: Добавляем файл в созданную базу
+            add_file_payload = {
+                'databaseId': database_id,
+                'name': body_data.get('name'),
                 'sourceType': body_data.get('sourceType'),
                 'content': body_data.get('content')
             }
             
-            print(f"[DEBUG] Sending to GPTunnel: {json.dumps(gptunnel_request, ensure_ascii=False)}")
+            print(f"[DEBUG] Step 2: Adding file to database: {database_id}")
             
-            response = requests.post(
+            file_response = requests.post(
                 'https://gptunnel.ru/v1/database/file/add',
                 headers=headers,
-                json=gptunnel_request,
+                json=add_file_payload,
                 timeout=60
             )
             
-            print(f"[DEBUG] GPTunnel response status: {response.status_code}")
-            print(f"[DEBUG] GPTunnel response body: {response.text}")
+            print(f"[DEBUG] File add response status: {file_response.status_code}")
+            print(f"[DEBUG] File add response body: {file_response.text}")
             
             return {
-                'statusCode': response.status_code,
+                'statusCode': file_response.status_code,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': response.text,
+                'body': file_response.text,
                 'isBase64Encoded': False
             }
         
