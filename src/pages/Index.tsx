@@ -11,7 +11,6 @@ import { AssistantsTab } from '@/components/AssistantsTab';
 import { UsageTab } from '@/components/UsageTab';
 import { DeleteKeyDialog } from '@/components/dialogs/DeleteKeyDialog';
 import { EditKeyDialog } from '@/components/dialogs/EditKeyDialog';
-import { GptunnelSettingsDialog } from '@/components/dialogs/GptunnelSettingsDialog';
 import { CreateAssistantDialog } from '@/components/dialogs/CreateAssistantDialog';
 import { EditAssistantDialog } from '@/components/dialogs/EditAssistantDialog';
 import { DeleteAssistantDialog } from '@/components/dialogs/DeleteAssistantDialog';
@@ -19,17 +18,12 @@ import { TestAssistantDialog } from '@/components/dialogs/TestAssistantDialog';
 
 const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
 const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
-const GPTUNNEL_SETTINGS_URL = 'https://functions.poehali.dev/02fd2adf-54b4-4476-9f64-6c552acacfc1';
 const ASSISTANTS_URL = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d';
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 const USAGE_STATS_URL = 'https://functions.poehali.dev/3106619b-f815-4bcb-bbce-85e85edc9a8d';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
-  const [gptunnelApiKey, setGptunnelApiKey] = useState('');
-  const [gptunnelStatus, setGptunnelStatus] = useState<'connected' | 'disconnected'>('disconnected');
-  const [isCheckingKey, setIsCheckingKey] = useState(false);
-  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -83,55 +77,12 @@ const Index = () => {
       fetchApiKeys();
     } else if (activeTab === 'monitoring') {
       fetchMonitoring();
-    } else if (activeTab === 'settings') {
-      fetchGptunnelStatus();
     } else if (activeTab === 'assistants' && assistants.length === 0) {
       fetchAssistants();
     } else if (activeTab === 'usage') {
       fetchUsageStats();
     }
   }, [activeTab]);
-
-  const fetchGptunnelStatus = async () => {
-    try {
-      const response = await fetch(GPTUNNEL_SETTINGS_URL);
-      const data = await response.json();
-      setGptunnelStatus(data.connected ? 'connected' : 'disconnected');
-    } catch (error) {
-      setGptunnelStatus('disconnected');
-    }
-  };
-
-  const saveGptunnelKey = async () => {
-    if (!gptunnelApiKey.trim()) {
-      toast.error('Введите API ключ');
-      return;
-    }
-
-    setIsCheckingKey(true);
-    try {
-      const response = await fetch(GPTUNNEL_SETTINGS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: gptunnelApiKey })
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        setGptunnelStatus('connected');
-        setSettingsDialogOpen(false);
-        setGptunnelApiKey('');
-        toast.success('GPTunnel API подключен');
-      } else {
-        toast.error(result.error || 'Ошибка проверки ключа');
-      }
-    } catch (error) {
-      toast.error('Ошибка подключения к API');
-    } finally {
-      setIsCheckingKey(false);
-    }
-  };
 
   const fetchApiKeys = async () => {
     setIsLoadingKeys(true);
@@ -450,10 +401,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="settings">
-            <SettingsTab
-              gptunnelStatus={gptunnelStatus}
-              onOpenSettingsDialog={() => setSettingsDialogOpen(true)}
-            />
+            <SettingsTab />
           </TabsContent>
         </Tabs>
       </main>
@@ -472,15 +420,6 @@ const Index = () => {
         originalName={keyToEdit?.name || ''}
         onKeyNameChange={setNewKeyName}
         onConfirm={updateKeyName}
-      />
-
-      <GptunnelSettingsDialog
-        open={settingsDialogOpen}
-        onOpenChange={setSettingsDialogOpen}
-        apiKey={gptunnelApiKey}
-        onApiKeyChange={setGptunnelApiKey}
-        isChecking={isCheckingKey}
-        onConfirm={saveGptunnelKey}
       />
 
       <CreateAssistantDialog
