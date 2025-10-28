@@ -51,7 +51,8 @@ export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabas
       }
 
       const data = await response.json();
-      setFiles(data.files || []);
+      console.log('[ViewDatabaseDialog] Received files:', data);
+      setFiles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching files:', error);
       setFiles([]);
