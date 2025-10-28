@@ -23,6 +23,8 @@ export const useDatabaseState = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [createDatabaseOpen, setCreateDatabaseOpen] = useState(false);
+  const [viewDatabaseOpen, setViewDatabaseOpen] = useState(false);
+  const [selectedDatabase, setSelectedDatabase] = useState<Database | null>(null);
   const hasFetchedRef = useRef(localStorage.getItem(FETCHED_KEY) === 'true');
 
   useEffect(() => {
@@ -115,7 +117,8 @@ export const useDatabaseState = () => {
   };
 
   const viewDatabase = (database: Database) => {
-    toast.info(`Просмотр базы: ${database.name}`);
+    setSelectedDatabase(database);
+    setViewDatabaseOpen(true);
   };
 
   return {
@@ -123,6 +126,9 @@ export const useDatabaseState = () => {
     isLoading,
     createDatabaseOpen,
     setCreateDatabaseOpen,
+    viewDatabaseOpen,
+    setViewDatabaseOpen,
+    selectedDatabase,
     fetchDatabases,
     createDatabase,
     deleteDatabase,

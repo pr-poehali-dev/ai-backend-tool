@@ -16,6 +16,7 @@ import { DeleteAssistantDialog } from '@/components/dialogs/DeleteAssistantDialo
 import { TestAssistantDialog } from '@/components/dialogs/TestAssistantDialog';
 import { AddSecretDialog } from '@/components/dialogs/AddSecretDialog';
 import { CreateDatabaseDialog } from '@/components/dialogs/CreateDatabaseDialog';
+import { ViewDatabaseDialog } from '@/components/dialogs/ViewDatabaseDialog';
 import { useApiKeysState } from '@/components/admin/useApiKeysState';
 import { useAssistantsState } from '@/components/admin/useAssistantsState';
 import { useSecretsState } from '@/components/admin/useSecretsState';
@@ -205,6 +206,12 @@ const Index = () => {
         open={databaseState.createDatabaseOpen}
         onOpenChange={databaseState.setCreateDatabaseOpen}
         onConfirm={databaseState.createDatabase}
+      />
+
+      <ViewDatabaseDialog
+        open={databaseState.viewDatabaseOpen}
+        onOpenChange={databaseState.setViewDatabaseOpen}
+        database={databaseState.selectedDatabase}
       />
     </div>
   );
