@@ -314,12 +314,18 @@ const Index = () => {
     if (!assistantToDelete) return;
     
     try {
-      await fetch(`${ASSISTANTS_URL}?id=${assistantToDelete.id}`, {
+      const response = await fetch(`${ASSISTANTS_URL}?id=${assistantToDelete.id}`, {
         method: 'DELETE'
       });
+      
+      if (!response.ok) {
+        throw new Error('Delete failed');
+      }
+      
       setAssistants(assistants.filter(a => a.id !== assistantToDelete.id));
       toast.success('Ассистент удален');
     } catch (error) {
+      console.error('Delete error:', error);
       toast.error('Ошибка удаления ассистента');
     } finally {
       setDeleteAssistantOpen(false);
