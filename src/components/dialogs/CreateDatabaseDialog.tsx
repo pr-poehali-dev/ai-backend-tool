@@ -62,7 +62,8 @@ export const CreateDatabaseDialog = ({
       const response = await fetch('https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4');
       if (response.ok) {
         const data = await response.json();
-        setDatabases(data.data || []);
+        console.log('Loaded databases:', data);
+        setDatabases(Array.isArray(data) ? data : (data.data || []));
       }
     } catch (error) {
       console.error('Failed to load databases:', error);
