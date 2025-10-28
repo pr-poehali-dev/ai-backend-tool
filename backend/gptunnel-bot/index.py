@@ -36,16 +36,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    gptunnel_api_key = os.environ.get('GPTUNNEL_API_KEY')
-    if not gptunnel_api_key:
-        available_keys = list(os.environ.keys())
+    database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
         return {
-            'statusCode': 400,
+            'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({
-                'error': 'GPTunnel API key not configured',
-                'debug': f'Available env vars: {len(available_keys)} keys'
-            }),
+            'body': json.dumps({'error': 'Database not configured'}),
+            'isBase64Encoded': False
+        }
+    
+    try:
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+        cursor.execute("SELECT key_value FROM settings WHERE key_name = 'GPTUNNEL_API_KEY' LIMIT 1")
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not result or not result[0]:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'GPTunnel API key not configured in settings'}),
+                'isBase64Encoded': False
+            }
+        
+        gptunnel_api_key = result[0]
+        
+    except Exception as db_error:
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': f'Database error: {str(db_error)}'}),
             'isBase64Encoded': False
         }
     
@@ -94,20 +116,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             tokens_estimate = len(message.split()) + len(bot_response.get('response', '').split())
             
-            database_url = os.environ.get('DATABASE_URL')
-            if database_url:
-                try:
-                    conn = psycopg2.connect(database_url)
-                    cursor = conn.cursor()
-                    cursor.execute('''
-                        INSERT INTO assistant_usage (assistant_id, user_id, message_count, tokens_used)
-                        VALUES (%s, %s, %s, %s)
-                    ''', (assistant_id, user_id, 1, tokens_estimate))
-                    conn.commit()
-                    cursor.close()
-                    conn.close()
-                except:
-                    pass
+            try:
+                conn = psycopg2.connect(database_url)
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO assistant_usage (assistant_id, user_id, message_count, tokens_used)
+                    VALUES (%s, %s, %s, %s)
+                ''', (assistant_id, user_id, 1, tokens_estimate))
+                conn.commit()
+                cursor.close()
+                conn.close()
+            except:
+                pass
             
             return {
                 'statusCode': 200,
