@@ -35,31 +35,38 @@ export const TestAssistantDialog = ({
   assistantName,
   gptunnelBotUrl,
 }: TestAssistantDialogProps) => {
-  const storageKey = `chat_history_${assistantId}`;
-  
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return parsed.map((m: any) => ({
-          ...m,
-          timestamp: new Date(m.timestamp)
-        }));
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const storageKey = `chat_history_${assistantId}`;
+
+  // Load history when dialog opens or assistant changes
   useEffect(() => {
-    if (messages.length > 0) {
+    if (open && assistantId) {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setMessages(parsed.map((m: any) => ({
+            ...m,
+            timestamp: new Date(m.timestamp)
+          })));
+        } catch {
+          setMessages([]);
+        }
+      } else {
+        setMessages([]);
+      }
+    }
+  }, [open, assistantId, storageKey]);
+
+  // Save history when messages change
+  useEffect(() => {
+    if (messages.length > 0 && assistantId) {
       localStorage.setItem(storageKey, JSON.stringify(messages));
     }
-  }, [messages, storageKey]);
+  }, [messages, assistantId, storageKey]);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
