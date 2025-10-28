@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Get connection status",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "connected": "boolean"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

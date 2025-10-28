@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Get models without API key",
+      "method": "GET",
+      "path": "/?endpoint=models",
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

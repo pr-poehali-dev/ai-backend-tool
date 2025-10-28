@@ -22,9 +22,15 @@ import { Input } from '@/components/ui/input';
 
 const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
 const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
+const GPTUNNEL_SETTINGS_URL = 'https://functions.poehali.dev/02fd2adf-54b4-4476-9f64-6c552acacfc1';
+const GPTUNNEL_API_URL = 'https://functions.poehali.dev/e841d4e2-de13-41cb-bc7b-d3055e3c42c0';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
+  const [gptunnelApiKey, setGptunnelApiKey] = useState('');
+  const [gptunnelStatus, setGptunnelStatus] = useState<'connected' | 'disconnected'>('disconnected');
+  const [isCheckingKey, setIsCheckingKey] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -40,8 +46,51 @@ const Index = () => {
       fetchApiKeys();
     } else if (activeTab === 'monitoring') {
       fetchMonitoring();
+    } else if (activeTab === 'settings') {
+      fetchGptunnelStatus();
     }
   }, [activeTab]);
+
+  const fetchGptunnelStatus = async () => {
+    try {
+      const response = await fetch(GPTUNNEL_SETTINGS_URL);
+      const data = await response.json();
+      setGptunnelStatus(data.connected ? 'connected' : 'disconnected');
+    } catch (error) {
+      setGptunnelStatus('disconnected');
+    }
+  };
+
+  const saveGptunnelKey = async () => {
+    if (!gptunnelApiKey.trim()) {
+      toast.error('Введите API ключ');
+      return;
+    }
+
+    setIsCheckingKey(true);
+    try {
+      const response = await fetch(GPTUNNEL_SETTINGS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: gptunnelApiKey })
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        setGptunnelStatus('connected');
+        setSettingsDialogOpen(false);
+        setGptunnelApiKey('');
+        toast.success('GPTunnel API подключен');
+      } else {
+        toast.error(result.error || 'Ошибка проверки ключа');
+      }
+    } catch (error) {
+      toast.error('Ошибка подключения к API');
+    } finally {
+      setIsCheckingKey(false);
+    }
+  };
 
   const fetchApiKeys = async () => {
     setIsLoadingKeys(true);
@@ -190,7 +239,7 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-card">
+          <TabsList className="grid w-full grid-cols-3 mb-8 bg-card">
             <TabsTrigger value="keys" className="data-[state=active]:bg-primary/10">
               <Icon name="Key" size={16} className="mr-2" />
               API-ключи
@@ -198,6 +247,10 @@ const Index = () => {
             <TabsTrigger value="monitoring" className="data-[state=active]:bg-primary/10">
               <Icon name="BarChart3" size={16} className="mr-2" />
               Мониторинг
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-primary/10">
+              <Icon name="Settings" size={16} className="mr-2" />
+              Настройки
             </TabsTrigger>
           </TabsList>
 
@@ -369,6 +422,64 @@ const Index = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold">Настройки интеграций</h2>
+              <p className="text-muted-foreground">Подключение внешних сервисов</p>
+            </div>
+
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Icon name="Zap" size={20} className="text-primary" />
+                      GPTunnel API
+                    </CardTitle>
+                    <CardDescription>Интеграция с GPTunnel для доступа к AI моделям</CardDescription>
+                  </div>
+                  <Badge variant={gptunnelStatus === 'connected' ? 'default' : 'secondary'} 
+                         className={gptunnelStatus === 'connected' ? 'bg-secondary/10 text-secondary border-secondary/30' : ''}>
+                    {gptunnelStatus === 'connected' ? 'Подключено' : 'Отключено'}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+                  <Icon name="Info" size={20} className="text-primary mt-0.5" />
+                  <div className="flex-1 space-y-2 text-sm">
+                    <p className="text-foreground">
+                      GPTunnel предоставляет доступ к различным AI моделям через единый API.
+                    </p>
+                    <p className="text-muted-foreground">
+                      Документация: <a href="https://docs.gptunnel.ru" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://docs.gptunnel.ru</a>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={() => setSettingsDialogOpen(true)}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <Icon name="Key" size={16} className="mr-2" />
+                    {gptunnelStatus === 'connected' ? 'Изменить ключ' : 'Настроить интеграцию'}
+                  </Button>
+                  
+                  {gptunnelStatus === 'connected' && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.open('https://docs.gptunnel.ru', '_blank')}
+                    >
+                      <Icon name="ExternalLink" size={16} className="mr-2" />
+                      Документация API
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </main>
 
@@ -443,6 +554,68 @@ const Index = () => {
             >
               <Icon name="Check" size={16} className="mr-2" />
               Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={settingsDialogOpen} onOpenChange={setSettingsDialogOpen}>
+        <DialogContent className="bg-card border-border sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="Zap" size={20} className="text-primary" />
+              Настройка GPTunnel API
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Введите API ключ для подключения к GPTunnel
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="gptunnel-key">API ключ GPTunnel</Label>
+              <Input
+                id="gptunnel-key"
+                type="password"
+                value={gptunnelApiKey}
+                onChange={(e) => setGptunnelApiKey(e.target.value)}
+                placeholder="Введите API ключ"
+                className="bg-muted border-border font-mono"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    saveGptunnelKey();
+                  }
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Ключ будет проверен и сохранен в защищенном хранилище
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setSettingsDialogOpen(false)}
+              className="bg-muted hover:bg-muted/80"
+              disabled={isCheckingKey}
+            >
+              Отмена
+            </Button>
+            <Button 
+              onClick={saveGptunnelKey}
+              disabled={!gptunnelApiKey.trim() || isCheckingKey}
+              className="bg-primary hover:bg-primary/90"
+            >
+              {isCheckingKey ? (
+                <>
+                  <Icon name="Loader2" size={16} className="mr-2 animate-spin" />
+                  Проверка...
+                </>
+              ) : (
+                <>
+                  <Icon name="Check" size={16} className="mr-2" />
+                  Сохранить и проверить
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
