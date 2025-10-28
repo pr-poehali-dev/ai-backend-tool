@@ -43,61 +43,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    auth_header = event.get('headers', {}).get('authorization', '')
-    if not auth_header.startswith('Bearer '):
-        return {
-            'statusCode': 401,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Missing or invalid authorization header'}),
-            'isBase64Encoded': False
-        }
-    
-    client_api_key = auth_header[7:]
-    
     try:
-        import hashlib
-        
-        # Hash the provided key to compare with stored hash
-        key_hash = hashlib.sha256(client_api_key.encode()).hexdigest()
-        
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
-        cursor.execute('SELECT active FROM api_keys WHERE key_hash = %s', (key_hash,))
+        cursor.execute("SELECT secret_value FROM secrets WHERE secret_name = 'GPTUNNEL_API_KEY' LIMIT 1")
         result = cursor.fetchone()
         cursor.close()
         conn.close()
         
-        if not result:
+        if not result or not result[0]:
             return {
-                'statusCode': 401,
+                'statusCode': 500,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Invalid API key'}),
+                'body': json.dumps({'error': 'GPTUNNEL_API_KEY не настроен'}),
                 'isBase64Encoded': False
             }
         
-        if not result[0]:
-            return {
-                'statusCode': 403,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'API key is disabled'}),
-                'isBase64Encoded': False
-            }
+        gptunnel_api_key = result[0]
     except Exception as e:
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'Authentication error: {str(e)}'}),
+            'body': json.dumps({'error': f'Ошибка загрузки ключа: {str(e)}'}),
             'isBase64Encoded': False
         }
     
-    gptunnel_api_key = os.environ.get('GPTUNNEL_API_KEY')
-    if not gptunnel_api_key:
-        return {
-            'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'GPTunnel API не настроен'}),
-            'isBase64Encoded': False
-        }
+    gptunnel_api_key_env = os.environ.get('GPTUNNEL_API_KEY')
+    if gptunnel_api_key_env:
+        gptunnel_api_key = gptunnel_api_key_env
     
     try:
         response = requests.get(
