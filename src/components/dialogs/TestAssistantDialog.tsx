@@ -11,11 +11,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import { AccommodationCard } from '@/components/AccommodationCard';
 
 interface Message {
   role: 'user' | 'assistant';
-  content: string;
+  content: string | any[];
   timestamp: Date;
+  mode?: 'text' | 'json';
 }
 
 interface TestAssistantDialogProps {
@@ -80,6 +82,7 @@ export const TestAssistantDialog = ({
         role: 'assistant',
         content: data.response || data.message || 'Нет ответа',
         timestamp: new Date(),
+        mode: data.mode || 'text',
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -139,34 +142,58 @@ export const TestAssistantDialog = ({
                   key={index}
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      {message.role === 'assistant' && (
-                        <Icon name="Bot" size={16} className="mt-1 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                        <p
-                          className={`text-xs mt-1 ${
-                            message.role === 'user'
-                              ? 'text-primary-foreground/70'
-                              : 'text-muted-foreground'
-                          }`}
-                        >
+                  {message.mode === 'json' && Array.isArray(message.content) ? (
+                    <div className="w-full max-w-full">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icon name="Bot" size={16} className="text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">
+                          Найдено объектов: {message.content.length}
+                        </p>
+                        <p className="text-xs text-muted-foreground ml-auto">
                           {message.timestamp.toLocaleTimeString('ru-RU', {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
                         </p>
                       </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {message.content.map((item: any, idx: number) => (
+                          <AccommodationCard key={idx} item={item} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div
+                      className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        {message.role === 'assistant' && (
+                          <Icon name="Bot" size={16} className="mt-1 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {typeof message.content === 'string' ? message.content : JSON.stringify(message.content)}
+                          </p>
+                          <p
+                            className={`text-xs mt-1 ${
+                              message.role === 'user'
+                                ? 'text-primary-foreground/70'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {message.timestamp.toLocaleTimeString('ru-RU', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             )}
