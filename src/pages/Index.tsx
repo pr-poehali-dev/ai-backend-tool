@@ -7,13 +7,18 @@ import { toast } from 'sonner';
 import { ApiKeysTab } from '@/components/ApiKeysTab';
 import { MonitoringTab } from '@/components/MonitoringTab';
 import { SettingsTab } from '@/components/SettingsTab';
+import { AssistantsTab } from '@/components/AssistantsTab';
 import { DeleteKeyDialog } from '@/components/dialogs/DeleteKeyDialog';
 import { EditKeyDialog } from '@/components/dialogs/EditKeyDialog';
 import { GptunnelSettingsDialog } from '@/components/dialogs/GptunnelSettingsDialog';
+import { CreateAssistantDialog } from '@/components/dialogs/CreateAssistantDialog';
+import { EditAssistantDialog } from '@/components/dialogs/EditAssistantDialog';
+import { DeleteAssistantDialog } from '@/components/dialogs/DeleteAssistantDialog';
 
 const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
 const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
 const GPTUNNEL_SETTINGS_URL = 'https://functions.poehali.dev/02fd2adf-54b4-4476-9f64-6c552acacfc1';
+const ASSISTANTS_URL = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
@@ -37,6 +42,17 @@ const Index = () => {
     dailyRequests: [] as { date: string; count: number }[],
   });
 
+  const [assistants, setAssistants] = useState<any[]>([]);
+  const [createAssistantOpen, setCreateAssistantOpen] = useState(false);
+  const [newAssistantName, setNewAssistantName] = useState('');
+  const [newAssistantModel, setNewAssistantModel] = useState('gpt-4o');
+  const [editAssistantOpen, setEditAssistantOpen] = useState(false);
+  const [assistantToEdit, setAssistantToEdit] = useState<{id: string, name: string, model: string} | null>(null);
+  const [editAssistantName, setEditAssistantName] = useState('');
+  const [editAssistantModel, setEditAssistantModel] = useState('');
+  const [deleteAssistantOpen, setDeleteAssistantOpen] = useState(false);
+  const [assistantToDelete, setAssistantToDelete] = useState<{id: string, name: string} | null>(null);
+
   useEffect(() => {
     if (activeTab === 'keys') {
       fetchApiKeys();
@@ -44,6 +60,8 @@ const Index = () => {
       fetchMonitoring();
     } else if (activeTab === 'settings') {
       fetchGptunnelStatus();
+    } else if (activeTab === 'assistants') {
+      fetchAssistants();
     }
   }, [activeTab]);
 
@@ -196,6 +214,89 @@ const Index = () => {
     }
   };
 
+  const fetchAssistants = async () => {
+    try {
+      const response = await fetch(ASSISTANTS_URL);
+      const data = await response.json();
+      setAssistants(data);
+    } catch (error) {
+      toast.error('Ошибка загрузки ассистентов');
+    }
+  };
+
+  const createAssistant = async () => {
+    if (!newAssistantName.trim() || !newAssistantModel) return;
+    
+    try {
+      const response = await fetch(ASSISTANTS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newAssistantName, model: newAssistantModel })
+      });
+      const newAssistant = await response.json();
+      setAssistants([newAssistant, ...assistants]);
+      toast.success('Ассистент создан');
+      setCreateAssistantOpen(false);
+      setNewAssistantName('');
+      setNewAssistantModel('gpt-4o');
+    } catch (error) {
+      toast.error('Ошибка создания ассистента');
+    }
+  };
+
+  const openEditAssistant = (id: string, name: string) => {
+    const assistant = assistants.find(a => a.id === id);
+    if (!assistant) return;
+    setAssistantToEdit({ id, name, model: assistant.model });
+    setEditAssistantName(name);
+    setEditAssistantModel(assistant.model);
+    setEditAssistantOpen(true);
+  };
+
+  const updateAssistant = async () => {
+    if (!assistantToEdit || !editAssistantName.trim() || !editAssistantModel) return;
+    
+    try {
+      const response = await fetch(ASSISTANTS_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: assistantToEdit.id, name: editAssistantName, model: editAssistantModel })
+      });
+      const updatedAssistant = await response.json();
+      setAssistants(assistants.map(a => a.id === assistantToEdit.id ? updatedAssistant : a));
+      toast.success('Ассистент обновлен');
+    } catch (error) {
+      toast.error('Ошибка обновления ассистента');
+    } finally {
+      setEditAssistantOpen(false);
+      setAssistantToEdit(null);
+      setEditAssistantName('');
+      setEditAssistantModel('');
+    }
+  };
+
+  const openDeleteAssistant = (id: string, name: string) => {
+    setAssistantToDelete({ id, name });
+    setDeleteAssistantOpen(true);
+  };
+
+  const deleteAssistant = async () => {
+    if (!assistantToDelete) return;
+    
+    try {
+      await fetch(`${ASSISTANTS_URL}?id=${assistantToDelete.id}`, {
+        method: 'DELETE'
+      });
+      setAssistants(assistants.filter(a => a.id !== assistantToDelete.id));
+      toast.success('Ассистент удален');
+    } catch (error) {
+      toast.error('Ошибка удаления ассистента');
+    } finally {
+      setDeleteAssistantOpen(false);
+      setAssistantToDelete(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -224,10 +325,14 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 bg-card">
+          <TabsList className="grid w-full grid-cols-4 mb-8 bg-card">
             <TabsTrigger value="keys" className="data-[state=active]:bg-primary/10">
               <Icon name="Key" size={16} className="mr-2" />
               API-ключи
+            </TabsTrigger>
+            <TabsTrigger value="assistants" className="data-[state=active]:bg-primary/10">
+              <Icon name="Bot" size={16} className="mr-2" />
+              ИИ Ассистенты
             </TabsTrigger>
             <TabsTrigger value="monitoring" className="data-[state=active]:bg-primary/10">
               <Icon name="BarChart3" size={16} className="mr-2" />
@@ -247,6 +352,15 @@ const Index = () => {
               onToggleStatus={toggleKeyStatus}
               onEditKey={openEditDialog}
               onDeleteKey={openDeleteDialog}
+            />
+          </TabsContent>
+
+          <TabsContent value="assistants">
+            <AssistantsTab
+              assistants={assistants}
+              onCreateAssistant={() => setCreateAssistantOpen(true)}
+              onEditAssistant={openEditAssistant}
+              onDeleteAssistant={openDeleteAssistant}
             />
           </TabsContent>
 
@@ -286,6 +400,35 @@ const Index = () => {
         onApiKeyChange={setGptunnelApiKey}
         isChecking={isCheckingKey}
         onConfirm={saveGptunnelKey}
+      />
+
+      <CreateAssistantDialog
+        open={createAssistantOpen}
+        onOpenChange={setCreateAssistantOpen}
+        name={newAssistantName}
+        model={newAssistantModel}
+        onNameChange={setNewAssistantName}
+        onModelChange={setNewAssistantModel}
+        onConfirm={createAssistant}
+      />
+
+      <EditAssistantDialog
+        open={editAssistantOpen}
+        onOpenChange={setEditAssistantOpen}
+        name={editAssistantName}
+        model={editAssistantModel}
+        originalName={assistantToEdit?.name || ''}
+        originalModel={assistantToEdit?.model || ''}
+        onNameChange={setEditAssistantName}
+        onModelChange={setEditAssistantModel}
+        onConfirm={updateAssistant}
+      />
+
+      <DeleteAssistantDialog
+        open={deleteAssistantOpen}
+        onOpenChange={setDeleteAssistantOpen}
+        assistantName={assistantToDelete?.name || null}
+        onConfirm={deleteAssistant}
       />
     </div>
   );

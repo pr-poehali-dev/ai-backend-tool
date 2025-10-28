@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "name": "Get all assistants",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Create new assistant",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test Assistant",
+        "model": "gpt-4o"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "id": "string",
+        "name": "Test Assistant",
+        "model": "gpt-4o",
+        "status": "active"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
