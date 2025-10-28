@@ -1,0 +1,37 @@
+{
+  "tests": [
+    {
+      "name": "Get all API keys",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "id": "number",
+        "name": "string",
+        "key": "string",
+        "created": "string",
+        "active": "boolean",
+        "requests": "number"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Create new API key",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Test Key"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "id": "number",
+        "name": "string",
+        "key": "string",
+        "created": "string",
+        "active": "boolean",
+        "requests": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

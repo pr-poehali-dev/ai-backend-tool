@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,57 +8,90 @@ import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 
+const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
+const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
-  const [apiKeys, setApiKeys] = useState([
-    { id: '1', name: 'Production Key', key: 'sk_live_...abc123', created: '2025-10-15', requests: 45678, active: true },
-    { id: '2', name: 'Development Key', key: 'sk_test_...xyz789', created: '2025-10-20', requests: 12543, active: true },
-    { id: '3', name: 'Testing Key', key: 'sk_test_...def456', created: '2025-10-25', requests: 3421, active: false },
-  ]);
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [isLoadingKeys, setIsLoadingKeys] = useState(false);
 
 
+
+  useEffect(() => {
+    if (activeTab === 'keys') {
+      fetchApiKeys();
+    } else if (activeTab === 'monitoring') {
+      fetchMonitoring();
+    }
+  }, [activeTab]);
+
+  const fetchApiKeys = async () => {
+    setIsLoadingKeys(true);
+    try {
+      const response = await fetch(API_KEYS_URL);
+      const data = await response.json();
+      setApiKeys(data);
+    } catch (error) {
+      toast.error('Ошибка загрузки ключей');
+    } finally {
+      setIsLoadingKeys(false);
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('Скопировано в буфер обмена');
   };
 
-  const generateNewKey = () => {
-    const newKey = {
-      id: String(apiKeys.length + 1),
-      name: `New API Key ${apiKeys.length + 1}`,
-      key: `sk_live_...${Math.random().toString(36).substring(7)}`,
-      created: new Date().toISOString().split('T')[0],
-      requests: 0,
-      active: true,
-    };
-    setApiKeys([...apiKeys, newKey]);
-    toast.success('Новый API ключ создан');
+  const generateNewKey = async () => {
+    try {
+      const response = await fetch(API_KEYS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: `New API Key ${apiKeys.length + 1}` })
+      });
+      const newKey = await response.json();
+      setApiKeys([newKey, ...apiKeys]);
+      toast.success('Новый API ключ создан');
+    } catch (error) {
+      toast.error('Ошибка создания ключа');
+    }
   };
 
-  const toggleKeyStatus = (id: string) => {
-    setApiKeys(apiKeys.map(key => 
-      key.id === id ? { ...key, active: !key.active } : key
-    ));
-    toast.success('Статус ключа обновлен');
+  const toggleKeyStatus = async (id: number, currentActive: boolean) => {
+    try {
+      const response = await fetch(API_KEYS_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, active: !currentActive })
+      });
+      const updatedKey = await response.json();
+      setApiKeys(apiKeys.map(key => key.id === id ? updatedKey : key));
+      toast.success('Статус ключа обновлен');
+    } catch (error) {
+      toast.error('Ошибка обновления статуса');
+    }
   };
 
 
 
-  const monitoringData = {
-    totalRequests: 61642,
-    successRate: 99.7,
-    avgLatency: 342,
-    activeKeys: 2,
-    dailyRequests: [
-      { date: '2025-10-22', count: 8234 },
-      { date: '2025-10-23', count: 9123 },
-      { date: '2025-10-24', count: 7856 },
-      { date: '2025-10-25', count: 10234 },
-      { date: '2025-10-26', count: 11543 },
-      { date: '2025-10-27', count: 9876 },
-      { date: '2025-10-28', count: 4776 },
-    ],
+  const [monitoringData, setMonitoringData] = useState({
+    totalRequests: 0,
+    successRate: 0,
+    avgLatency: 0,
+    activeKeys: 0,
+    dailyRequests: [] as { date: string; count: number }[],
+  });
+
+  const fetchMonitoring = async () => {
+    try {
+      const response = await fetch(MONITORING_URL);
+      const data = await response.json();
+      setMonitoringData(data);
+    } catch (error) {
+      toast.error('Ошибка загрузки мониторинга');
+    }
   };
 
   const maxRequests = Math.max(...monitoringData.dailyRequests.map(d => d.count));
@@ -157,7 +190,7 @@ const Index = () => {
                           <Switch 
                             id={`switch-${key.id}`}
                             checked={key.active} 
-                            onCheckedChange={() => toggleKeyStatus(key.id)}
+                            onCheckedChange={() => toggleKeyStatus(key.id, key.active)}
                           />
                         </div>
                         <Button variant="outline" size="sm">
