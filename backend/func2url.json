@@ -1,1 +1,13 @@
-{}
+{
+  "qqrenta-search": "https://functions.poehali.dev/3fa1b9a8-41d1-4576-bf83-b9dad01836b2",
+  "secrets": "https://functions.poehali.dev/1bfad5cb-d72a-4295-a5d5-c6e1211be804",
+  "usage-stats": "https://functions.poehali.dev/3106619b-f815-4bcb-bbce-85e85edc9a8d",
+  "gptunnel-bot": "https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d",
+  "assistants": "https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d",
+  "v1-chat-completions": "https://functions.poehali.dev/f96d3cc7-cbf8-4220-99c6-91096a998318",
+  "v1-moderations": "https://functions.poehali.dev/6baa4fa0-9c8a-4595-953e-6ba90a67d2f4",
+  "v1-models": "https://functions.poehali.dev/74151b51-97a6-4b7e-b229-d9020587c813",
+  "v1-embeddings": "https://functions.poehali.dev/e5c94a21-c5bb-426f-828c-9e2bd942bb4b",
+  "api-keys": "https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74",
+  "monitoring": "https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49"
+}
