@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
 interface AccommodationItem {
-  id: string;
+  id: string | number;
   title?: string;
   name?: string;
   price?: number;
@@ -22,11 +22,12 @@ interface AccommodationCardProps {
 }
 
 export const AccommodationCard = ({ item }: AccommodationCardProps) => {
-  const getBookingUrl = (id: string) => {
-    if (id.includes('hotels')) {
-      return `https://qqrenta.ru/hotels/${id}`;
+  const getBookingUrl = (id: string | number) => {
+    const idStr = String(id);
+    if (idStr.includes('hotels')) {
+      return `https://qqrenta.ru/hotels/${idStr}`;
     }
-    return `https://qqrenta.ru/rooms/${id}`;
+    return `https://qqrenta.ru/rooms/${idStr}`;
   };
 
   const title = item.title || item.name || 'Без названия';
