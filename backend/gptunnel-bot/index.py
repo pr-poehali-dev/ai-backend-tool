@@ -184,7 +184,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
         
         if rag_database_ids and len(rag_database_ids) > 0:
-            gptunnel_payload['database_ids'] = rag_database_ids
+            gptunnel_payload['databaseIds'] = rag_database_ids
         
         if tools:
             gptunnel_payload['tools'] = tools
