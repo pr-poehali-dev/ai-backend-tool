@@ -16,6 +16,7 @@ export const useDatabaseState = () => {
   const [databases, setDatabases] = useState<Database[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [createDatabaseOpen, setCreateDatabaseOpen] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const fetchDatabases = async () => {
     setIsLoading(true);
@@ -31,6 +32,7 @@ export const useDatabaseState = () => {
 
       const data = await response.json();
       setDatabases(data);
+      setHasFetched(true);
     } catch (error) {
       console.error('Error fetching databases:', error);
       toast.error(error instanceof Error ? error.message : 'Не удалось загрузить базы данных');
@@ -94,5 +96,6 @@ export const useDatabaseState = () => {
     createDatabase,
     deleteDatabase,
     viewDatabase,
+    hasFetched,
   };
 };
