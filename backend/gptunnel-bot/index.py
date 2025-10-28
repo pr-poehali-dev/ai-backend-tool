@@ -184,6 +184,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         updated_at = CURRENT_TIMESTAMP
                 ''', ('/gptunnel-bot', model, tokens_total, tokens_prompt, tokens_completion))
                 
+                cursor.execute('''
+                    INSERT INTO messages (assistant_id, user_id, role, content, tokens_used)
+                    VALUES (%s, %s, 'user', %s, %s)
+                ''', (assistant_id, user_id, message, tokens_prompt))
+                
+                cursor.execute('''
+                    INSERT INTO messages (assistant_id, user_id, role, content, tokens_used)
+                    VALUES (%s, %s, 'assistant', %s, %s)
+                ''', (assistant_id, user_id, response_text, tokens_completion))
+                
                 conn.commit()
                 cursor.close()
                 conn.close()
