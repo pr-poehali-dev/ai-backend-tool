@@ -41,21 +41,42 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         if method == 'GET':
-            response = requests.get(
-                'https://gptunnel.ru/v1/database/list',
-                headers={'Authorization': gptunnel_api_key},
-                timeout=30
-            )
+            query_params = event.get('queryStringParameters', {}) or {}
+            database_id = query_params.get('databaseId')
             
-            print(f"[DEBUG] GET /v1/database/list - Status: {response.status_code}")
-            print(f"[DEBUG] Response body: {response.text}")
-            
-            return {
-                'statusCode': response.status_code,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': response.text,
-                'isBase64Encoded': False
-            }
+            if database_id:
+                print(f"[DEBUG] Getting files for database: {database_id}")
+                response = requests.get(
+                    f'https://gptunnel.ru/v1/database/{database_id}/file/list',
+                    headers={'Authorization': gptunnel_api_key},
+                    timeout=30
+                )
+                
+                print(f"[DEBUG] GET /v1/database/{database_id}/file/list - Status: {response.status_code}")
+                print(f"[DEBUG] Response body: {response.text[:500]}")
+                
+                return {
+                    'statusCode': response.status_code,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': response.text,
+                    'isBase64Encoded': False
+                }
+            else:
+                response = requests.get(
+                    'https://gptunnel.ru/v1/database/list',
+                    headers={'Authorization': gptunnel_api_key},
+                    timeout=30
+                )
+                
+                print(f"[DEBUG] GET /v1/database/list - Status: {response.status_code}")
+                print(f"[DEBUG] Response body: {response.text}")
+                
+                return {
+                    'statusCode': response.status_code,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': response.text,
+                    'isBase64Encoded': False
+                }
         
         elif method == 'POST':
             body_str = event.get('body', '{}')
