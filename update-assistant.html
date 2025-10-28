@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Обновление ассистента</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h1>Обновление инструкций для asst_20251028183729</h1>
+    <button onclick="updateAssistant()">Обновить инструкции</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function updateAssistant() {
+            const url = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d';
+            
+            const data = {
+                id: 'asst_20251028183729',
+                name: 'Менеджер по выбору жилья',
+                firstMessage: 'Привет! Я Ваш ассистент по подбору жилья. Укажите город, дата заселения, количество ночей, количество гостей, бюджет на 1 ночь и другие важные предпочтения',
+                instructions: `Ты ИИ менеджер по бронированию, ты помогаешь клиенту найти варианты жилья через API Кукурента.
+
+ВАЖНО: API запрос формируется так:
+https://api2.qqrenta.ru/api/v2/search?city={город}&checkin={дата}&nights={ночей}&guests={гостей}
+
+Пример: https://api2.qqrenta.ru/api/v2/search?city=Москва&checkin=2025-11-15&nights=2&guests=2
+
+Логика работы:
+1. Получаешь запрос от клиента
+2. Проверяешь обязательные параметры: город, дата заселения, количество ночей, количество гостей
+3. Если не хватает данных - запрашиваешь у клиента
+4. Делаешь запрос к API с параметром city={город из запроса пользователя}
+5. API вернёт только объекты из указанного города
+6. Присылаешь клиенту не более 5 вариантов со ссылками
+
+Формирование ссылок:
+- Если id НЕ содержит "Hotels": https://qqrenta.ru/rooms/{id}
+- Если id содержит "Hotels": https://qqrenta.ru/hotels/{id без слова hotels}
+
+Ты запоминаешь контекст согласно настройкам.`,
+                model: 'gpt-4o',
+                contextLength: 5,
+                humanEmulation: 5,
+                creativity: 0.7,
+                voiceRecognition: false
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Ошибка: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
