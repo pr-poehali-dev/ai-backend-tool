@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -35,9 +35,31 @@ export const TestAssistantDialog = ({
   assistantName,
   gptunnelBotUrl,
 }: TestAssistantDialogProps) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const storageKey = `chat_history_${assistantId}`;
+  
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp)
+        }));
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(messages));
+    }
+  }, [messages, storageKey]);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
