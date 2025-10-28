@@ -212,6 +212,7 @@ const Index = () => {
         open={databaseState.viewDatabaseOpen}
         onOpenChange={databaseState.setViewDatabaseOpen}
         database={databaseState.selectedDatabase}
+        onFileDeleted={databaseState.fetchDatabases}
       />
     </div>
   );

@@ -23,11 +23,12 @@ interface ViewDatabaseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   database: Database | null;
+  onFileDeleted?: () => void;
 }
 
 const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4';
 
-export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabaseDialogProps) => {
+export const ViewDatabaseDialog = ({ open, onOpenChange, database, onFileDeleted }: ViewDatabaseDialogProps) => {
   const [files, setFiles] = useState<DatabaseFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [addFileOpen, setAddFileOpen] = useState(false);
@@ -108,6 +109,7 @@ export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabas
 
       toast.success('Файл удалён');
       fetchDatabaseFiles();
+      onFileDeleted?.();
     } catch (error) {
       console.error('Error deleting file:', error);
       toast.error(error instanceof Error ? error.message : 'Не удалось удалить файл');
