@@ -97,15 +97,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         cursor.execute('''
             SELECT name, first_message, instructions, model, 
-                   context_length, creativity, status
+                   context_length, creativity, status, api_integration_id
             FROM assistants 
             WHERE id = %s
         ''', (assistant_id,))
         assistant = cursor.fetchone()
-        cursor.close()
-        conn.close()
         
         if not assistant:
+            cursor.close()
+            conn.close()
             return {
                 'statusCode': 404,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -113,7 +113,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        assistant_name, first_message, instructions, model, context_length, creativity, status = assistant
+        assistant_name, first_message, instructions, model, context_length, creativity, status, api_integration_id = assistant
+        
+        # Load API integration config if exists
+        api_config = None
+        if api_integration_id:
+            cursor.execute('''
+                SELECT name, api_base_url, function_name, function_description, 
+                       function_parameters, response_mode
+                FROM api_integrations
+                WHERE id = %s
+            ''', (api_integration_id,))
+            api_data = cursor.fetchone()
+            if api_data:
+                api_config = {
+                    'name': api_data[0],
+                    'api_base_url': api_data[1],
+                    'function_name': api_data[2],
+                    'function_description': api_data[3],
+                    'function_parameters': api_data[4],
+                    'response_mode': api_data[5]
+                }
+        
+        cursor.close()
+        conn.close()
         
         if status != 'active':
             return {
@@ -133,44 +156,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         messages.append({'role': 'user', 'content': message})
         
-        # Define tools for function calling (QQRenta search)
-        tools = [{
-            'type': 'function',
-            'function': {
-                'name': 'search_accommodation',
-                'description': 'Поиск жилья через API Кукурента по городу, дате заезда, количеству ночей и гостей',
-                'parameters': {
-                    'type': 'object',
-                    'properties': {
-                        'city': {
-                            'type': 'string',
-                            'description': 'Название города для поиска (например: Москва, Санкт-Петербург, Казань)'
-                        },
-                        'checkin': {
-                            'type': 'string',
-                            'description': 'Дата заезда в формате YYYY-MM-DD (например: 2025-11-15)'
-                        },
-                        'nights': {
-                            'type': 'integer',
-                            'description': 'Количество ночей проживания'
-                        },
-                        'guests': {
-                            'type': 'integer',
-                            'description': 'Количество гостей'
-                        }
-                    },
-                    'required': ['city', 'checkin', 'nights', 'guests']
+        # Define tools for function calling from API integration config
+        tools = None
+        if api_config:
+            tools = [{
+                'type': 'function',
+                'function': {
+                    'name': api_config['function_name'],
+                    'description': api_config['function_description'],
+                    'parameters': api_config['function_parameters']
                 }
-            }
-        }]
+            }]
         
         gptunnel_payload = {
             'model': model or 'gpt-4o',
             'messages': messages,
-            'temperature': float(creativity) if creativity else 0.7,
-            'tools': tools,
-            'tool_choice': 'auto'
+            'temperature': float(creativity) if creativity else 0.7
         }
+        
+        if tools:
+            gptunnel_payload['tools'] = tools
+            gptunnel_payload['tool_choice'] = 'auto'
         
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
         
@@ -192,66 +198,63 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             tool_calls = message_obj.get('tool_calls', [])
             
             # If model wants to call function
-            if tool_calls:
+            if tool_calls and api_config:
                 for tool_call in tool_calls:
                     function_name = tool_call.get('function', {}).get('name')
                     function_args = json.loads(tool_call.get('function', {}).get('arguments', '{}'))
                     
-                    if function_name == 'search_accommodation':
-                        # Call QQRenta API
-                        city = function_args.get('city')
-                        checkin = function_args.get('checkin')
-                        nights = function_args.get('nights')
-                        guests = function_args.get('guests')
+                    if function_name == api_config['function_name']:
+                        # Build API URL with parameters
+                        search_params = urllib.parse.urlencode(function_args)
+                        api_url = f"{api_config['api_base_url']}?{search_params}"
+                        api_req = urllib.request.Request(api_url, headers={'Accept': 'application/json'})
                         
-                        search_params = urllib.parse.urlencode({
-                            'city': city,
-                            'checkin': checkin,
-                            'nights': nights,
-                            'guests': guests
-                        })
-                        
-                        search_url = f'https://api2.qqrenta.ru/api/v2/search?{search_params}'
-                        search_req = urllib.request.Request(search_url, headers={'Accept': 'application/json'})
-                        
-                        with urllib.request.urlopen(search_req, timeout=30) as search_response:
-                            search_data = json.loads(search_response.read().decode('utf-8'))
+                        with urllib.request.urlopen(api_req, timeout=30) as api_response:
+                            api_data = json.loads(api_response.read().decode('utf-8'))
                             
-                            # Add assistant message with tool_calls
-                            messages.append({
-                                'role': 'assistant',
-                                'content': message_obj.get('content'),
-                                'tool_calls': tool_calls
-                            })
-                            
-                            # Add function result
-                            messages.append({
-                                'role': 'tool',
-                                'tool_call_id': tool_call.get('id'),
-                                'content': json.dumps(search_data, ensure_ascii=False)
-                            })
-                            
-                            # Call GPT again with function result
-                            second_payload = {
-                                'model': model or 'gpt-4o',
-                                'messages': messages,
-                                'temperature': float(creativity) if creativity else 0.7
-                            }
-                            
-                            second_request_data = json.dumps(second_payload).encode('utf-8')
-                            second_req = urllib.request.Request(
-                                'https://gptunnel.ru/v1/chat/completions',
-                                data=second_request_data,
-                                headers={
-                                    'Content-Type': 'application/json',
-                                    'Authorization': f'Bearer {gptunnel_api_key}'
-                                },
-                                method='POST'
-                            )
-                            
-                            with urllib.request.urlopen(second_req, timeout=60) as second_response:
-                                second_response_data = second_response.read().decode('utf-8')
-                                bot_response = json.loads(second_response_data)
+                            # Check response mode
+                            if api_config.get('response_mode') == 'json':
+                                # Return raw JSON data directly
+                                return {
+                                    'statusCode': 200,
+                                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                    'body': json.dumps({'response': api_data, 'mode': 'json'}),
+                                    'isBase64Encoded': False
+                                }
+                            else:
+                                # Continue with GPT processing (text mode)
+                                messages.append({
+                                    'role': 'assistant',
+                                    'content': message_obj.get('content'),
+                                    'tool_calls': tool_calls
+                                })
+                                
+                                messages.append({
+                                    'role': 'tool',
+                                    'tool_call_id': tool_call.get('id'),
+                                    'content': json.dumps(api_data, ensure_ascii=False)
+                                })
+                                
+                                second_payload = {
+                                    'model': model or 'gpt-4o',
+                                    'messages': messages,
+                                    'temperature': float(creativity) if creativity else 0.7
+                                }
+                                
+                                second_request_data = json.dumps(second_payload).encode('utf-8')
+                                second_req = urllib.request.Request(
+                                    'https://gptunnel.ru/v1/chat/completions',
+                                    data=second_request_data,
+                                    headers={
+                                        'Content-Type': 'application/json',
+                                        'Authorization': f'Bearer {gptunnel_api_key}'
+                                    },
+                                    method='POST'
+                                )
+                                
+                                with urllib.request.urlopen(second_req, timeout=60) as second_response:
+                                    second_response_data = second_response.read().decode('utf-8')
+                                    bot_response = json.loads(second_response_data)
             
             response_text = bot_response.get('choices', [{}])[0].get('message', {}).get('content', 'Нет ответа')
             
@@ -301,7 +304,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'response': response_text, 'raw': bot_response}),
+                'body': json.dumps({'response': response_text, 'mode': 'text'}),
                 'isBase64Encoded': False
             }
     
