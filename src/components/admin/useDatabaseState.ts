@@ -76,29 +76,6 @@ export const useDatabaseState = () => {
     }
   };
 
-  const deleteDatabase = async (databaseId: string) => {
-    try {
-      const response = await fetch(RAG_API_URL, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: databaseId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Ошибка удаления базы');
-      }
-
-      toast.success('База данных удалена');
-      fetchDatabases();
-    } catch (error) {
-      console.error('Error deleting database:', error);
-      toast.error(error instanceof Error ? error.message : 'Не удалось удалить базу данных');
-    }
-  };
-
   const viewDatabase = (database: Database) => {
     toast.info(`Просмотр базы: ${database.name}`);
   };
@@ -110,7 +87,6 @@ export const useDatabaseState = () => {
     setCreateDatabaseOpen,
     fetchDatabases,
     createDatabase,
-    deleteDatabase,
     viewDatabase,
   };
 };

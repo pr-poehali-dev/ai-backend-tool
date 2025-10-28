@@ -17,7 +17,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type',
                 'Access-Control-Max-Age': '86400'
             },
@@ -75,41 +75,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 data=body,
                 timeout=60
             )
-            
-            return {
-                'statusCode': response.status_code,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': response.text,
-                'isBase64Encoded': False
-            }
-        
-        elif method == 'DELETE':
-            raw_body = event.get('body', '{}')
-            print(f"DEBUG: Raw body: {raw_body}")
-            
-            body = json.loads(raw_body) if raw_body else {}
-            database_id = body.get('id')
-            
-            print(f"DEBUG: Parsed body: {body}, ID: {database_id}")
-            
-            if not database_id:
-                return {
-                    'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': f'ID базы данных обязателен. Body: {body}'}),
-                    'isBase64Encoded': False
-                }
-            
-            print(f"DEBUG: Deleting database with ID: {database_id}")
-            
-            response = requests.delete(
-                f'https://gptunnel.ru/v1/database/{database_id}',
-                headers={'Authorization': gptunnel_api_key},
-                timeout=30
-            )
-            
-            print(f"DEBUG: GPTunnel response status: {response.status_code}")
-            print(f"DEBUG: GPTunnel response text: {response.text}")
             
             return {
                 'statusCode': response.status_code,
