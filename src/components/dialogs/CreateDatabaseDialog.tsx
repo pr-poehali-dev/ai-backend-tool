@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel' | 'json';
+
+interface GPTunnelDatabase {
+  id: string;
+  name: string;
+  createDate: string;
+}
 
 interface CreateDatabaseDialogProps {
   open: boolean;
@@ -33,6 +40,8 @@ export const CreateDatabaseDialog = ({
   onOpenChange,
   onConfirm,
 }: CreateDatabaseDialogProps) => {
+  const [databases, setDatabases] = useState<GPTunnelDatabase[]>([]);
+  const [loadingDatabases, setLoadingDatabases] = useState(false);
   const [databaseId, setDatabaseId] = useState('');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -40,6 +49,27 @@ export const CreateDatabaseDialog = ({
   const [textContent, setTextContent] = useState('');
   const [url, setUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      loadDatabases();
+    }
+  }, [open]);
+
+  const loadDatabases = async () => {
+    setLoadingDatabases(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4');
+      if (response.ok) {
+        const data = await response.json();
+        setDatabases(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load databases:', error);
+    } finally {
+      setLoadingDatabases(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -92,15 +122,26 @@ export const CreateDatabaseDialog = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="database-id">ID базы данных GPTunnel</Label>
-            <Input
-              id="database-id"
-              placeholder="Например: 68ff6ea8228b78a246d0d1e6"
-              value={databaseId}
-              onChange={(e) => setDatabaseId(e.target.value)}
-            />
+            <Label htmlFor="database-id">База данных GPTunnel</Label>
+            <Select value={databaseId} onValueChange={setDatabaseId} disabled={loadingDatabases}>
+              <SelectTrigger>
+                <SelectValue placeholder={loadingDatabases ? "Загрузка..." : "Выберите базу данных"} />
+              </SelectTrigger>
+              <SelectContent>
+                {databases.length === 0 && !loadingDatabases && (
+                  <div className="p-2 text-sm text-muted-foreground text-center">
+                    Нет баз данных
+                  </div>
+                )}
+                {databases.map((db) => (
+                  <SelectItem key={db.id} value={db.id}>
+                    {db.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-sm text-muted-foreground">
-              Создайте базу в <a href="https://gptunnel.ru/database" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">GPTunnel</a> и скопируйте ID из URL
+              Создайте базу в <a href="https://gptunnel.ru/database" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">GPTunnel</a> если её нет в списке
             </p>
           </div>
 
