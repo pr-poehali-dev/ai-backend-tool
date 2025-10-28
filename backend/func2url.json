@@ -1,4 +1,5 @@
 {
+  "sync-rag-integration": "https://functions.poehali.dev/6733172d-0324-42f4-b1df-7f0024d950c0",
   "qqrenta-search": "https://functions.poehali.dev/3fa1b9a8-41d1-4576-bf83-b9dad01836b2",
   "secrets": "https://functions.poehali.dev/1bfad5cb-d72a-4295-a5d5-c6e1211be804",
   "usage-stats": "https://functions.poehali.dev/3106619b-f815-4bcb-bbce-85e85edc9a8d",

@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS request",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Test missing action",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "rag_id": "test-123"
+      },
+      "expectedStatus": 400
+    },
+    {
+      "name": "Test missing rag_id",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "create"
+      },
+      "expectedStatus": 400
+    }
+  ]
+}
