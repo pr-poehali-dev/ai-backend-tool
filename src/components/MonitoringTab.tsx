@@ -10,11 +10,11 @@ interface MonitoringData {
 }
 
 interface MonitoringTabProps {
-  data: MonitoringData;
+  monitoringData: MonitoringData;
 }
 
-export const MonitoringTab = ({ data }: MonitoringTabProps) => {
-  const maxRequests = Math.max(...data.dailyRequests.map(d => d.count));
+export const MonitoringTab = ({ monitoringData }: MonitoringTabProps) => {
+  const maxRequests = Math.max(...monitoringData.dailyRequests.map(d => d.count), 0);
 
   return (
     <div className="space-y-6">
@@ -32,7 +32,7 @@ export const MonitoringTab = ({ data }: MonitoringTabProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{data.totalRequests.toLocaleString()}</div>
+            <div className="text-3xl font-bold">{monitoringData.totalRequests.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground mt-1">За все время</p>
           </CardContent>
         </Card>
@@ -45,7 +45,7 @@ export const MonitoringTab = ({ data }: MonitoringTabProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-secondary">{data.successRate}%</div>
+            <div className="text-3xl font-bold text-secondary">{monitoringData.successRate}%</div>
             <p className="text-xs text-muted-foreground mt-1">Процент успешных запросов</p>
           </CardContent>
         </Card>
@@ -58,7 +58,7 @@ export const MonitoringTab = ({ data }: MonitoringTabProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{data.avgLatency}ms</div>
+            <div className="text-3xl font-bold">{monitoringData.avgLatency}ms</div>
             <p className="text-xs text-muted-foreground mt-1">Время ответа API</p>
           </CardContent>
         </Card>
@@ -71,7 +71,7 @@ export const MonitoringTab = ({ data }: MonitoringTabProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">{data.activeKeys}</div>
+            <div className="text-3xl font-bold text-primary">{monitoringData.activeKeys}</div>
             <p className="text-xs text-muted-foreground mt-1">Включенных ключей</p>
           </CardContent>
         </Card>
@@ -84,7 +84,7 @@ export const MonitoringTab = ({ data }: MonitoringTabProps) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {data.dailyRequests.map((day, index) => (
+            {monitoringData.dailyRequests.map((day, index) => (
               <div key={index} className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground font-mono">{day.date}</span>
