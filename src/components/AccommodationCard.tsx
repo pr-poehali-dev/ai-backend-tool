@@ -3,17 +3,29 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
+interface Photo {
+  sm?: string;
+  md?: string;
+  lg?: string;
+}
+
 interface AccommodationItem {
   id: string | number;
   title?: string;
   name?: string;
   price?: number;
+  full_address?: string;
   address?: string;
   location?: string;
+  bedrooms?: number;
   rooms?: number;
   image?: string;
   images?: string[];
+  photos?: Photo[];
+  external_reviews_rating?: number;
   rating?: number;
+  city?: string;
+  guests?: number;
   [key: string]: any;
 }
 
@@ -31,10 +43,17 @@ export const AccommodationCard = ({ item }: AccommodationCardProps) => {
   };
 
   const title = item.title || item.name || 'Без названия';
-  const imageUrl = item.image || (item.images && item.images[0]) || '';
-  const location = item.address || item.location || '';
+  
+  const imageUrl = 
+    item.image || 
+    (item.images && item.images[0]) || 
+    (item.photos && item.photos[0]?.sm) || 
+    '';
+  
+  const location = item.full_address || item.address || item.location || '';
   const price = item.price || 0;
-  const rating = item.rating || 0;
+  const rating = item.external_reviews_rating || item.rating || 0;
+  const rooms = item.bedrooms || item.rooms || 0;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -75,9 +94,9 @@ export const AccommodationCard = ({ item }: AccommodationCardProps) => {
             {price > 0 && (
               <div className="text-2xl font-bold">{price.toLocaleString('ru-RU')} ₽</div>
             )}
-            {item.rooms && (
+            {rooms > 0 && (
               <div className="text-xs text-muted-foreground">
-                {item.rooms} {item.rooms === 1 ? 'комната' : 'комнаты'}
+                {rooms} {rooms === 1 ? 'комната' : 'комнаты'}
               </div>
             )}
           </div>
