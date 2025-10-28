@@ -78,10 +78,6 @@ export const TestAssistantDialog = ({
         throw new Error(data.error || 'Ошибка отправки сообщения');
       }
 
-      console.log('Backend response:', data);
-      console.log('Response type:', typeof data.response);
-      console.log('Is array:', Array.isArray(data.response));
-
       const assistantMessage: Message = {
         role: 'assistant',
         content: data.response || data.message || 'Нет ответа',
@@ -146,7 +142,7 @@ export const TestAssistantDialog = ({
                   key={index}
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  {message.mode === 'json' && Array.isArray(message.content) ? (
+                  {message.role === 'assistant' && message.mode === 'json' && Array.isArray(message.content) && message.content.length > 0 ? (
                     <div className="w-full max-w-full">
                       <div className="flex items-center gap-2 mb-3">
                         <Icon name="Bot" size={16} className="text-muted-foreground" />
