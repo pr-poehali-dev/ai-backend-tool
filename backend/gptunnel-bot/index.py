@@ -36,38 +36,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
+    gptunnel_api_key = os.environ.get('GPTUNNEL_API_KEY')
+    if not gptunnel_api_key:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'GPTunnel API key not configured in secrets'}),
+            'isBase64Encoded': False
+        }
+    
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
             'body': json.dumps({'error': 'Database not configured'}),
-            'isBase64Encoded': False
-        }
-    
-    try:
-        conn = psycopg2.connect(database_url)
-        cursor = conn.cursor()
-        cursor.execute("SELECT key_value FROM settings WHERE key_name = 'GPTUNNEL_API_KEY' LIMIT 1")
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        
-        if not result or not result[0]:
-            return {
-                'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'GPTunnel API key not configured in settings'}),
-                'isBase64Encoded': False
-            }
-        
-        gptunnel_api_key = result[0]
-        
-    except Exception as db_error:
-        return {
-            'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'Database error: {str(db_error)}'}),
             'isBase64Encoded': False
         }
     
