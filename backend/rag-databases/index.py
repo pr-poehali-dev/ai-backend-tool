@@ -84,14 +84,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         elif method == 'DELETE':
-            body = json.loads(event.get('body', '{}'))
+            raw_body = event.get('body', '{}')
+            print(f"DEBUG: Raw body: {raw_body}")
+            
+            body = json.loads(raw_body) if raw_body else {}
             database_id = body.get('id')
+            
+            print(f"DEBUG: Parsed body: {body}, ID: {database_id}")
             
             if not database_id:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'ID базы данных обязателен'}),
+                    'body': json.dumps({'error': f'ID базы данных обязателен. Body: {body}'}),
                     'isBase64Encoded': False
                 }
             
