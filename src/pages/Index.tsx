@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-import { toast } from 'sonner';
 import { ApiKeysTab } from '@/components/ApiKeysTab';
 import { MonitoringTab } from '@/components/MonitoringTab';
 import { SettingsTab } from '@/components/SettingsTab';
@@ -16,529 +14,174 @@ import { EditAssistantDialog } from '@/components/dialogs/EditAssistantDialog';
 import { DeleteAssistantDialog } from '@/components/dialogs/DeleteAssistantDialog';
 import { TestAssistantDialog } from '@/components/dialogs/TestAssistantDialog';
 import { AddSecretDialog } from '@/components/dialogs/AddSecretDialog';
+import { useApiKeysState } from '@/components/admin/useApiKeysState';
+import { useAssistantsState } from '@/components/admin/useAssistantsState';
+import { useSecretsState } from '@/components/admin/useSecretsState';
+import { useMonitoringState } from '@/components/admin/useMonitoringState';
+import { useUsageState } from '@/components/admin/useUsageState';
 
-const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
-const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
-const ASSISTANTS_URL = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d';
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
-const USAGE_STATS_URL = 'https://functions.poehali.dev/3106619b-f815-4bcb-bbce-85e85edc9a8d';
-const SECRETS_URL = 'https://functions.poehali.dev/1bfad5cb-d72a-4295-a5d5-c6e1211be804';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
-  const [apiKeys, setApiKeys] = useState<any[]>([]);
-  const [isLoadingKeys, setIsLoadingKeys] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [keyToDelete, setKeyToDelete] = useState<{id: number, name: string} | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [keyToEdit, setKeyToEdit] = useState<{id: number, name: string} | null>(null);
-  const [newKeyName, setNewKeyName] = useState('');
 
-  const [monitoringData, setMonitoringData] = useState({
-    totalRequests: 0,
-    successRate: 0,
-    avgLatency: 0,
-    activeKeys: 0,
-    dailyRequests: [] as { date: string; count: number }[],
-  });
-
-  const [assistants, setAssistants] = useState<any[]>([]);
-  const [createAssistantOpen, setCreateAssistantOpen] = useState(false);
-  const [newAssistantConfig, setNewAssistantConfig] = useState({
-    name: '',
-    firstMessage: '',
-    instructions: '',
-    model: 'gpt-4o',
-    contextLength: 5,
-    humanEmulation: 5,
-    creativity: 0.7,
-    voiceRecognition: false
-  });
-  const [editAssistantOpen, setEditAssistantOpen] = useState(false);
-  const [editAssistantConfig, setEditAssistantConfig] = useState({
-    name: '',
-    firstMessage: '',
-    instructions: '',
-    model: 'gpt-4o',
-    contextLength: 5,
-    humanEmulation: 5,
-    creativity: 0.7,
-    voiceRecognition: false
-  });
-  const [assistantToEdit, setAssistantToEdit] = useState<string | null>(null);
-  const [deleteAssistantOpen, setDeleteAssistantOpen] = useState(false);
-  const [assistantToDelete, setAssistantToDelete] = useState<{id: string, name: string} | null>(null);
-  const [testAssistantOpen, setTestAssistantOpen] = useState(false);
-  const [assistantToTest, setAssistantToTest] = useState<{id: string, name: string} | null>(null);
-
-  const [usageStats, setUsageStats] = useState<any[]>([]);
-  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
-
-  const [secrets, setSecrets] = useState<any[]>([]);
-  const [isLoadingSecrets, setIsLoadingSecrets] = useState(false);
-  const [addSecretOpen, setAddSecretOpen] = useState(false);
-  const [newSecretName, setNewSecretName] = useState('');
-  const [newSecretValue, setNewSecretValue] = useState('');
-  const [isCheckingSecret, setIsCheckingSecret] = useState(false);
+  const apiKeysState = useApiKeysState();
+  const assistantsState = useAssistantsState();
+  const secretsState = useSecretsState();
+  const monitoringState = useMonitoringState();
+  const usageState = useUsageState();
 
   useEffect(() => {
-    if (activeTab === 'keys' && apiKeys.length === 0) {
-      fetchApiKeys();
+    if (activeTab === 'keys' && apiKeysState.apiKeys.length === 0) {
+      apiKeysState.fetchApiKeys();
     } else if (activeTab === 'monitoring') {
-      fetchMonitoring();
-    } else if (activeTab === 'assistants' && assistants.length === 0) {
-      fetchAssistants();
+      monitoringState.fetchMonitoring();
+    } else if (activeTab === 'assistants' && assistantsState.assistants.length === 0) {
+      assistantsState.fetchAssistants();
     } else if (activeTab === 'usage') {
-      fetchUsageStats();
+      usageState.fetchUsageStats();
     } else if (activeTab === 'settings') {
-      fetchSecrets();
+      secretsState.fetchSecrets();
     }
   }, [activeTab]);
 
-  const fetchApiKeys = async () => {
-    setIsLoadingKeys(true);
-    try {
-      const response = await fetch(API_KEYS_URL);
-      const data = await response.json();
-      setApiKeys(data);
-    } catch (error) {
-      toast.error('Ошибка загрузки ключей');
-    } finally {
-      setIsLoadingKeys(false);
-    }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('Скопировано в буфер обмена');
-  };
-
-  const generateNewKey = async () => {
-    try {
-      const response = await fetch(API_KEYS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: `New API Key ${apiKeys.length + 1}` })
-      });
-      const newKey = await response.json();
-      setApiKeys([newKey, ...apiKeys]);
-      toast.success('Новый API ключ создан');
-    } catch (error) {
-      toast.error('Ошибка создания ключа');
-    }
-  };
-
-  const toggleKeyStatus = async (id: number, currentActive: boolean) => {
-    try {
-      const response = await fetch(API_KEYS_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, active: !currentActive })
-      });
-      const updatedKey = await response.json();
-      setApiKeys(apiKeys.map(key => key.id === id ? updatedKey : key));
-      toast.success('Статус ключа обновлен');
-    } catch (error) {
-      toast.error('Ошибка обновления статуса');
-    }
-  };
-
-  const openDeleteDialog = (id: number, name: string) => {
-    setKeyToDelete({ id, name });
-    setDeleteDialogOpen(true);
-  };
-
-  const openEditDialog = (id: number, name: string) => {
-    setKeyToEdit({ id, name });
-    setNewKeyName(name);
-    setEditDialogOpen(true);
-  };
-
-  const updateKeyName = async () => {
-    if (!keyToEdit || !newKeyName.trim()) return;
-    
-    try {
-      const response = await fetch(API_KEYS_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: keyToEdit.id, name: newKeyName })
-      });
-      const updatedKey = await response.json();
-      setApiKeys(apiKeys.map(key => key.id === keyToEdit.id ? updatedKey : key));
-      toast.success('Название ключа обновлено');
-    } catch (error) {
-      toast.error('Ошибка обновления названия');
-    } finally {
-      setEditDialogOpen(false);
-      setKeyToEdit(null);
-      setNewKeyName('');
-    }
-  };
-
-  const deleteApiKey = async () => {
-    if (!keyToDelete) return;
-    
-    try {
-      const response = await fetch(`${API_KEYS_URL}?id=${keyToDelete.id}`, {
-        method: 'DELETE'
-      });
-      await response.json();
-      setApiKeys(apiKeys.filter(key => key.id !== keyToDelete.id));
-      toast.success('API ключ удален');
-    } catch (error) {
-      toast.error('Ошибка удаления ключа');
-    } finally {
-      setDeleteDialogOpen(false);
-      setKeyToDelete(null);
-    }
-  };
-
-  const fetchMonitoring = async () => {
-    try {
-      const response = await fetch(MONITORING_URL);
-      const data = await response.json();
-      
-      if (!response.ok) {
-        toast.error(data.error || 'Ошибка загрузки мониторинга');
-        return;
-      }
-      
-      setMonitoringData(data);
-    } catch (error) {
-      toast.error('Ошибка загрузки мониторинга');
-      console.error('Monitoring error:', error);
-    }
-  };
-
-  const fetchAssistants = async () => {
-    try {
-      const response = await fetch(ASSISTANTS_URL);
-      const data = await response.json();
-      setAssistants(data);
-    } catch (error) {
-      toast.error('Ошибка загрузки ассистентов');
-    }
-  };
-
-  const fetchUsageStats = async () => {
-    setIsLoadingUsage(true);
-    try {
-      const response = await fetch(`${USAGE_STATS_URL}?days=30`);
-      const data = await response.json();
-      setUsageStats(data);
-    } catch (error) {
-      toast.error('Ошибка загрузки статистики');
-    } finally {
-      setIsLoadingUsage(false);
-    }
-  };
-
-  const fetchSecrets = async () => {
-    setIsLoadingSecrets(true);
-    try {
-      const response = await fetch(SECRETS_URL);
-      const data = await response.json();
-      setSecrets(data);
-    } catch (error) {
-      toast.error('Ошибка загрузки секретов');
-    } finally {
-      setIsLoadingSecrets(false);
-    }
-  };
-
-  const addSecret = async () => {
-    if (!newSecretName.trim() || !newSecretValue.trim()) return;
-
-    setIsCheckingSecret(true);
-    try {
-      const response = await fetch(SECRETS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newSecretName, value: newSecretValue })
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        toast.success('Секрет добавлен');
-        setAddSecretOpen(false);
-        setNewSecretName('');
-        setNewSecretValue('');
-        fetchSecrets();
-      } else {
-        toast.error(result.error || 'Ошибка добавления секрета');
-      }
-    } catch (error) {
-      toast.error('Ошибка подключения к API');
-    } finally {
-      setIsCheckingSecret(false);
-    }
-  };
-
-  const deleteSecret = async (name: string) => {
-    try {
-      const response = await fetch(`${SECRETS_URL}?name=${encodeURIComponent(name)}`, {
-        method: 'DELETE'
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        toast.success('Секрет удалён');
-        fetchSecrets();
-      } else {
-        toast.error(result.error || 'Ошибка удаления секрета');
-      }
-    } catch (error) {
-      toast.error('Ошибка подключения к API');
-    }
-  };
-
-  const createAssistant = async () => {
-    if (!newAssistantConfig.name.trim() || !newAssistantConfig.model) return;
-    
-    try {
-      const response = await fetch(ASSISTANTS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newAssistantConfig)
-      });
-      const newAssistant = await response.json();
-      setAssistants([newAssistant, ...assistants]);
-      toast.success('Ассистент создан');
-      setCreateAssistantOpen(false);
-      setNewAssistantConfig({
-        name: '',
-        firstMessage: '',
-        instructions: '',
-        model: 'gpt-4o',
-        contextLength: 5,
-        humanEmulation: 5,
-        creativity: 0.7,
-        voiceRecognition: false
-      });
-    } catch (error) {
-      toast.error('Ошибка создания ассистента');
-    }
-  };
-
-  const openEditAssistant = (id: string, name: string) => {
-    const assistant = assistants.find(a => a.id === id);
-    if (!assistant) return;
-    setAssistantToEdit(id);
-    setEditAssistantConfig({
-      name: assistant.name || '',
-      firstMessage: assistant.firstMessage || '',
-      instructions: assistant.instructions || '',
-      model: assistant.model || 'gpt-4o',
-      contextLength: assistant.contextLength || 5,
-      humanEmulation: assistant.humanEmulation || 5,
-      creativity: assistant.creativity || 0.7,
-      voiceRecognition: assistant.voiceRecognition || false
-    });
-    setEditAssistantOpen(true);
-  };
-
-  const updateAssistant = async () => {
-    if (!assistantToEdit || !editAssistantConfig.name.trim() || !editAssistantConfig.model) return;
-    
-    try {
-      const response = await fetch(ASSISTANTS_URL, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: assistantToEdit, ...editAssistantConfig })
-      });
-      const updatedAssistant = await response.json();
-      setAssistants(assistants.map(a => a.id === assistantToEdit ? updatedAssistant : a));
-      toast.success('Ассистент обновлен');
-    } catch (error) {
-      toast.error('Ошибка обновления ассистента');
-    } finally {
-      setEditAssistantOpen(false);
-      setAssistantToEdit(null);
-    }
-  };
-
-  const openDeleteAssistant = (id: string, name: string) => {
-    setAssistantToDelete({ id, name });
-    setDeleteAssistantOpen(true);
-  };
-
-  const openTestAssistant = (id: string, name: string) => {
-    setAssistantToTest({ id, name });
-    setTestAssistantOpen(true);
-  };
-
-  const deleteAssistant = async () => {
-    if (!assistantToDelete) return;
-    
-    try {
-      const response = await fetch(`${ASSISTANTS_URL}?id=${assistantToDelete.id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Delete failed');
-      }
-      
-      setAssistants(assistants.filter(a => a.id !== assistantToDelete.id));
-      toast.success('Ассистент удален');
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast.error('Ошибка удаления ассистента');
-    } finally {
-      setDeleteAssistantOpen(false);
-      setAssistantToDelete(null);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Icon name="Cpu" className="text-primary" size={24} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">AI Developer Console</h1>
-              <p className="text-xs text-muted-foreground">API Management & Testing</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="bg-purple-500/20 p-3 rounded-xl">
+            <Icon name="Settings" className="w-8 h-8 text-purple-400" />
           </div>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/30">
-              <Icon name="Activity" size={14} className="mr-1" />
-              Online
-            </Badge>
-            <Button variant="outline" size="sm">
-              <Icon name="Bell" size={16} className="mr-2" />
-              Уведомления
-            </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-white">GPTunnel Admin</h1>
+            <p className="text-purple-300">Управление API ключами и ассистентами</p>
           </div>
+          <Badge variant="secondary" className="ml-auto bg-green-500/20 text-green-300 border-green-500/30">
+            <Icon name="Activity" className="w-3 h-3 mr-1" />
+            Online
+          </Badge>
         </div>
-      </header>
 
-      <main className="container mx-auto px-6 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8 bg-card">
-            <TabsTrigger value="keys" className="data-[state=active]:bg-primary/10">
-              <Icon name="Key" size={16} className="mr-2" />
-              API-ключи
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="bg-slate-800/50 border border-slate-700/50 p-1">
+            <TabsTrigger value="keys" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+              <Icon name="Key" className="w-4 h-4 mr-2" />
+              API Ключи
             </TabsTrigger>
-            <TabsTrigger value="assistants" className="data-[state=active]:bg-primary/10">
-              <Icon name="Bot" size={16} className="mr-2" />
-              ИИ Ассистенты
+            <TabsTrigger value="assistants" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+              <Icon name="Bot" className="w-4 h-4 mr-2" />
+              Ассистенты
             </TabsTrigger>
-            <TabsTrigger value="monitoring" className="data-[state=active]:bg-primary/10">
-              <Icon name="BarChart3" size={16} className="mr-2" />
+            <TabsTrigger value="monitoring" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+              <Icon name="BarChart3" className="w-4 h-4 mr-2" />
               Мониторинг
             </TabsTrigger>
-            <TabsTrigger value="usage" className="data-[state=active]:bg-primary/10">
-              <Icon name="Zap" size={16} className="mr-2" />
-              Использование
+            <TabsTrigger value="usage" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+              <Icon name="TrendingUp" className="w-4 h-4 mr-2" />
+              Статистика
             </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-primary/10">
-              <Icon name="Settings" size={16} className="mr-2" />
+            <TabsTrigger value="settings" className="data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-300">
+              <Icon name="Settings" className="w-4 h-4 mr-2" />
               Настройки
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="keys">
             <ApiKeysTab
-              apiKeys={apiKeys}
-              onGenerateKey={generateNewKey}
-              onCopyKey={copyToClipboard}
-              onToggleStatus={toggleKeyStatus}
-              onEditKey={openEditDialog}
-              onDeleteKey={openDeleteDialog}
+              apiKeys={apiKeysState.apiKeys}
+              isLoading={apiKeysState.isLoadingKeys}
+              onCopy={apiKeysState.copyToClipboard}
+              onGenerateNew={apiKeysState.generateNewKey}
+              onToggleStatus={apiKeysState.toggleKeyStatus}
+              onEdit={apiKeysState.openEditDialog}
+              onDelete={apiKeysState.openDeleteDialog}
             />
           </TabsContent>
 
           <TabsContent value="assistants">
             <AssistantsTab
-              assistants={assistants}
-              onCreateAssistant={() => setCreateAssistantOpen(true)}
-              onEditAssistant={openEditAssistant}
-              onDeleteAssistant={openDeleteAssistant}
-              onTestAssistant={openTestAssistant}
+              assistants={assistantsState.assistants}
+              onCreateNew={() => assistantsState.setCreateAssistantOpen(true)}
+              onEdit={assistantsState.openEditAssistant}
+              onDelete={assistantsState.openDeleteAssistant}
+              onTest={assistantsState.openTestAssistant}
             />
           </TabsContent>
 
           <TabsContent value="monitoring">
-            <MonitoringTab data={monitoringData} />
+            <MonitoringTab monitoringData={monitoringState.monitoringData} />
           </TabsContent>
 
           <TabsContent value="usage">
-            <UsageTab usageStats={usageStats} isLoading={isLoadingUsage} />
+            <UsageTab usageStats={usageState.usageStats} isLoading={usageState.isLoadingUsage} />
           </TabsContent>
 
           <TabsContent value="settings">
             <SettingsTab
-              secrets={secrets}
-              isLoading={isLoadingSecrets}
-              onAddSecret={() => setAddSecretOpen(true)}
-              onDeleteSecret={deleteSecret}
+              secrets={secretsState.secrets}
+              isLoading={secretsState.isLoadingSecrets}
+              onAddSecret={() => secretsState.setAddSecretOpen(true)}
+              onDeleteSecret={secretsState.deleteSecret}
             />
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
 
       <DeleteKeyDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        keyName={keyToDelete?.name || null}
-        onConfirm={deleteApiKey}
+        open={apiKeysState.deleteDialogOpen}
+        onOpenChange={apiKeysState.setDeleteDialogOpen}
+        keyName={apiKeysState.keyToDelete?.name || ''}
+        onConfirm={apiKeysState.deleteApiKey}
       />
 
       <EditKeyDialog
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        keyName={newKeyName}
-        originalName={keyToEdit?.name || ''}
-        onKeyNameChange={setNewKeyName}
-        onConfirm={updateKeyName}
+        open={apiKeysState.editDialogOpen}
+        onOpenChange={apiKeysState.setEditDialogOpen}
+        keyName={apiKeysState.newKeyName}
+        onKeyNameChange={apiKeysState.setNewKeyName}
+        onConfirm={apiKeysState.updateKeyName}
       />
 
       <CreateAssistantDialog
-        open={createAssistantOpen}
-        onOpenChange={setCreateAssistantOpen}
-        config={newAssistantConfig}
-        onConfigChange={setNewAssistantConfig}
-        onConfirm={createAssistant}
+        open={assistantsState.createAssistantOpen}
+        onOpenChange={assistantsState.setCreateAssistantOpen}
+        config={assistantsState.newAssistantConfig}
+        onConfigChange={assistantsState.setNewAssistantConfig}
+        onCreate={assistantsState.createAssistant}
       />
 
       <EditAssistantDialog
-        open={editAssistantOpen}
-        onOpenChange={setEditAssistantOpen}
-        config={editAssistantConfig}
-        onConfigChange={setEditAssistantConfig}
-        onConfirm={updateAssistant}
+        open={assistantsState.editAssistantOpen}
+        onOpenChange={assistantsState.setEditAssistantOpen}
+        config={assistantsState.editAssistantConfig}
+        onConfigChange={assistantsState.setEditAssistantConfig}
+        onUpdate={assistantsState.updateAssistant}
       />
 
       <DeleteAssistantDialog
-        open={deleteAssistantOpen}
-        onOpenChange={setDeleteAssistantOpen}
-        assistantName={assistantToDelete?.name || null}
-        onConfirm={deleteAssistant}
+        open={assistantsState.deleteAssistantOpen}
+        onOpenChange={assistantsState.setDeleteAssistantOpen}
+        assistantName={assistantsState.assistantToDelete?.name || ''}
+        onConfirm={assistantsState.deleteAssistant}
       />
 
       <TestAssistantDialog
-        open={testAssistantOpen}
-        onOpenChange={setTestAssistantOpen}
-        assistantId={assistantToTest?.id || ''}
-        assistantName={assistantToTest?.name || ''}
+        open={assistantsState.testAssistantOpen}
+        onOpenChange={assistantsState.setTestAssistantOpen}
+        assistantId={assistantsState.assistantToTest?.id || ''}
+        assistantName={assistantsState.assistantToTest?.name || ''}
         gptunnelBotUrl={GPTUNNEL_BOT_URL}
       />
 
       <AddSecretDialog
-        open={addSecretOpen}
-        onOpenChange={setAddSecretOpen}
-        secretName={newSecretName}
-        secretValue={newSecretValue}
-        onSecretNameChange={setNewSecretName}
-        onSecretValueChange={setNewSecretValue}
-        isChecking={isCheckingSecret}
-        onConfirm={addSecret}
+        open={secretsState.addSecretOpen}
+        onOpenChange={secretsState.setAddSecretOpen}
+        secretName={secretsState.newSecretName}
+        secretValue={secretsState.newSecretValue}
+        onSecretNameChange={secretsState.setNewSecretName}
+        onSecretValueChange={secretsState.setNewSecretValue}
+        isChecking={secretsState.isCheckingSecret}
+        onConfirm={secretsState.addSecret}
       />
     </div>
   );
