@@ -78,8 +78,12 @@ export const useDatabaseState = () => {
 
   const deleteDatabase = async (databaseId: string) => {
     try {
-      const response = await fetch(`${RAG_API_URL}?id=${databaseId}`, {
+      const response = await fetch(RAG_API_URL, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: databaseId }),
       });
 
       if (!response.ok) {
