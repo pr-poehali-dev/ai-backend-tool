@@ -92,19 +92,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
+        import time
         gptunnel_payload = {
-            'message': message,
-            'user_id': user_id
+            'event': 'CLIENT_MESSAGE',
+            'id': assistant_id,
+            'chat_id': user_id,
+            'client_id': user_id,
+            'message': {
+                'type': 'TEXT',
+                'text': message,
+                'timestamp': int(time.time())
+            },
+            'agents_online': False
         }
         
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
         
         req = urllib.request.Request(
-            f'https://gptunnel.ru/api/bot/{assistant_id}',
+            'https://gptunnel.ru/api/bot',
             data=request_data,
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {gptunnel_api_key}'
+                'Authorization': gptunnel_api_key
             },
             method='POST'
         )
@@ -113,7 +122,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             response_data = response.read().decode('utf-8')
             bot_response = json.loads(response_data)
             
-            tokens_estimate = len(message.split()) + len(bot_response.get('response', '').split())
+            response_text = bot_response.get('message', {}).get('text', '') if isinstance(bot_response.get('message'), dict) else str(bot_response)
+            tokens_estimate = len(message.split()) + len(response_text.split())
             
             try:
                 conn = psycopg2.connect(database_url)
@@ -131,7 +141,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps(bot_response),
+                'body': json.dumps({'response': response_text, 'raw': bot_response}),
                 'isBase64Encoded': False
             }
     
