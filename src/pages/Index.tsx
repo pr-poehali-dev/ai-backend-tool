@@ -56,6 +56,12 @@ const Index = () => {
     }
   }, [activeTab, usageState.usageStats.length]);
 
+  useEffect(() => {
+    if (activeTab === 'settings' && secretsState.secrets.length === 0) {
+      secretsState.fetchSecrets();
+    }
+  }, [activeTab, secretsState.secrets.length]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
