@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Icon from '@/components/ui/icon';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface Secret {
   name: string;
@@ -18,10 +20,33 @@ interface SettingsTabProps {
   onDeleteSecret: (name: string) => void;
 }
 
+const MODELS_URL = 'https://functions.poehali.dev/74151b51-97a6-4b7e-b229-d9020587c813';
+
 export const SettingsTab = ({ secrets, isLoading, onAddSecret, onDeleteSecret }: SettingsTabProps) => {
+  const [loadingModels, setLoadingModels] = useState(false);
+  const [models, setModels] = useState<Array<{id: string}>>([]);
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleString('ru-RU');
+  };
+
+  const fetchModels = async () => {
+    setLoadingModels(true);
+    try {
+      const response = await fetch(MODELS_URL);
+      const data = await response.json();
+      if (data.data && Array.isArray(data.data)) {
+        setModels(data.data);
+        toast.success(`Загружено ${data.data.length} моделей`);
+      } else {
+        toast.error('Не удалось загрузить модели');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Ошибка загрузки моделей');
+    } finally {
+      setLoadingModels(false);
+    }
   };
 
   return (
@@ -111,7 +136,7 @@ export const SettingsTab = ({ secrets, isLoading, onAddSecret, onDeleteSecret }:
         <CardContent className="space-y-3">
           <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
             <Icon name="Info" size={18} className="text-primary mt-0.5" />
-            <div className="space-y-1 text-sm">
+            <div className="space-y-1 text-sm flex-1">
               <p className="font-medium">GPTunnel API</p>
               <p className="text-muted-foreground">
                 Получите ключ на{' '}
@@ -120,6 +145,46 @@ export const SettingsTab = ({ secrets, isLoading, onAddSecret, onDeleteSecret }:
                 </a>
                 {' '}и добавьте секрет <code className="bg-muted px-1 py-0.5 rounded">GPTUNNEL_API_KEY</code>
               </p>
+              <div className="pt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchModels}
+                  disabled={loadingModels}
+                  className="w-full sm:w-auto"
+                >
+                  {loadingModels ? (
+                    <>
+                      <Icon name="Loader2" size={14} className="mr-2 animate-spin" />
+                      Загрузка моделей...
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="RefreshCw" size={14} className="mr-2" />
+                      Загрузить список моделей
+                    </>
+                  )}
+                </Button>
+                {models.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Доступно моделей: {models.length}
+                    </p>
+                    <div className="max-h-48 overflow-y-auto bg-muted/30 rounded-md p-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                        {models.map((model) => (
+                          <div 
+                            key={model.id} 
+                            className="text-xs font-mono px-2 py-1 bg-background rounded border border-border/50"
+                          >
+                            {model.id}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
