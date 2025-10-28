@@ -100,11 +100,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
+            print(f"DEBUG: Deleting database with ID: {database_id}")
+            
             response = requests.delete(
                 f'https://gptunnel.ru/v1/database/{database_id}',
                 headers={'Authorization': gptunnel_api_key},
                 timeout=30
             )
+            
+            print(f"DEBUG: GPTunnel response status: {response.status_code}")
+            print(f"DEBUG: GPTunnel response text: {response.text}")
             
             return {
                 'statusCode': response.status_code,
