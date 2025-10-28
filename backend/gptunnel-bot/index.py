@@ -152,7 +152,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             messages.append({'role': 'system', 'content': instructions})
         
         if len(message_history) > 0:
-            messages.extend(message_history[-context_length * 2:])
+            # Нормализуем сообщения из истории - content должен быть строкой
+            for msg in message_history[-context_length * 2:]:
+                content = msg.get('content', '')
+                # Если content - массив/объект, конвертируем в строку
+                if isinstance(content, (list, dict)):
+                    content = json.dumps(content, ensure_ascii=False)
+                messages.append({
+                    'role': msg.get('role', 'user'),
+                    'content': content
+                })
         
         messages.append({'role': 'user', 'content': message})
         
