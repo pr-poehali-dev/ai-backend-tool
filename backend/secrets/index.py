@@ -41,13 +41,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         if method == 'GET':
-            cursor.execute("SELECT key_name, created_at, updated_at FROM settings WHERE key_name LIKE '%_API_%' OR key_name LIKE '%_KEY' ORDER BY key_name")
+            cursor.execute("SELECT secret_name, created_at, updated_at FROM secrets ORDER BY secret_name")
             secrets = cursor.fetchall()
             
             result = []
             for secret in secrets:
                 result.append({
-                    'name': secret['key_name'],
+                    'name': secret['secret_name'],
                     'has_value': True,
                     'created_at': secret['created_at'].isoformat() if secret['created_at'] else None,
                     'updated_at': secret['updated_at'].isoformat() if secret['updated_at'] else None
@@ -99,11 +99,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
             
             cursor.execute('''
-                INSERT INTO settings (key_name, key_value)
+                INSERT INTO secrets (secret_name, secret_value)
                 VALUES (%s, %s)
-                ON CONFLICT (key_name) 
-                DO UPDATE SET key_value = EXCLUDED.key_value, updated_at = CURRENT_TIMESTAMP
-                RETURNING key_name, created_at, updated_at
+                ON CONFLICT (secret_name) 
+                DO UPDATE SET secret_value = EXCLUDED.secret_value, updated_at = CURRENT_TIMESTAMP
+                RETURNING secret_name, created_at, updated_at
             ''', (name, value))
             conn.commit()
             
@@ -114,7 +114,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({
                     'success': True,
-                    'name': result['key_name'],
+                    'name': result['secret_name'],
                     'created_at': result['created_at'].isoformat() if result['created_at'] else None,
                     'updated_at': result['updated_at'].isoformat() if result['updated_at'] else None
                 }),
@@ -133,7 +133,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cursor.execute('DELETE FROM settings WHERE key_name = %s', (name,))
+            cursor.execute('DELETE FROM secrets WHERE secret_name = %s', (name,))
             conn.commit()
             
             return {
