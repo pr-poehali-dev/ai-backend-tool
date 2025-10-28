@@ -59,7 +59,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'guests': guests
         })
         
-        api_url = f'https://api.qqrenta.ru/search?{query_params}'
+        api_url = f'https://api2.qqrenta.ru/api/v2/search?{query_params}'
         
         req = urllib.request.Request(
             api_url,
