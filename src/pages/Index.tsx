@@ -23,7 +23,14 @@ import { useUsageState } from '@/components/admin/useUsageState';
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState('keys');
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('activeTab') || 'keys';
+  });
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    localStorage.setItem('activeTab', value);
+  };
 
   const apiKeysState = useApiKeysState();
   const assistantsState = useAssistantsState();
@@ -51,7 +58,7 @@ const Index = () => {
           <p className="text-muted-foreground">Управление API ключами и ассистентами</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList>
             <TabsTrigger value="keys">API Ключи</TabsTrigger>
             <TabsTrigger value="assistants">Ассистенты</TabsTrigger>
