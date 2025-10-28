@@ -38,10 +38,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     gptunnel_api_key = os.environ.get('GPTUNNEL_API_KEY')
     if not gptunnel_api_key:
+        available_keys = list(os.environ.keys())
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'GPTunnel API key not configured'}),
+            'body': json.dumps({
+                'error': 'GPTunnel API key not configured',
+                'debug': f'Available env vars: {len(available_keys)} keys'
+            }),
             'isBase64Encoded': False
         }
     
