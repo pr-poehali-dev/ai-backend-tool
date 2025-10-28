@@ -7,6 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
 const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
@@ -15,6 +25,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [keyToDelete, setKeyToDelete] = useState<{id: number, name: string} | null>(null);
 
 
 
@@ -74,16 +86,26 @@ const Index = () => {
     }
   };
 
-  const deleteApiKey = async (id: number) => {
+  const openDeleteDialog = (id: number, name: string) => {
+    setKeyToDelete({ id, name });
+    setDeleteDialogOpen(true);
+  };
+
+  const deleteApiKey = async () => {
+    if (!keyToDelete) return;
+    
     try {
-      const response = await fetch(`${API_KEYS_URL}?id=${id}`, {
+      const response = await fetch(`${API_KEYS_URL}?id=${keyToDelete.id}`, {
         method: 'DELETE'
       });
       await response.json();
-      setApiKeys(apiKeys.filter(key => key.id !== id));
+      setApiKeys(apiKeys.filter(key => key.id !== keyToDelete.id));
       toast.success('API ключ удален');
     } catch (error) {
       toast.error('Ошибка удаления ключа');
+    } finally {
+      setDeleteDialogOpen(false);
+      setKeyToDelete(null);
     }
   };
 
@@ -212,7 +234,7 @@ const Index = () => {
                           variant="ghost" 
                           size="sm" 
                           className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => deleteApiKey(key.id)}
+                          onClick={() => openDeleteDialog(key.id, key.name)}
                         >
                           <Icon name="Trash2" size={16} />
                         </Button>
@@ -313,6 +335,34 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Icon name="AlertTriangle" size={20} className="text-destructive" />
+              Удалить API ключ?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Вы уверены, что хотите удалить ключ <span className="font-semibold text-foreground">"{keyToDelete?.name}"</span>?
+              <br />
+              Это действие деактивирует ключ и его нельзя будет использовать для API запросов.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-muted hover:bg-muted/80">
+              Отмена
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={deleteApiKey}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Icon name="Trash2" size={16} className="mr-2" />
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
