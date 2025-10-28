@@ -58,6 +58,7 @@ export const useDatabaseState = () => {
   };
 
   const createDatabase = async (data: {
+    databaseId: string;
     name: string;
     description: string;
     sourceType: SourceType;
@@ -74,6 +75,7 @@ export const useDatabaseState = () => {
       }
 
       const requestBody = {
+        databaseId: data.databaseId,
         name: data.name,
         description: data.description,
         sourceType: data.sourceType,

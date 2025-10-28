@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,13 +13,21 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel' | 'json';
+
+interface GPTunnelDatabase {
+  id: string;
+  name: string;
+  createDate: string;
+}
 
 interface CreateDatabaseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (data: {
+    databaseId: string;
     name: string;
     description: string;
     sourceType: SourceType;
@@ -32,12 +40,36 @@ export const CreateDatabaseDialog = ({
   onOpenChange,
   onConfirm,
 }: CreateDatabaseDialogProps) => {
+  const [gptunnelDatabases, setGptunnelDatabases] = useState<GPTunnelDatabase[]>([]);
+  const [selectedDatabaseId, setSelectedDatabaseId] = useState('');
+  const [loadingDatabases, setLoadingDatabases] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [sourceType, setSourceType] = useState<SourceType>('text');
   const [textContent, setTextContent] = useState('');
   const [url, setUrl] = useState('');
   const [file, setFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      loadGptunnelDatabases();
+    }
+  }, [open]);
+
+  const loadGptunnelDatabases = async () => {
+    setLoadingDatabases(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4');
+      if (response.ok) {
+        const data = await response.json();
+        setGptunnelDatabases(data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to load GPTunnel databases:', error);
+    } finally {
+      setLoadingDatabases(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -58,6 +90,7 @@ export const CreateDatabaseDialog = ({
     }
 
     onConfirm({
+      databaseId: selectedDatabaseId,
       name,
       description,
       sourceType,
@@ -71,7 +104,7 @@ export const CreateDatabaseDialog = ({
     setFile(null);
   };
 
-  const isValid = name.trim() && description.trim() && (
+  const isValid = selectedDatabaseId && name.trim() && description.trim() && (
     (sourceType === 'text' && textContent.trim()) ||
     ((sourceType === 'api' || sourceType === 'xml') && url.trim()) ||
     (['docx', 'pdf', 'csv', 'excel', 'json'].includes(sourceType) && file)
@@ -89,7 +122,26 @@ export const CreateDatabaseDialog = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="db-name">Название базы</Label>
+            <Label htmlFor="gptunnel-db">База данных GPTunnel</Label>
+            <Select value={selectedDatabaseId} onValueChange={setSelectedDatabaseId} disabled={loadingDatabases}>
+              <SelectTrigger>
+                <SelectValue placeholder={loadingDatabases ? "Загрузка..." : "Выберите базу данных"} />
+              </SelectTrigger>
+              <SelectContent>
+                {gptunnelDatabases.map((db) => (
+                  <SelectItem key={db.id} value={db.id}>
+                    {db.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">
+              Создайте базу данных в <a href="https://gptunnel.ru" target="_blank" rel="noopener noreferrer" className="underline">GPTunnel</a> если её нет в списке
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="db-name">Название файла</Label>
             <Input
               id="db-name"
               placeholder="Например: База знаний компании"
