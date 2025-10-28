@@ -89,23 +89,41 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body = json.loads(event.get('body', '{}'))
             key_id = body.get('id')
             active = body.get('active')
+            name = body.get('name')
             
-            if key_id is None or active is None:
+            if key_id is None:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Missing id or active field'}),
+                    'body': json.dumps({'error': 'Missing id field'}),
                     'isBase64Encoded': False
                 }
             
-            cursor.execute('''
-                UPDATE api_keys 
-                SET active = %s, updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-                RETURNING id, name, key_prefix as key, 
-                          TO_CHAR(created_at, 'YYYY-MM-DD') as created,
-                          active, requests_count as requests
-            ''', (active, key_id))
+            if active is not None:
+                cursor.execute('''
+                    UPDATE api_keys 
+                    SET active = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                    RETURNING id, name, key_prefix as key, 
+                              TO_CHAR(created_at, 'YYYY-MM-DD') as created,
+                              active, requests_count as requests
+                ''', (active, key_id))
+            elif name is not None:
+                cursor.execute('''
+                    UPDATE api_keys 
+                    SET name = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                    RETURNING id, name, key_prefix as key, 
+                              TO_CHAR(created_at, 'YYYY-MM-DD') as created,
+                              active, requests_count as requests
+                ''', (name, key_id))
+            else:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Missing active or name field'}),
+                    'isBase64Encoded': False
+                }
             
             updated_key = cursor.fetchone()
             conn.commit()

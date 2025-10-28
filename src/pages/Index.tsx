@@ -17,6 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
 const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
@@ -27,6 +29,9 @@ const Index = () => {
   const [isLoadingKeys, setIsLoadingKeys] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [keyToDelete, setKeyToDelete] = useState<{id: number, name: string} | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [keyToEdit, setKeyToEdit] = useState<{id: number, name: string} | null>(null);
+  const [newKeyName, setNewKeyName] = useState('');
 
 
 
@@ -89,6 +94,33 @@ const Index = () => {
   const openDeleteDialog = (id: number, name: string) => {
     setKeyToDelete({ id, name });
     setDeleteDialogOpen(true);
+  };
+
+  const openEditDialog = (id: number, name: string) => {
+    setKeyToEdit({ id, name });
+    setNewKeyName(name);
+    setEditDialogOpen(true);
+  };
+
+  const updateKeyName = async () => {
+    if (!keyToEdit || !newKeyName.trim()) return;
+    
+    try {
+      const response = await fetch(API_KEYS_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: keyToEdit.id, name: newKeyName })
+      });
+      const updatedKey = await response.json();
+      setApiKeys(apiKeys.map(key => key.id === keyToEdit.id ? updatedKey : key));
+      toast.success('Название ключа обновлено');
+    } catch (error) {
+      toast.error('Ошибка обновления названия');
+    } finally {
+      setEditDialogOpen(false);
+      setKeyToEdit(null);
+      setNewKeyName('');
+    }
   };
 
   const deleteApiKey = async () => {
@@ -227,7 +259,11 @@ const Index = () => {
                             onCheckedChange={() => toggleKeyStatus(key.id, key.active)}
                           />
                         </div>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openEditDialog(key.id, key.name)}
+                        >
                           <Icon name="Settings" size={16} />
                         </Button>
                         <Button 
@@ -363,6 +399,54 @@ const Index = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="bg-card border-border sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="Settings" size={20} className="text-primary" />
+              Редактировать API ключ
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Измените название для удобной идентификации ключа
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="key-name">Название ключа</Label>
+              <Input
+                id="key-name"
+                value={newKeyName}
+                onChange={(e) => setNewKeyName(e.target.value)}
+                placeholder="Введите новое название"
+                className="bg-muted border-border"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    updateKeyName();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setEditDialogOpen(false)}
+              className="bg-muted hover:bg-muted/80"
+            >
+              Отмена
+            </Button>
+            <Button 
+              onClick={updateKeyName}
+              disabled={!newKeyName.trim() || newKeyName === keyToEdit?.name}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Icon name="Check" size={16} className="mr-2" />
+              Сохранить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
