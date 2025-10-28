@@ -163,14 +163,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             print(f"[DEBUG] Deleting file: {file_id}")
             
-            response = requests.delete(
-                f'https://gptunnel.ru/v1/database/file/{file_id}',
+            # Пробуем разные endpoints для удаления
+            delete_urls = [
+                f'https://gptunnel.ru/v1/database/file/delete',
+                f'https://gptunnel.ru/v1/database/file/remove',
+            ]
+            
+            # Сначала пробуем POST запрос с fileId в body
+            response = requests.post(
+                'https://gptunnel.ru/v1/database/file/delete',
                 headers=headers,
+                json={'fileId': file_id},
                 timeout=30
             )
             
-            print(f"[DEBUG] DELETE response status: {response.status_code}")
+            print(f"[DEBUG] DELETE (POST method) response status: {response.status_code}")
             print(f"[DEBUG] DELETE response body: {response.text[:500]}")
+            
+            # Если не сработало, пробуем через DELETE
+            if response.status_code >= 400:
+                print(f"[DEBUG] Trying DELETE method...")
+                response = requests.delete(
+                    f'https://gptunnel.ru/v1/database/file/delete?fileId={file_id}',
+                    headers=headers,
+                    timeout=30
+                )
+                print(f"[DEBUG] DELETE (DELETE method) response status: {response.status_code}")
+                print(f"[DEBUG] DELETE response body: {response.text[:500]}")
             
             return {
                 'statusCode': response.status_code,
