@@ -309,7 +309,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         error_body = e.read().decode('utf-8')
         try:
             error_data = json.loads(error_body)
-            error_message = error_data.get('error', str(e))
+            error_obj = error_data.get('error', str(e))
+            # If error is object with message, extract message
+            if isinstance(error_obj, dict):
+                error_message = error_obj.get('message', str(error_obj))
+            else:
+                error_message = str(error_obj)
         except:
             error_message = str(e)
         
