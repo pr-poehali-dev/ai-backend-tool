@@ -73,13 +73,13 @@ export const useAssistantsState = () => {
     setAssistantToEdit(assistant.id);
     setEditAssistantConfig({
       name: assistant.name,
-      firstMessage: assistant.first_message,
+      firstMessage: assistant.firstMessage,
       instructions: assistant.instructions,
       model: assistant.model,
-      contextLength: assistant.context_length,
-      humanEmulation: assistant.human_emulation,
+      contextLength: assistant.contextLength,
+      humanEmulation: assistant.humanEmulation,
       creativity: assistant.creativity,
-      voiceRecognition: assistant.voice_recognition
+      voiceRecognition: assistant.voiceRecognition
     });
     setEditAssistantOpen(true);
   };
