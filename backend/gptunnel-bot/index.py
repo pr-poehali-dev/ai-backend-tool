@@ -118,15 +118,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             response_text = bot_response.get('choices', [{}])[0].get('message', {}).get('content', 'Нет ответа')
             
             usage = bot_response.get('usage', {})
-            tokens_estimate = usage.get('total_tokens', len(message.split()) + len(response_text.split()))
+            tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split()))
+            tokens_prompt = usage.get('prompt_tokens', len(message.split()))
+            tokens_completion = usage.get('completion_tokens', len(response_text.split()))
+            model = gptunnel_payload.get('model', 'gpt-4o-mini')
             
             try:
                 conn = psycopg2.connect(database_url)
                 cursor = conn.cursor()
+                
                 cursor.execute('''
                     INSERT INTO assistant_usage (assistant_id, user_id, message_count, tokens_used)
                     VALUES (%s, %s, %s, %s)
-                ''', (assistant_id, user_id, 1, tokens_estimate))
+                ''', (assistant_id, user_id, 1, tokens_total))
+                
+                cursor.execute('''
+                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens, total_prompt_tokens, total_completion_tokens)
+                    VALUES (%s, %s, 1, %s, %s, %s)
+                    ON CONFLICT (endpoint, model, date) 
+                    DO UPDATE SET 
+                        request_count = usage_stats.request_count + 1,
+                        total_tokens = usage_stats.total_tokens + EXCLUDED.total_tokens,
+                        total_prompt_tokens = usage_stats.total_prompt_tokens + EXCLUDED.total_prompt_tokens,
+                        total_completion_tokens = usage_stats.total_completion_tokens + EXCLUDED.total_completion_tokens,
+                        updated_at = CURRENT_TIMESTAMP
+                ''', ('/gptunnel-bot', model, tokens_total, tokens_prompt, tokens_completion))
+                
                 conn.commit()
                 cursor.close()
                 conn.close()
