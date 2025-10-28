@@ -212,16 +212,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         with urllib.request.urlopen(api_req, timeout=30) as api_response:
                             api_data = json.loads(api_response.read().decode('utf-8'))
                             
-                            print(f"API Response type: {type(api_data)}")
-                            print(f"API Response keys: {api_data.keys() if isinstance(api_data, dict) else 'not a dict'}")
-                            
                             # Check response mode
                             if api_config.get('response_mode') == 'json':
+                                # Extract results array from response if it exists
+                                results = api_data.get('results', []) if isinstance(api_data, dict) else api_data
+                                
                                 # Return raw JSON data directly
                                 return {
                                     'statusCode': 200,
                                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                                    'body': json.dumps({'response': api_data, 'mode': 'json'}),
+                                    'body': json.dumps({'response': results, 'mode': 'json'}),
                                     'isBase64Encoded': False
                                 }
                             else:
