@@ -63,25 +63,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             import random
             import string
-            random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=7))
-            key_prefix = f'sk_live_...{random_suffix}'
-            key_hash = f'hash_{random_suffix}'
+            import hashlib
             
+            # Generate full key: sk_live_<32 random chars>
+            full_key = 'sk_live_' + ''.join(random.choices(string.ascii_lowercase + string.digits, k=32))
+            
+            # Create hash for database storage
+            key_hash = hashlib.sha256(full_key.encode()).hexdigest()
+            
+            # Create prefix for display: sk_live_...last7
+            key_prefix = f'sk_live_...{full_key[-7:]}'
+            
+            # Store only hash and prefix in DB (never store full key)
             cursor.execute('''
                 INSERT INTO api_keys (name, key_hash, key_prefix, active, requests_count)
                 VALUES (%s, %s, %s, %s, %s)
-                RETURNING id, name, key_prefix as key, 
+                RETURNING id, name, 
                           TO_CHAR(created_at, 'YYYY-MM-DD') as created,
                           active, requests_count as requests
             ''', (name, key_hash, key_prefix, True, 0))
             
-            new_key = cursor.fetchone()
+            row = cursor.fetchone()
             conn.commit()
+            
+            # Build response with only selected fields + full key
+            response_data = {
+                'id': row['id'],
+                'name': row['name'],
+                'created': row['created'],
+                'active': row['active'],
+                'requests': row['requests'],
+                'key': full_key  # Full key returned ONLY on creation
+            }
             
             return {
                 'statusCode': 201,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps(dict(new_key)),
+                'body': json.dumps(response_data),
                 'isBase64Encoded': False
             }
         

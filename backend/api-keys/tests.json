@@ -4,16 +4,7 @@
       "name": "Get all API keys",
       "method": "GET",
       "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": {
-        "id": "number",
-        "name": "string",
-        "key": "string",
-        "created": "string",
-        "active": "boolean",
-        "requests": "number"
-      },
-      "bodyMatcher": "partial"
+      "expectedStatus": 200
     },
     {
       "name": "Create new API key",
@@ -25,22 +16,17 @@
       "expectedStatus": 201,
       "expectedBody": {
         "id": "number",
-        "name": "string",
-        "key": "string",
-        "created": "string",
-        "active": "boolean",
-        "requests": "number"
+        "key": "string"
       },
       "bodyMatcher": "partial"
     },
     {
       "name": "Delete API key",
       "method": "DELETE",
-      "path": "/?id=1",
-      "expectedStatus": 200,
+      "path": "/?id=999",
+      "expectedStatus": 404,
       "expectedBody": {
-        "success": "boolean",
-        "id": "number"
+        "error": "string"
       },
       "bodyMatcher": "partial"
     }

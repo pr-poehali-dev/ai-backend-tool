@@ -55,9 +55,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     client_api_key = auth_header[7:]
     
     try:
+        import hashlib
+        
+        # Hash the provided key to compare with stored hash
+        key_hash = hashlib.sha256(client_api_key.encode()).hexdigest()
+        
         conn = psycopg2.connect(database_url)
         cursor = conn.cursor()
-        cursor.execute('SELECT active FROM api_keys WHERE key_value = %s', (client_api_key,))
+        cursor.execute('SELECT active FROM api_keys WHERE key_hash = %s', (key_hash,))
         result = cursor.fetchone()
         cursor.close()
         conn.close()
