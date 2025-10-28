@@ -44,12 +44,28 @@ const Index = () => {
 
   const [assistants, setAssistants] = useState<any[]>([]);
   const [createAssistantOpen, setCreateAssistantOpen] = useState(false);
-  const [newAssistantName, setNewAssistantName] = useState('');
-  const [newAssistantModel, setNewAssistantModel] = useState('gpt-4o');
+  const [newAssistantConfig, setNewAssistantConfig] = useState({
+    name: '',
+    firstMessage: '',
+    instructions: '',
+    model: 'gpt-4o',
+    contextLength: 5,
+    humanEmulation: 5,
+    creativity: 0.7,
+    voiceRecognition: false
+  });
   const [editAssistantOpen, setEditAssistantOpen] = useState(false);
-  const [assistantToEdit, setAssistantToEdit] = useState<{id: string, name: string, model: string} | null>(null);
-  const [editAssistantName, setEditAssistantName] = useState('');
-  const [editAssistantModel, setEditAssistantModel] = useState('');
+  const [editAssistantConfig, setEditAssistantConfig] = useState({
+    name: '',
+    firstMessage: '',
+    instructions: '',
+    model: 'gpt-4o',
+    contextLength: 5,
+    humanEmulation: 5,
+    creativity: 0.7,
+    voiceRecognition: false
+  });
+  const [assistantToEdit, setAssistantToEdit] = useState<string | null>(null);
   const [deleteAssistantOpen, setDeleteAssistantOpen] = useState(false);
   const [assistantToDelete, setAssistantToDelete] = useState<{id: string, name: string} | null>(null);
 
@@ -225,20 +241,28 @@ const Index = () => {
   };
 
   const createAssistant = async () => {
-    if (!newAssistantName.trim() || !newAssistantModel) return;
+    if (!newAssistantConfig.name.trim() || !newAssistantConfig.model) return;
     
     try {
       const response = await fetch(ASSISTANTS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newAssistantName, model: newAssistantModel })
+        body: JSON.stringify(newAssistantConfig)
       });
       const newAssistant = await response.json();
       setAssistants([newAssistant, ...assistants]);
       toast.success('Ассистент создан');
       setCreateAssistantOpen(false);
-      setNewAssistantName('');
-      setNewAssistantModel('gpt-4o');
+      setNewAssistantConfig({
+        name: '',
+        firstMessage: '',
+        instructions: '',
+        model: 'gpt-4o',
+        contextLength: 5,
+        humanEmulation: 5,
+        creativity: 0.7,
+        voiceRecognition: false
+      });
     } catch (error) {
       toast.error('Ошибка создания ассистента');
     }
@@ -247,31 +271,37 @@ const Index = () => {
   const openEditAssistant = (id: string, name: string) => {
     const assistant = assistants.find(a => a.id === id);
     if (!assistant) return;
-    setAssistantToEdit({ id, name, model: assistant.model });
-    setEditAssistantName(name);
-    setEditAssistantModel(assistant.model);
+    setAssistantToEdit(id);
+    setEditAssistantConfig({
+      name: assistant.name || '',
+      firstMessage: assistant.firstMessage || '',
+      instructions: assistant.instructions || '',
+      model: assistant.model || 'gpt-4o',
+      contextLength: assistant.contextLength || 5,
+      humanEmulation: assistant.humanEmulation || 5,
+      creativity: assistant.creativity || 0.7,
+      voiceRecognition: assistant.voiceRecognition || false
+    });
     setEditAssistantOpen(true);
   };
 
   const updateAssistant = async () => {
-    if (!assistantToEdit || !editAssistantName.trim() || !editAssistantModel) return;
+    if (!assistantToEdit || !editAssistantConfig.name.trim() || !editAssistantConfig.model) return;
     
     try {
       const response = await fetch(ASSISTANTS_URL, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: assistantToEdit.id, name: editAssistantName, model: editAssistantModel })
+        body: JSON.stringify({ id: assistantToEdit, ...editAssistantConfig })
       });
       const updatedAssistant = await response.json();
-      setAssistants(assistants.map(a => a.id === assistantToEdit.id ? updatedAssistant : a));
+      setAssistants(assistants.map(a => a.id === assistantToEdit ? updatedAssistant : a));
       toast.success('Ассистент обновлен');
     } catch (error) {
       toast.error('Ошибка обновления ассистента');
     } finally {
       setEditAssistantOpen(false);
       setAssistantToEdit(null);
-      setEditAssistantName('');
-      setEditAssistantModel('');
     }
   };
 
@@ -405,22 +435,16 @@ const Index = () => {
       <CreateAssistantDialog
         open={createAssistantOpen}
         onOpenChange={setCreateAssistantOpen}
-        name={newAssistantName}
-        model={newAssistantModel}
-        onNameChange={setNewAssistantName}
-        onModelChange={setNewAssistantModel}
+        config={newAssistantConfig}
+        onConfigChange={setNewAssistantConfig}
         onConfirm={createAssistant}
       />
 
       <EditAssistantDialog
         open={editAssistantOpen}
         onOpenChange={setEditAssistantOpen}
-        name={editAssistantName}
-        model={editAssistantModel}
-        originalName={assistantToEdit?.name || ''}
-        originalModel={assistantToEdit?.model || ''}
-        onNameChange={setEditAssistantName}
-        onModelChange={setEditAssistantModel}
+        config={editAssistantConfig}
+        onConfigChange={setEditAssistantConfig}
         onConfirm={updateAssistant}
       />
 

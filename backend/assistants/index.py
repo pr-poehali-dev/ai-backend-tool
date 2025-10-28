@@ -6,14 +6,26 @@ assistants_db = [
     {
         "id": "asst_001",
         "name": "Главный ассистент",
+        "firstMessage": "Здравствуйте! Я главный ИИ-ассистент. Чем могу помочь?",
+        "instructions": "Отвечать профессионально и подробно на все вопросы пользователей.",
         "model": "gpt-4o",
+        "contextLength": 7,
+        "humanEmulation": 8,
+        "creativity": 0.7,
+        "voiceRecognition": True,
         "status": "active",
         "created_at": "2025-01-15T10:00:00Z"
     },
     {
         "id": "asst_002",
         "name": "Служба поддержки",
+        "firstMessage": "Привет! Я ассистент службы поддержки. Опишите вашу проблему.",
+        "instructions": "Помогать решать технические проблемы пользователей.",
         "model": "gpt-3.5-turbo",
+        "contextLength": 5,
+        "humanEmulation": 6,
+        "creativity": 0.5,
+        "voiceRecognition": False,
         "status": "active",
         "created_at": "2025-01-20T14:30:00Z"
     }
@@ -52,13 +64,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     if method == 'POST':
         body_data = json.loads(event.get('body', '{}'))
-        name = body_data.get('name', '')
-        model = body_data.get('model', 'gpt-4o')
         
         new_assistant = {
             'id': f"asst_{len(assistants_db) + 1:03d}",
-            'name': name,
-            'model': model,
+            'name': body_data.get('name', ''),
+            'firstMessage': body_data.get('firstMessage', ''),
+            'instructions': body_data.get('instructions', ''),
+            'model': body_data.get('model', 'gpt-4o'),
+            'contextLength': body_data.get('contextLength', 5),
+            'humanEmulation': body_data.get('humanEmulation', 5),
+            'creativity': body_data.get('creativity', 0.7),
+            'voiceRecognition': body_data.get('voiceRecognition', False),
             'status': 'active',
             'created_at': datetime.utcnow().isoformat() + 'Z'
         }
@@ -82,8 +98,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if assistant['id'] == assistant_id:
                 if 'name' in body_data:
                     assistant['name'] = body_data['name']
+                if 'firstMessage' in body_data:
+                    assistant['firstMessage'] = body_data['firstMessage']
+                if 'instructions' in body_data:
+                    assistant['instructions'] = body_data['instructions']
                 if 'model' in body_data:
                     assistant['model'] = body_data['model']
+                if 'contextLength' in body_data:
+                    assistant['contextLength'] = body_data['contextLength']
+                if 'humanEmulation' in body_data:
+                    assistant['humanEmulation'] = body_data['humanEmulation']
+                if 'creativity' in body_data:
+                    assistant['creativity'] = body_data['creativity']
+                if 'voiceRecognition' in body_data:
+                    assistant['voiceRecognition'] = body_data['voiceRecognition']
                 
                 return {
                     'statusCode': 200,

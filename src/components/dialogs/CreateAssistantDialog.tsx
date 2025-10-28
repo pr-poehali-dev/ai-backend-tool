@@ -2,31 +2,46 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+interface AssistantConfig {
+  name: string;
+  firstMessage: string;
+  instructions: string;
+  model: string;
+  contextLength: number;
+  humanEmulation: number;
+  creativity: number;
+  voiceRecognition: boolean;
+}
 
 interface CreateAssistantDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  name: string;
-  model: string;
-  onNameChange: (name: string) => void;
-  onModelChange: (model: string) => void;
+  config: AssistantConfig;
+  onConfigChange: (config: AssistantConfig) => void;
   onConfirm: () => void;
 }
 
 export const CreateAssistantDialog = ({ 
   open, 
   onOpenChange, 
-  name, 
-  model,
-  onNameChange, 
-  onModelChange,
+  config,
+  onConfigChange,
   onConfirm 
 }: CreateAssistantDialogProps) => {
+  const updateConfig = (field: keyof AssistantConfig, value: any) => {
+    onConfigChange({ ...config, [field]: value });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border sm:max-w-md">
+      <DialogContent className="bg-card border-border sm:max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon name="Bot" size={20} className="text-primary" />
@@ -36,33 +51,128 @@ export const CreateAssistantDialog = ({
             Настройте параметры нового AI ассистента
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="assistant-name">Название ассистента</Label>
-            <Input
-              id="assistant-name"
-              value={name}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder="Введите название"
-              className="bg-muted border-border"
-            />
+        
+        <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="assistant-name">Название ассистента</Label>
+              <Input
+                id="assistant-name"
+                value={config.name}
+                onChange={(e) => updateConfig('name', e.target.value)}
+                placeholder="Введите название"
+                className="bg-muted border-border"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="first-message">Первое сообщение</Label>
+              <Textarea
+                id="first-message"
+                value={config.firstMessage}
+                onChange={(e) => updateConfig('firstMessage', e.target.value)}
+                placeholder="Привет! Я ваш ИИ ассистент. Чем могу помочь?"
+                className="bg-muted border-border min-h-[80px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="instructions">Инструкция к работе</Label>
+              <Textarea
+                id="instructions"
+                value={config.instructions}
+                onChange={(e) => updateConfig('instructions', e.target.value)}
+                placeholder="Опишите, как должен работать ассистент..."
+                className="bg-muted border-border min-h-[120px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="assistant-model">Модель ИИ</Label>
+              <Select value={config.model} onValueChange={(v) => updateConfig('model', v)}>
+                <SelectTrigger className="bg-muted border-border">
+                  <SelectValue placeholder="Выберите модель" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                  <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
+                  <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                  <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
+                  <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Длина контекста</Label>
+                <span className="text-sm text-muted-foreground">{config.contextLength}</span>
+              </div>
+              <Slider
+                value={[config.contextLength]}
+                onValueChange={(v) => updateConfig('contextLength', v[0])}
+                min={1}
+                max={10}
+                step={1}
+                className="py-4"
+              />
+              <p className="text-xs text-muted-foreground">
+                Количество сообщений, которые ассистент помнит в диалоге
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Эмуляция диалога человека</Label>
+                <span className="text-sm text-muted-foreground">{config.humanEmulation}</span>
+              </div>
+              <Slider
+                value={[config.humanEmulation]}
+                onValueChange={(v) => updateConfig('humanEmulation', v[0])}
+                min={1}
+                max={10}
+                step={1}
+                className="py-4"
+              />
+              <p className="text-xs text-muted-foreground">
+                Насколько естественно ассистент имитирует человеческую речь
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Креативность</Label>
+                <span className="text-sm text-muted-foreground">{config.creativity.toFixed(1)}</span>
+              </div>
+              <Slider
+                value={[config.creativity * 10]}
+                onValueChange={(v) => updateConfig('creativity', v[0] / 10)}
+                min={0}
+                max={10}
+                step={1}
+                className="py-4"
+              />
+              <p className="text-xs text-muted-foreground">
+                Уровень случайности и вариативности ответов (0 - предсказуемо, 1 - креативно)
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between space-x-4 rounded-lg border border-border bg-muted/50 p-4">
+              <div className="space-y-1 flex-1">
+                <Label htmlFor="voice-recognition">Распознавание голосовых ответов</Label>
+                <p className="text-xs text-muted-foreground">
+                  Автоматическое распознавание голосовых команд "да" и "нет"
+                </p>
+              </div>
+              <Switch
+                id="voice-recognition"
+                checked={config.voiceRecognition}
+                onCheckedChange={(v) => updateConfig('voiceRecognition', v)}
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="assistant-model">Модель ИИ</Label>
-            <Select value={model} onValueChange={onModelChange}>
-              <SelectTrigger className="bg-muted border-border">
-                <SelectValue placeholder="Выберите модель" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                <SelectItem value="claude-3-opus">Claude 3 Opus</SelectItem>
-                <SelectItem value="claude-3-sonnet">Claude 3 Sonnet</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        </ScrollArea>
+
         <DialogFooter className="gap-2">
           <Button 
             variant="outline" 
@@ -73,7 +183,7 @@ export const CreateAssistantDialog = ({
           </Button>
           <Button 
             onClick={onConfirm}
-            disabled={!name.trim() || !model}
+            disabled={!config.name.trim() || !config.model}
             className="bg-primary hover:bg-primary/90"
           >
             <Icon name="Check" size={16} className="mr-2" />
