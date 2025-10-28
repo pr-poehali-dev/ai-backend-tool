@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Icon from '@/components/ui/icon';
 import { useState, useEffect } from 'react';
 import { AddFileToDatabaseDialog } from './AddFileToDatabaseDialog';
+import { toast } from 'sonner';
 
 interface DatabaseFile {
   id: string;
@@ -30,6 +31,7 @@ export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabas
   const [files, setFiles] = useState<DatabaseFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [addFileOpen, setAddFileOpen] = useState(false);
+  const [deletingFileId, setDeletingFileId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && database) {
@@ -80,6 +82,37 @@ export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabas
       return new Date(dateString).toLocaleString('ru-RU');
     } catch {
       return dateString;
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    if (!database) return;
+
+    setDeletingFileId(fileId);
+    try {
+      const response = await fetch(RAG_API_URL, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          databaseId: database.id,
+          fileId: fileId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка удаления файла');
+      }
+
+      toast.success('Файл удалён');
+      fetchDatabaseFiles();
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      toast.error(error instanceof Error ? error.message : 'Не удалось удалить файл');
+    } finally {
+      setDeletingFileId(null);
     }
   };
 
@@ -141,6 +174,19 @@ export const ViewDatabaseDialog = ({ open, onOpenChange, database }: ViewDatabas
                           </span>
                         </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteFile(file.id)}
+                        disabled={deletingFileId === file.id}
+                      >
+                        {deletingFileId === file.id ? (
+                          <Icon name="Loader2" className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Icon name="Trash2" className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
                   ))}
                 </div>

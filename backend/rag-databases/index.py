@@ -147,6 +147,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
+        elif method == 'DELETE':
+            body_str = event.get('body', '{}')
+            body_data = json.loads(body_str)
+            
+            file_id = body_data.get('fileId')
+            
+            if not file_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Требуется fileId'}),
+                    'isBase64Encoded': False
+                }
+            
+            print(f"[DEBUG] Deleting file: {file_id}")
+            
+            response = requests.delete(
+                f'https://gptunnel.ru/v1/database/file/{file_id}',
+                headers=headers,
+                timeout=30
+            )
+            
+            print(f"[DEBUG] DELETE response status: {response.status_code}")
+            print(f"[DEBUG] DELETE response body: {response.text[:500]}")
+            
+            return {
+                'statusCode': response.status_code,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': response.text,
+                'isBase64Encoded': False
+            }
+        
         else:
             return {
                 'statusCode': 405,
