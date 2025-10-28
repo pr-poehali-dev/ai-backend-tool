@@ -74,6 +74,18 @@ const Index = () => {
     }
   };
 
+  const deleteApiKey = async (id: number) => {
+    try {
+      const response = await fetch(`${API_KEYS_URL}?id=${id}`, {
+        method: 'DELETE'
+      });
+      await response.json();
+      setApiKeys(apiKeys.filter(key => key.id !== id));
+      toast.success('API ключ удален');
+    } catch (error) {
+      toast.error('Ошибка удаления ключа');
+    }
+  };
 
 
   const [monitoringData, setMonitoringData] = useState({
@@ -196,7 +208,12 @@ const Index = () => {
                         <Button variant="outline" size="sm">
                           <Icon name="Settings" size={16} />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => deleteApiKey(key.id)}
+                        >
                           <Icon name="Trash2" size={16} />
                         </Button>
                       </div>

@@ -32,6 +32,17 @@
         "requests": "number"
       },
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Delete API key",
+      "method": "DELETE",
+      "path": "/?id=1",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": "boolean",
+        "id": "number"
+      },
+      "bodyMatcher": "partial"
     }
   ]
 }
