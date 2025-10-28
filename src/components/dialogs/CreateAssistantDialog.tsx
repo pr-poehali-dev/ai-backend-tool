@@ -46,9 +46,18 @@ export const CreateAssistantDialog = ({
   onOpenChange, 
   onConfirm 
 }: CreateAssistantDialogProps) => {
-  const [config, setConfig] = useState<AssistantConfig>(defaultConfig);
+  const [config, setConfig] = useState<AssistantConfig>(() => {
+    const saved = sessionStorage.getItem('createAssistantDraft');
+    return saved ? JSON.parse(saved) : defaultConfig;
+  });
   const [models, setModels] = useState<Array<{id: string, name: string}>>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+  
+  useEffect(() => {
+    if (open) {
+      sessionStorage.setItem('createAssistantDraft', JSON.stringify(config));
+    }
+  }, [config, open]);
 
   useEffect(() => {
     if (open && models.length === 0) {
@@ -78,6 +87,7 @@ export const CreateAssistantDialog = ({
   const handleConfirm = async () => {
     await onConfirm(config);
     setConfig(defaultConfig);
+    sessionStorage.removeItem('createAssistantDraft');
   };
 
   return (
