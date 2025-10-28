@@ -97,7 +97,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         cursor.execute('''
             SELECT name, first_message, instructions, model, 
-                   context_length, creativity, status, api_integration_id
+                   context_length, creativity, status, api_integration_id, rag_database_ids
             FROM assistants 
             WHERE id = %s
         ''', (assistant_id,))
@@ -113,7 +113,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        assistant_name, first_message, instructions, model, context_length, creativity, status, api_integration_id = assistant
+        assistant_name, first_message, instructions, model, context_length, creativity, status, api_integration_id, rag_database_ids = assistant
         
         # Load API integration config if exists
         api_config = None
@@ -173,6 +173,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'messages': messages,
             'temperature': float(creativity) if creativity else 0.7
         }
+        
+        if rag_database_ids and len(rag_database_ids) > 0:
+            gptunnel_payload['database_ids'] = rag_database_ids
         
         if tools:
             gptunnel_payload['tools'] = tools

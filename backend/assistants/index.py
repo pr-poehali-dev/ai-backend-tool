@@ -68,6 +68,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'humanEmulation': assistant['human_emulation'],
                     'creativity': float(assistant['creativity']),
                     'voiceRecognition': assistant['voice_recognition'],
+                    'ragDatabaseIds': assistant.get('rag_database_ids') or [],
                     'status': assistant['status'],
                     'created_at': assistant['created_at'].isoformat() if assistant['created_at'] else None,
                     'stats': {
@@ -89,12 +90,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             assistant_id = f"asst_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
             
+            rag_database_ids = body_data.get('ragDatabaseIds', [])
+            
             cursor.execute('''
                 INSERT INTO assistants (
                     id, name, first_message, instructions, model,
                     context_length, human_emulation, creativity,
-                    voice_recognition, status
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    voice_recognition, rag_database_ids, status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING *
             ''', (
                 assistant_id,
@@ -106,6 +109,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 body_data.get('humanEmulation', 5),
                 body_data.get('creativity', 0.7),
                 body_data.get('voiceRecognition', False),
+                rag_database_ids,
                 'active'
             ))
             
@@ -122,6 +126,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'humanEmulation': new_assistant['human_emulation'],
                 'creativity': float(new_assistant['creativity']),
                 'voiceRecognition': new_assistant['voice_recognition'],
+                'ragDatabaseIds': new_assistant.get('rag_database_ids') or [],
                 'status': new_assistant['status'],
                 'created_at': new_assistant['created_at'].isoformat(),
                 'stats': {
@@ -160,6 +165,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     human_emulation = %s,
                     creativity = %s,
                     voice_recognition = %s,
+                    rag_database_ids = %s,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
                 RETURNING *
@@ -172,6 +178,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 body_data.get('humanEmulation'),
                 body_data.get('creativity'),
                 body_data.get('voiceRecognition'),
+                body_data.get('ragDatabaseIds', []),
                 assistant_id
             ))
             

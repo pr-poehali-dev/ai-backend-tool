@@ -20,6 +20,7 @@ interface AssistantConfig {
   humanEmulation: number;
   creativity: number;
   voiceRecognition: boolean;
+  ragDatabaseIds?: string[];
 }
 
 interface CreateAssistantDialogProps {
@@ -38,7 +39,8 @@ const defaultConfig: AssistantConfig = {
   contextLength: 5,
   humanEmulation: 5,
   creativity: 0.7,
-  voiceRecognition: false
+  voiceRecognition: false,
+  ragDatabaseIds: []
 };
 
 export const CreateAssistantDialog = ({ 
@@ -52,6 +54,8 @@ export const CreateAssistantDialog = ({
   });
   const [models, setModels] = useState<Array<{id: string, name: string}>>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [databases, setDatabases] = useState<Array<{id: string, name: string}>>([]);
+  const [loadingDatabases, setLoadingDatabases] = useState(false);
   
   useEffect(() => {
     if (open) {
@@ -63,7 +67,10 @@ export const CreateAssistantDialog = ({
     if (open && models.length === 0) {
       fetchModels();
     }
-  }, [open, models.length]);
+    if (open && databases.length === 0) {
+      fetchDatabases();
+    }
+  }, [open, models.length, databases.length]);
 
   const fetchModels = async () => {
     setLoadingModels(true);
@@ -78,6 +85,34 @@ export const CreateAssistantDialog = ({
     } finally {
       setLoadingModels(false);
     }
+  };
+
+  const fetchDatabases = async () => {
+    setLoadingDatabases(true);
+    try {
+      const apiKey = localStorage.getItem('gptunnel_default_key');
+      if (!apiKey) return;
+      
+      const response = await fetch('https://gptunnel.ru/v1/database/list', {
+        headers: { 'Authorization': apiKey }
+      });
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setDatabases(data.map((db: any) => ({ id: db.id, name: db.name })));
+      }
+    } catch (error) {
+      console.error('Error fetching databases:', error);
+    } finally {
+      setLoadingDatabases(false);
+    }
+  };
+
+  const toggleDatabase = (dbId: string) => {
+    const current = config.ragDatabaseIds || [];
+    const updated = current.includes(dbId)
+      ? current.filter(id => id !== dbId)
+      : [...current, dbId];
+    updateConfig('ragDatabaseIds', updated);
   };
 
   const updateConfig = (field: keyof AssistantConfig, value: any) => {
@@ -150,6 +185,42 @@ export const CreateAssistantDialog = ({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Базы знаний (RAG)</Label>
+                <span className="text-xs text-muted-foreground">
+                  {loadingDatabases ? 'Загрузка...' : `Выбрано: ${(config.ragDatabaseIds || []).length}`}
+                </span>
+              </div>
+              {databases.length > 0 ? (
+                <div className="grid gap-2 max-h-32 overflow-y-auto p-2 bg-muted/50 rounded-md">
+                  {databases.map((db) => (
+                    <div
+                      key={db.id}
+                      className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
+                      onClick={() => toggleDatabase(db.id)}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                        (config.ragDatabaseIds || []).includes(db.id) 
+                          ? 'bg-primary border-primary' 
+                          : 'border-muted-foreground'
+                      }`}>
+                        {(config.ragDatabaseIds || []).includes(db.id) && (
+                          <Icon name="Check" size={12} className="text-primary-foreground" />
+                        )}
+                      </div>
+                      <span className="text-sm flex-1">{db.name}</span>
+                      <Icon name="Database" size={14} className="text-muted-foreground" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground p-2 bg-muted/50 rounded-md">
+                  Нет доступных баз знаний. Создайте их в разделе "База данных"
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
