@@ -50,6 +50,12 @@ const Index = () => {
     }
   }, [activeTab, assistantsState.assistants.length]);
 
+  useEffect(() => {
+    if (activeTab === 'usage' && usageState.usageStats.length === 0) {
+      usageState.fetchUsageStats();
+    }
+  }, [activeTab, usageState.usageStats.length]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
