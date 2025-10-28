@@ -64,16 +64,20 @@ export const useDatabaseState = () => {
     sourceContent: string | File;
   }) => {
     try {
+      let content: string;
+      
       if (data.sourceContent instanceof File) {
-        toast.error('Загрузка файлов пока не поддерживается. Используйте текстовый ввод.');
-        return;
+        const text = await data.sourceContent.text();
+        content = text;
+      } else {
+        content = data.sourceContent;
       }
 
       const requestBody = {
         name: data.name,
         description: data.description,
         sourceType: data.sourceType,
-        content: data.sourceContent,
+        content: content,
       };
 
       const response = await fetch(RAG_API_URL, {
