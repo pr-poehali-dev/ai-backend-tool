@@ -58,12 +58,15 @@ export const ApiKeysTab = ({
                   <div className="flex items-center gap-6 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Icon name="Key" size={14} />
-                      <code className="bg-[hsl(var(--code-bg))] px-2 py-1 rounded font-mono text-xs">{key.key}</code>
+                      <code className="bg-[hsl(var(--code-bg))] px-2 py-1 rounded font-mono text-xs">
+                        {key.key.substring(0, 8)}...{key.key.substring(key.key.length - 4)}
+                      </code>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         className="h-6 w-6 p-0"
                         onClick={() => onCopyKey(key.key)}
+                        title="Скопировать полный ключ"
                       >
                         <Icon name="Copy" size={12} />
                       </Button>
