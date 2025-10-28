@@ -75,7 +75,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'databaseId': database_id,
                 'name': body_data.get('name'),
                 'sourceType': body_data.get('sourceType'),
-                'content': body_data.get('content')
+                'text': body_data.get('content')
             }
             
             print(f"[DEBUG] Adding file to database {database_id}: {json.dumps(add_file_payload, ensure_ascii=False)[:200]}")
