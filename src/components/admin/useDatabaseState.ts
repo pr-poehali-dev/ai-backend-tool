@@ -116,9 +116,29 @@ export const useDatabaseState = () => {
     toast.success('База данных удалена локально');
   };
 
-  const viewDatabase = (database: Database) => {
+  const viewDatabase = async (database: Database) => {
     setSelectedDatabase(database);
     setViewDatabaseOpen(true);
+    
+    try {
+      const response = await fetch(`${RAG_API_URL}?databaseId=${database.id}`);
+      if (response.ok) {
+        const files = await response.json();
+        const filesCount = Array.isArray(files) ? files.length : 0;
+        
+        setDatabases(prev => 
+          prev.map(db => 
+            db.id === database.id 
+              ? { ...db, filesCount } 
+              : db
+          )
+        );
+        
+        setSelectedDatabase({ ...database, filesCount });
+      }
+    } catch (error) {
+      console.error('Error fetching files count:', error);
+    }
   };
 
   return {
