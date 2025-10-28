@@ -64,20 +64,24 @@ export const useDatabaseState = () => {
     sourceContent: string | File;
   }) => {
     try {
-      const formData = new FormData();
-      formData.append('name', data.name);
-      formData.append('description', data.description);
-      formData.append('sourceType', data.sourceType);
-
       if (data.sourceContent instanceof File) {
-        formData.append('file', data.sourceContent);
-      } else {
-        formData.append('content', data.sourceContent);
+        toast.error('Загрузка файлов пока не поддерживается. Используйте текстовый ввод.');
+        return;
       }
+
+      const requestBody = {
+        name: data.name,
+        description: data.description,
+        sourceType: data.sourceType,
+        content: data.sourceContent,
+      };
 
       const response = await fetch(RAG_API_URL, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
