@@ -155,7 +155,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cursor.execute('UPDATE api_keys SET active = false WHERE id = %s RETURNING id', (key_id,))
+            cursor.execute('DELETE FROM api_keys WHERE id = %s RETURNING id', (key_id,))
             deleted_key = cursor.fetchone()
             conn.commit()
             
