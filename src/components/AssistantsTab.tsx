@@ -24,6 +24,7 @@ interface AssistantsTabProps {
   onCreateAssistant: () => void;
   onEditAssistant: (id: string, name: string) => void;
   onDeleteAssistant: (id: string, name: string) => void;
+  onTestAssistant: (id: string, name: string) => void;
 }
 
 export const AssistantsTab = ({
@@ -31,6 +32,7 @@ export const AssistantsTab = ({
   onCreateAssistant,
   onEditAssistant,
   onDeleteAssistant,
+  onTestAssistant,
 }: AssistantsTabProps) => {
   return (
     <div className="space-y-6">
@@ -107,6 +109,14 @@ export const AssistantsTab = ({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onTestAssistant(assistant.id, assistant.name)}
+                          title="Тестировать ассистента"
+                        >
+                          <Icon name="MessageSquare" size={16} className="text-primary" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

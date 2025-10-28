@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "Test OPTIONS request",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Test missing message",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "assistant_id": "test-assistant"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test missing assistant_id",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "message": "Hello"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

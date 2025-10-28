@@ -14,11 +14,13 @@ import { GptunnelSettingsDialog } from '@/components/dialogs/GptunnelSettingsDia
 import { CreateAssistantDialog } from '@/components/dialogs/CreateAssistantDialog';
 import { EditAssistantDialog } from '@/components/dialogs/EditAssistantDialog';
 import { DeleteAssistantDialog } from '@/components/dialogs/DeleteAssistantDialog';
+import { TestAssistantDialog } from '@/components/dialogs/TestAssistantDialog';
 
 const API_KEYS_URL = 'https://functions.poehali.dev/1032605c-9bdd-4a3e-8e80-ede97e25fc74';
 const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8a57517ba49';
 const GPTUNNEL_SETTINGS_URL = 'https://functions.poehali.dev/02fd2adf-54b4-4476-9f64-6c552acacfc1';
 const ASSISTANTS_URL = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d';
+const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
@@ -68,6 +70,8 @@ const Index = () => {
   const [assistantToEdit, setAssistantToEdit] = useState<string | null>(null);
   const [deleteAssistantOpen, setDeleteAssistantOpen] = useState(false);
   const [assistantToDelete, setAssistantToDelete] = useState<{id: string, name: string} | null>(null);
+  const [testAssistantOpen, setTestAssistantOpen] = useState(false);
+  const [assistantToTest, setAssistantToTest] = useState<{id: string, name: string} | null>(null);
 
   useEffect(() => {
     if (activeTab === 'keys' && apiKeys.length === 0) {
@@ -317,6 +321,11 @@ const Index = () => {
     setDeleteAssistantOpen(true);
   };
 
+  const openTestAssistant = (id: string, name: string) => {
+    setAssistantToTest({ id, name });
+    setTestAssistantOpen(true);
+  };
+
   const deleteAssistant = async () => {
     if (!assistantToDelete) return;
     
@@ -404,6 +413,7 @@ const Index = () => {
               onCreateAssistant={() => setCreateAssistantOpen(true)}
               onEditAssistant={openEditAssistant}
               onDeleteAssistant={openDeleteAssistant}
+              onTestAssistant={openTestAssistant}
             />
           </TabsContent>
 
@@ -466,6 +476,14 @@ const Index = () => {
         onOpenChange={setDeleteAssistantOpen}
         assistantName={assistantToDelete?.name || null}
         onConfirm={deleteAssistant}
+      />
+
+      <TestAssistantDialog
+        open={testAssistantOpen}
+        onOpenChange={setTestAssistantOpen}
+        assistantId={assistantToTest?.id || ''}
+        assistantName={assistantToTest?.name || ''}
+        gptunnelBotUrl={GPTUNNEL_BOT_URL}
       />
     </div>
   );
