@@ -39,6 +39,11 @@ export const useApiKeysState = () => {
       });
       const newKey = await response.json();
       setApiKeys([newKey, ...apiKeys]);
+      
+      if (apiKeys.length === 0 && newKey.key) {
+        localStorage.setItem('gptunnel_default_key', newKey.key);
+      }
+      
       toast.success('Новый API ключ создан');
     } catch (error) {
       toast.error('Ошибка создания ключа');
