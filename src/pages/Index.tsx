@@ -8,6 +8,7 @@ import { ApiKeysTab } from '@/components/ApiKeysTab';
 import { MonitoringTab } from '@/components/MonitoringTab';
 import { SettingsTab } from '@/components/SettingsTab';
 import { AssistantsTab } from '@/components/AssistantsTab';
+import { UsageTab } from '@/components/UsageTab';
 import { DeleteKeyDialog } from '@/components/dialogs/DeleteKeyDialog';
 import { EditKeyDialog } from '@/components/dialogs/EditKeyDialog';
 import { GptunnelSettingsDialog } from '@/components/dialogs/GptunnelSettingsDialog';
@@ -21,6 +22,7 @@ const MONITORING_URL = 'https://functions.poehali.dev/6775cf31-8260-4bb5-b914-e8
 const GPTUNNEL_SETTINGS_URL = 'https://functions.poehali.dev/02fd2adf-54b4-4476-9f64-6c552acacfc1';
 const ASSISTANTS_URL = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d';
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
+const USAGE_STATS_URL = 'https://functions.poehali.dev/3106619b-f815-4bcb-bbce-85e85edc9a8d';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('keys');
@@ -73,6 +75,9 @@ const Index = () => {
   const [testAssistantOpen, setTestAssistantOpen] = useState(false);
   const [assistantToTest, setAssistantToTest] = useState<{id: string, name: string} | null>(null);
 
+  const [usageStats, setUsageStats] = useState<any[]>([]);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
+
   useEffect(() => {
     if (activeTab === 'keys' && apiKeys.length === 0) {
       fetchApiKeys();
@@ -82,6 +87,8 @@ const Index = () => {
       fetchGptunnelStatus();
     } else if (activeTab === 'assistants' && assistants.length === 0) {
       fetchAssistants();
+    } else if (activeTab === 'usage') {
+      fetchUsageStats();
     }
   }, [activeTab]);
 
@@ -251,6 +258,19 @@ const Index = () => {
     }
   };
 
+  const fetchUsageStats = async () => {
+    setIsLoadingUsage(true);
+    try {
+      const response = await fetch(`${USAGE_STATS_URL}?days=30`);
+      const data = await response.json();
+      setUsageStats(data);
+    } catch (error) {
+      toast.error('Ошибка загрузки статистики');
+    } finally {
+      setIsLoadingUsage(false);
+    }
+  };
+
   const createAssistant = async () => {
     if (!newAssistantConfig.name.trim() || !newAssistantConfig.model) return;
     
@@ -377,7 +397,7 @@ const Index = () => {
 
       <main className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8 bg-card">
+          <TabsList className="grid w-full grid-cols-5 mb-8 bg-card">
             <TabsTrigger value="keys" className="data-[state=active]:bg-primary/10">
               <Icon name="Key" size={16} className="mr-2" />
               API-ключи
@@ -389,6 +409,10 @@ const Index = () => {
             <TabsTrigger value="monitoring" className="data-[state=active]:bg-primary/10">
               <Icon name="BarChart3" size={16} className="mr-2" />
               Мониторинг
+            </TabsTrigger>
+            <TabsTrigger value="usage" className="data-[state=active]:bg-primary/10">
+              <Icon name="Zap" size={16} className="mr-2" />
+              Использование
             </TabsTrigger>
             <TabsTrigger value="settings" className="data-[state=active]:bg-primary/10">
               <Icon name="Settings" size={16} className="mr-2" />
@@ -419,6 +443,10 @@ const Index = () => {
 
           <TabsContent value="monitoring">
             <MonitoringTab data={monitoringData} />
+          </TabsContent>
+
+          <TabsContent value="usage">
+            <UsageTab usageStats={usageStats} isLoading={isLoadingUsage} />
           </TabsContent>
 
           <TabsContent value="settings">

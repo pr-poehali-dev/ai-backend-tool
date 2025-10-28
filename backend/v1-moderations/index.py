@@ -2,6 +2,8 @@ import json
 import os
 from typing import Dict, Any
 import requests
+import psycopg2
+import time
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -42,9 +44,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
+    database_url = os.environ.get('DATABASE_URL')
+    
     try:
         body_data = json.loads(event.get('body', '{}'))
+        model = 'text-moderation-latest'
         
+        start_time = time.time()
         response = requests.post(
             'https://gptunnel.ru/v1/moderations',
             headers={
@@ -54,6 +60,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             json=body_data,
             timeout=30
         )
+        latency_ms = int((time.time() - start_time) * 1000)
+        
+        if database_url:
+            try:
+                conn = psycopg2.connect(database_url)
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO api_requests (endpoint, method, status_code, latency_ms, model)
+                    VALUES (%s, %s, %s, %s, %s)
+                ''', ('/v1/moderations', 'POST', response.status_code, latency_ms, model))
+                
+                cursor.execute('''
+                    INSERT INTO usage_stats (endpoint, model, request_count)
+                    VALUES (%s, %s, 1)
+                    ON CONFLICT (endpoint, model, date) 
+                    DO UPDATE SET 
+                        request_count = usage_stats.request_count + 1,
+                        updated_at = CURRENT_TIMESTAMP
+                ''', ('/v1/moderations', model))
+                
+                conn.commit()
+                cursor.close()
+                conn.close()
+            except:
+                pass
         
         return {
             'statusCode': response.status_code,

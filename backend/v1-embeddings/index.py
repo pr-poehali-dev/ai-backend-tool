@@ -2,6 +2,8 @@ import json
 import os
 from typing import Dict, Any
 import requests
+import psycopg2
+import time
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -42,9 +44,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
+    database_url = os.environ.get('DATABASE_URL')
+    
     try:
         body_data = json.loads(event.get('body', '{}'))
+        model = body_data.get('model', 'unknown')
         
+        start_time = time.time()
         response = requests.post(
             'https://gptunnel.ru/v1/embeddings',
             headers={
@@ -54,6 +60,42 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             json=body_data,
             timeout=30
         )
+        latency_ms = int((time.time() - start_time) * 1000)
+        
+        tokens_total = 0
+        
+        if response.status_code == 200:
+            try:
+                response_json = response.json()
+                usage = response_json.get('usage', {})
+                tokens_total = usage.get('total_tokens', 0)
+            except:
+                pass
+        
+        if database_url:
+            try:
+                conn = psycopg2.connect(database_url)
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO api_requests (endpoint, method, status_code, latency_ms, tokens_total, model)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                ''', ('/v1/embeddings', 'POST', response.status_code, latency_ms, tokens_total, model))
+                
+                cursor.execute('''
+                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens)
+                    VALUES (%s, %s, 1, %s)
+                    ON CONFLICT (endpoint, model, date) 
+                    DO UPDATE SET 
+                        request_count = usage_stats.request_count + 1,
+                        total_tokens = usage_stats.total_tokens + EXCLUDED.total_tokens,
+                        updated_at = CURRENT_TIMESTAMP
+                ''', ('/v1/embeddings', model, tokens_total))
+                
+                conn.commit()
+                cursor.close()
+                conn.close()
+            except:
+                pass
         
         return {
             'statusCode': response.status_code,

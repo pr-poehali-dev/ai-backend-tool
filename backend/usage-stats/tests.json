@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "Get usage stats",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "type"
+    },
+    {
+      "name": "Get usage stats with days filter",
+      "method": "GET",
+      "path": "/?days=7",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "type"
+    }
+  ]
+}
