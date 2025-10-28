@@ -133,10 +133,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         messages.append({'role': 'user', 'content': message})
         
+        # Define tools for function calling (QQRenta search)
+        tools = [{
+            'type': 'function',
+            'function': {
+                'name': 'search_accommodation',
+                'description': 'Поиск жилья через API Кукурента по городу, дате заезда, количеству ночей и гостей',
+                'parameters': {
+                    'type': 'object',
+                    'properties': {
+                        'city': {
+                            'type': 'string',
+                            'description': 'Название города для поиска (например: Москва, Санкт-Петербург, Казань)'
+                        },
+                        'checkin': {
+                            'type': 'string',
+                            'description': 'Дата заезда в формате YYYY-MM-DD (например: 2025-11-15)'
+                        },
+                        'nights': {
+                            'type': 'integer',
+                            'description': 'Количество ночей проживания'
+                        },
+                        'guests': {
+                            'type': 'integer',
+                            'description': 'Количество гостей'
+                        }
+                    },
+                    'required': ['city', 'checkin', 'nights', 'guests']
+                }
+            }
+        }]
+        
         gptunnel_payload = {
             'model': model or 'gpt-4o',
             'messages': messages,
-            'temperature': float(creativity) if creativity else 0.7
+            'temperature': float(creativity) if creativity else 0.7,
+            'tools': tools,
+            'tool_choice': 'auto'
         }
         
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
@@ -154,6 +187,65 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         with urllib.request.urlopen(req, timeout=60) as response:
             response_data = response.read().decode('utf-8')
             bot_response = json.loads(response_data)
+            
+            message_obj = bot_response.get('choices', [{}])[0].get('message', {})
+            tool_calls = message_obj.get('tool_calls', [])
+            
+            # If model wants to call function
+            if tool_calls:
+                for tool_call in tool_calls:
+                    function_name = tool_call.get('function', {}).get('name')
+                    function_args = json.loads(tool_call.get('function', {}).get('arguments', '{}'))
+                    
+                    if function_name == 'search_accommodation':
+                        # Call QQRenta API
+                        city = function_args.get('city')
+                        checkin = function_args.get('checkin')
+                        nights = function_args.get('nights')
+                        guests = function_args.get('guests')
+                        
+                        search_params = urllib.parse.urlencode({
+                            'city': city,
+                            'checkin': checkin,
+                            'nights': nights,
+                            'guests': guests
+                        })
+                        
+                        search_url = f'https://api2.qqrenta.ru/api/v2/search?{search_params}'
+                        search_req = urllib.request.Request(search_url, headers={'Accept': 'application/json'})
+                        
+                        with urllib.request.urlopen(search_req, timeout=30) as search_response:
+                            search_data = json.loads(search_response.read().decode('utf-8'))
+                            
+                            # Add function result to messages
+                            messages.append(message_obj)
+                            messages.append({
+                                'role': 'tool',
+                                'tool_call_id': tool_call.get('id'),
+                                'content': json.dumps(search_data, ensure_ascii=False)
+                            })
+                            
+                            # Call GPT again with function result
+                            second_payload = {
+                                'model': model or 'gpt-4o',
+                                'messages': messages,
+                                'temperature': float(creativity) if creativity else 0.7
+                            }
+                            
+                            second_request_data = json.dumps(second_payload).encode('utf-8')
+                            second_req = urllib.request.Request(
+                                'https://gptunnel.ru/v1/chat/completions',
+                                data=second_request_data,
+                                headers={
+                                    'Content-Type': 'application/json',
+                                    'Authorization': f'Bearer {gptunnel_api_key}'
+                                },
+                                method='POST'
+                            )
+                            
+                            with urllib.request.urlopen(second_req, timeout=60) as second_response:
+                                second_response_data = second_response.read().decode('utf-8')
+                                bot_response = json.loads(second_response_data)
             
             response_text = bot_response.get('choices', [{}])[0].get('message', {}).get('content', 'Нет ответа')
             
