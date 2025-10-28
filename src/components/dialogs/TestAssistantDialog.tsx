@@ -46,11 +46,17 @@ export const TestAssistantDialog = ({
       timestamp: new Date(),
     };
 
-    setMessages([...messages, userMessage]);
+    const currentMessages = [...messages, userMessage];
+    setMessages(currentMessages);
     setInputMessage('');
     setIsLoading(true);
 
     try {
+      const history = currentMessages.slice(0, -1).map(m => ({
+        role: m.role,
+        content: m.content
+      }));
+
       const response = await fetch(gptunnelBotUrl, {
         method: 'POST',
         headers: {
@@ -60,6 +66,7 @@ export const TestAssistantDialog = ({
         body: JSON.stringify({
           message: inputMessage,
           assistant_id: assistantId,
+          history: history,
         }),
       });
 

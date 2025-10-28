@@ -75,6 +75,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         message = body_data.get('message', '')
         assistant_id = body_data.get('assistant_id', '')
         user_id = event.get('headers', {}).get('X-User-Id', 'anonymous')
+        message_history = body_data.get('history', [])
         
         if not message:
             return {
@@ -92,11 +93,50 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
+        conn = psycopg2.connect(database_url)
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT name, first_message, instructions, model, 
+                   context_length, creativity, status
+            FROM assistants 
+            WHERE id = %s
+        ''', (assistant_id,))
+        assistant = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        
+        if not assistant:
+            return {
+                'statusCode': 404,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Assistant not found'}),
+                'isBase64Encoded': False
+            }
+        
+        assistant_name, first_message, instructions, model, context_length, creativity, status = assistant
+        
+        if status != 'active':
+            return {
+                'statusCode': 403,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Assistant is not active'}),
+                'isBase64Encoded': False
+            }
+        
+        messages = []
+        
+        if instructions:
+            messages.append({'role': 'system', 'content': instructions})
+        
+        if len(message_history) > 0:
+            messages.extend(message_history[-context_length * 2:])
+        
+        messages.append({'role': 'user', 'content': message})
+        
         gptunnel_payload = {
-            'model': 'gpt-4o-mini',
-            'messages': [
-                {'role': 'user', 'content': message}
-            ]
+            'model': model or 'gpt-4o',
+            'messages': messages,
+            'temperature': float(creativity) if creativity else 0.7
         }
         
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
