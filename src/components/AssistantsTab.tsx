@@ -75,8 +75,6 @@ export const AssistantsTab = ({
                   <TableHead>ID</TableHead>
                   <TableHead>Модель</TableHead>
                   <TableHead>Статистика</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead>Создан</TableHead>
                   <TableHead className="text-right">Действия</TableHead>
                 </TableRow>
               </TableHeader>
@@ -108,22 +106,6 @@ export const AssistantsTab = ({
                           <span>{assistant.stats?.uniqueUsers || 0} пользователей</span>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {assistant.status === 'active' ? (
-                        <Badge className="bg-secondary/10 text-secondary border-secondary/30">
-                          <Icon name="CheckCircle2" size={12} className="mr-1" />
-                          Активен
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-muted/10">
-                          <Icon name="Circle" size={12} className="mr-1" />
-                          Неактивен
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {new Date(assistant.created_at).toLocaleDateString('ru-RU')}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
