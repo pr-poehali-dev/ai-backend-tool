@@ -13,6 +13,7 @@ type SourceType = 'api' | 'xml' | 'text' | 'docx' | 'pdf' | 'csv' | 'excel' | 'j
 const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4';
 
 const STORAGE_KEY = 'rag_databases_cache';
+const FETCHED_KEY = 'rag_databases_fetched';
 
 export const useDatabaseState = () => {
   const [databases, setDatabases] = useState<Database[]>(() => {
@@ -21,7 +22,7 @@ export const useDatabaseState = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [createDatabaseOpen, setCreateDatabaseOpen] = useState(false);
-  const hasFetchedRef = useRef(false);
+  const hasFetchedRef = useRef(localStorage.getItem(FETCHED_KEY) === 'true');
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(databases));
@@ -44,6 +45,7 @@ export const useDatabaseState = () => {
       console.log('[useDatabaseState] Fetched databases:', data);
       setDatabases(data);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(FETCHED_KEY, 'true');
       hasFetchedRef.current = true;
     } catch (error) {
       console.error('Error fetching databases:', error);
