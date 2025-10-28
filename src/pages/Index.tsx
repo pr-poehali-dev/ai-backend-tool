@@ -73,10 +73,10 @@ const Index = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'database' && !databaseState.hasFetched) {
+    if (activeTab === 'database' && databaseState.databases.length === 0 && !databaseState.hasFetched) {
       databaseState.fetchDatabases();
     }
-  }, [activeTab, databaseState.hasFetched]);
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen bg-background">
