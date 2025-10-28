@@ -49,12 +49,6 @@ export const CreateAssistantDialog = ({
   const [config, setConfig] = useState<AssistantConfig>(defaultConfig);
   const [models, setModels] = useState<Array<{id: string, name: string}>>([]);
   const [loadingModels, setLoadingModels] = useState(false);
-  
-  useEffect(() => {
-    if (!open) {
-      setConfig(defaultConfig);
-    }
-  }, [open]);
 
   useEffect(() => {
     if (open && models.length === 0) {
@@ -81,8 +75,9 @@ export const CreateAssistantDialog = ({
     setConfig({ ...config, [field]: value });
   };
   
-  const handleConfirm = () => {
-    onConfirm(config);
+  const handleConfirm = async () => {
+    await onConfirm(config);
+    setConfig(defaultConfig);
   };
 
   return (
