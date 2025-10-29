@@ -4,6 +4,8 @@ interface BalanceData {
   balance: number;
 }
 
+const SECRETS_URL = 'https://functions.poehali.dev/1bfad5cb-d72a-4295-a5d5-c6e1211be804';
+
 export const useBalance = () => {
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,19 +16,9 @@ export const useBalance = () => {
     setError(null);
     
     try {
-      const apiKey = localStorage.getItem('gptunnel_default_key');
-      
-      if (!apiKey) {
-        console.warn('[useBalance] API ключ не найден в localStorage');
-        setBalance(0);
-        setIsLoading(false);
-        return;
-      }
-
-      const response = await fetch('https://gptunnel.ru/v1/balance', {
+      const response = await fetch(`${SECRETS_URL}?action=balance`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       });

@@ -41,6 +41,53 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         if method == 'GET':
+            query_params = event.get('queryStringParameters') or {}
+            action = query_params.get('action', '')
+            
+            if action == 'balance':
+                cursor.execute("SELECT secret_value FROM secrets WHERE secret_name = 'GPTUNNEL_API_KEY' LIMIT 1")
+                result = cursor.fetchone()
+                
+                if not result or not result['secret_value']:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'GPTUNNEL_API_KEY not found'}),
+                        'isBase64Encoded': False
+                    }
+                
+                api_key = result['secret_value']
+                
+                try:
+                    response = requests.get(
+                        'https://gptunnel.ru/v1/balance',
+                        headers={'Authorization': f'Bearer {api_key}'},
+                        timeout=30
+                    )
+                    
+                    if response.status_code != 200:
+                        return {
+                            'statusCode': response.status_code,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': f'GPTunnel API error: {response.status_code}'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    balance_data = response.json()
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'balance': balance_data.get('balance', 0)}),
+                        'isBase64Encoded': False
+                    }
+                except requests.RequestException as e:
+                    return {
+                        'statusCode': 500,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': f'Request failed: {str(e)}'}),
+                        'isBase64Encoded': False
+                    }
+            
             cursor.execute("SELECT secret_name, created_at, updated_at FROM secrets ORDER BY secret_name")
             secrets = cursor.fetchall()
             
