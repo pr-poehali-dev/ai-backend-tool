@@ -125,6 +125,7 @@ export const AssistantsTab = ({
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
+                          key="test"
                           variant="ghost"
                           size="sm"
                           onClick={() => onTestAssistant(assistant.id, assistant.name)}
@@ -133,6 +134,7 @@ export const AssistantsTab = ({
                           <Icon name="MessageSquare" size={16} className="text-primary" />
                         </Button>
                         <Button
+                          key="edit"
                           variant="ghost"
                           size="sm"
                           onClick={() => onEditAssistant(assistant)}
@@ -140,6 +142,7 @@ export const AssistantsTab = ({
                           <Icon name="Settings" size={16} />
                         </Button>
                         <Button
+                          key="delete"
                           variant="ghost"
                           size="sm"
                           onClick={() => onDeleteAssistant(assistant.id, assistant.name)}
