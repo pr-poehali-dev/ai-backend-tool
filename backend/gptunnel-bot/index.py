@@ -491,6 +491,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             # Limit to 10 items
                             results = results[:10] if isinstance(results, list) else results
                             
+                            # Добавляем параметры бронирования к каждому объекту для ссылок
+                            if isinstance(results, list):
+                                from datetime import datetime, timedelta
+                                
+                                # Вычисляем dateEnd из checkin + nights
+                                checkin_date = datetime.strptime(function_args.get('checkin'), '%Y-%m-%d')
+                                nights = function_args.get('nights', 1)
+                                checkout_date = checkin_date + timedelta(days=nights)
+                                
+                                # Параметры бронирования для ссылок
+                                booking_params = {
+                                    'dateStart': function_args.get('checkin'),
+                                    'dateEnd': checkout_date.strftime('%Y-%m-%d'),
+                                    'adults': function_args.get('guests', 1),
+                                    'children': function_args.get('children', 0),
+                                    'infants': function_args.get('infants', 0),
+                                    'pets': function_args.get('pets', 0)
+                                }
+                                
+                                # Добавляем параметры к каждому результату
+                                for result in results:
+                                    if isinstance(result, dict):
+                                        result['bookingParams'] = booking_params
+                            
                             print(f"[DEBUG] Returning to frontend: {len(results) if isinstance(results, list) else 1} items")
                             
                             # Return raw JSON data directly
