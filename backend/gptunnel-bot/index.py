@@ -322,26 +322,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Обработка tool_calls для вызова внешних API
             if tool_calls and api_config:
+                print(f"[DEBUG] tool_calls detected: {len(tool_calls)} calls")
+                print(f"[DEBUG] API config: {api_config['function_name']}, base_url={api_config['api_base_url']}, response_mode={api_config.get('response_mode')}")
+                
                 for tool_call in tool_calls:
                     function_name = tool_call.get('function', {}).get('name')
                     function_args = json.loads(tool_call.get('function', {}).get('arguments', '{}'))
+                    
+                    print(f"[DEBUG] Tool call: function={function_name}, args={json_dumps(function_args)}")
                     
                     if function_name == api_config['function_name']:
                         # Build API URL with parameters
                         search_params = urllib.parse.urlencode(function_args)
                         api_url = f"{api_config['api_base_url']}?{search_params}"
+                        
+                        print(f"[DEBUG] Calling external API: {api_url}")
+                        
                         api_req = urllib.request.Request(api_url, headers={'Accept': 'application/json'})
                         
                         with urllib.request.urlopen(api_req, timeout=30) as api_response:
-                            api_data = json.loads(api_response.read().decode('utf-8'))
+                            api_response_text = api_response.read().decode('utf-8')
+                            api_data = json.loads(api_response_text)
+                            
+                            print(f"[DEBUG] External API response (first 500 chars): {api_response_text[:500]}")
+                            print(f"[DEBUG] API response keys: {list(api_data.keys()) if isinstance(api_data, dict) else 'list'}")
                             
                             # Check response mode
                             if api_config.get('response_mode') == 'json':
+                                print(f"[DEBUG] Response mode is 'json' - returning raw JSON to frontend")
+                                
                                 # Extract results array from response if it exists
                                 results = api_data.get('results', []) if isinstance(api_data, dict) else api_data
                                 
+                                print(f"[DEBUG] Extracted results: {len(results) if isinstance(results, list) else 'not a list'}")
+                                
                                 # Limit to 10 items
                                 results = results[:10] if isinstance(results, list) else results
+                                
+                                print(f"[DEBUG] Returning to frontend: {len(results) if isinstance(results, list) else 1} items")
                                 
                                 # Return raw JSON data directly
                                 return {
@@ -351,6 +369,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     'isBase64Encoded': False
                                 }
                             else:
+                                print(f"[DEBUG] Response mode is 'text' - sending API data to GPT for processing")
+                                
                                 # Continue with GPT processing (text mode)
                                 messages.append({
                                     'role': 'assistant',
@@ -363,6 +383,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     'tool_call_id': tool_call.get('id'),
                                     'content': json_dumps(api_data, ensure_ascii=False)
                                 })
+                                
+                                print(f"[DEBUG] Prepared messages for second GPT call (with API data)")
                                 
                                 second_payload = {
                                     'model': model or 'gpt-4o',
@@ -377,6 +399,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     second_payload['databases'] = rag_database_ids
                                 
                                 second_request_data = json_dumps(second_payload).encode('utf-8')
+                                
+                                print(f"[DEBUG] Sending second request to GPTunnel with API data")
+                                print(f"[DEBUG] Second payload (first 500 chars): {json_dumps(second_payload, ensure_ascii=False)[:500]}")
+                                
                                 # Для второго запроса используем тот же endpoint
                                 second_req = urllib.request.Request(
                                     endpoint,
@@ -392,11 +418,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     second_response_data = second_response.read().decode('utf-8')
                                     bot_response = json.loads(second_response_data)
                                     
+                                    print(f"[DEBUG] Second GPT response (first 500 chars): {second_response_data[:500]}")
+                                    
                                     # Extract final response from second GPT call
                                     if 'choices' in bot_response and len(bot_response['choices']) > 0:
                                         response_text = bot_response['choices'][0]['message'].get('content', 'Нет ответа')
+                                        print(f"[DEBUG] Final response text from GPT: {response_text[:200]}")
                                     else:
                                         response_text = 'Нет ответа от GPT после вызова API'
+                                        print(f"[DEBUG] No valid response from second GPT call")
                                     
                                     print(f"[DEBUG] Final response after tool call: {response_text[:200]}")
             
