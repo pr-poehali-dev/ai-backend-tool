@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Chat } from '@/components/admin/useChatsState';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -112,6 +112,9 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Предпросмотр: {chat.name}</DialogTitle>
+          <DialogDescription>
+            Тестирование виджета чата с ассистентом
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex justify-center p-8 bg-muted rounded-lg">
