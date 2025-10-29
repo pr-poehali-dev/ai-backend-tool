@@ -397,97 +397,97 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 'body': json_dumps({'error': 'External API returned no data'}),
                                 'isBase64Encoded': False
                             }
+                        
+                        print(f"[DEBUG] External API response (first 500 chars): {json_dumps(api_data)[:500]}")
+                        print(f"[DEBUG] API response keys: {list(api_data.keys()) if isinstance(api_data, dict) else 'list'}")
+                        
+                        # Check response mode
+                        if api_config.get('response_mode') == 'json':
+                            print(f"[DEBUG] Response mode is 'json' - returning raw JSON to frontend")
                             
-                            print(f"[DEBUG] External API response (first 500 chars): {api_response_text[:500]}")
-                            print(f"[DEBUG] API response keys: {list(api_data.keys()) if isinstance(api_data, dict) else 'list'}")
+                            # Extract results array from response if it exists
+                            results = api_data.get('results', []) if isinstance(api_data, dict) else api_data
                             
-                            # Check response mode
-                            if api_config.get('response_mode') == 'json':
-                                print(f"[DEBUG] Response mode is 'json' - returning raw JSON to frontend")
+                            print(f"[DEBUG] Extracted results: {len(results) if isinstance(results, list) else 'not a list'}")
+                            
+                            # Filter by max_price if specified
+                            if max_price and isinstance(results, list):
+                                results = [r for r in results if r.get('price', 0) <= max_price]
+                                print(f"[DEBUG] After price filter (<={max_price}): {len(results)} items")
+                            
+                            # Limit to 10 items
+                            results = results[:10] if isinstance(results, list) else results
+                            
+                            print(f"[DEBUG] Returning to frontend: {len(results) if isinstance(results, list) else 1} items")
+                            
+                            # Return raw JSON data directly
+                            return {
+                                'statusCode': 200,
+                                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                'body': json_dumps({'response': results, 'mode': 'json'}),
+                                'isBase64Encoded': False
+                            }
+                        else:
+                            print(f"[DEBUG] Response mode is 'text' - sending API data to GPT for processing")
+                            
+                            # Continue with GPT processing (text mode)
+                            messages.append({
+                                'role': 'assistant',
+                                'content': message_obj.get('content'),
+                                'tool_calls': tool_calls
+                            })
+                            
+                            messages.append({
+                                'role': 'tool',
+                                'tool_call_id': tool_call.get('id'),
+                                'content': json_dumps(api_data, ensure_ascii=False)
+                            })
+                            
+                            print(f"[DEBUG] Prepared messages for second GPT call (with API data)")
+                            
+                            second_payload = {
+                                'model': model or 'gpt-4o',
+                                'messages': messages,
+                                'temperature': float(creativity) if creativity else 0.7
+                            }
+                            
+                            # Добавляем RAG базы для второго запроса
+                            if rag_database_ids and len(rag_database_ids) > 0:
+                                second_payload['databaseIds'] = rag_database_ids
+                                second_payload['database_ids'] = rag_database_ids
+                                second_payload['databases'] = rag_database_ids
+                            
+                            second_request_data = json_dumps(second_payload).encode('utf-8')
+                            
+                            print(f"[DEBUG] Sending second request to GPTunnel with API data")
+                            print(f"[DEBUG] Second payload (first 500 chars): {json_dumps(second_payload, ensure_ascii=False)[:500]}")
+                            
+                            # Для второго запроса используем тот же endpoint
+                            second_req = urllib.request.Request(
+                                endpoint,
+                                data=second_request_data,
+                                headers={
+                                    'Content-Type': 'application/json',
+                                    'Authorization': f'Bearer {gptunnel_api_key}'
+                                },
+                                method='POST'
+                            )
+                            
+                            with urllib.request.urlopen(second_req, timeout=60) as second_response:
+                                second_response_data = second_response.read().decode('utf-8')
+                                bot_response = json.loads(second_response_data)
                                 
-                                # Extract results array from response if it exists
-                                results = api_data.get('results', []) if isinstance(api_data, dict) else api_data
+                                print(f"[DEBUG] Second GPT response (first 500 chars): {second_response_data[:500]}")
                                 
-                                print(f"[DEBUG] Extracted results: {len(results) if isinstance(results, list) else 'not a list'}")
+                                # Extract final response from second GPT call
+                                if 'choices' in bot_response and len(bot_response['choices']) > 0:
+                                    response_text = bot_response['choices'][0]['message'].get('content', 'Нет ответа')
+                                    print(f"[DEBUG] Final response text from GPT: {response_text[:200]}")
+                                else:
+                                    response_text = 'Нет ответа от GPT после вызова API'
+                                    print(f"[DEBUG] No valid response from second GPT call")
                                 
-                                # Filter by max_price if specified
-                                if max_price and isinstance(results, list):
-                                    results = [r for r in results if r.get('price', 0) <= max_price]
-                                    print(f"[DEBUG] After price filter (<={max_price}): {len(results)} items")
-                                
-                                # Limit to 10 items
-                                results = results[:10] if isinstance(results, list) else results
-                                
-                                print(f"[DEBUG] Returning to frontend: {len(results) if isinstance(results, list) else 1} items")
-                                
-                                # Return raw JSON data directly
-                                return {
-                                    'statusCode': 200,
-                                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                                    'body': json_dumps({'response': results, 'mode': 'json'}),
-                                    'isBase64Encoded': False
-                                }
-                            else:
-                                print(f"[DEBUG] Response mode is 'text' - sending API data to GPT for processing")
-                                
-                                # Continue with GPT processing (text mode)
-                                messages.append({
-                                    'role': 'assistant',
-                                    'content': message_obj.get('content'),
-                                    'tool_calls': tool_calls
-                                })
-                                
-                                messages.append({
-                                    'role': 'tool',
-                                    'tool_call_id': tool_call.get('id'),
-                                    'content': json_dumps(api_data, ensure_ascii=False)
-                                })
-                                
-                                print(f"[DEBUG] Prepared messages for second GPT call (with API data)")
-                                
-                                second_payload = {
-                                    'model': model or 'gpt-4o',
-                                    'messages': messages,
-                                    'temperature': float(creativity) if creativity else 0.7
-                                }
-                                
-                                # Добавляем RAG базы для второго запроса
-                                if rag_database_ids and len(rag_database_ids) > 0:
-                                    second_payload['databaseIds'] = rag_database_ids
-                                    second_payload['database_ids'] = rag_database_ids
-                                    second_payload['databases'] = rag_database_ids
-                                
-                                second_request_data = json_dumps(second_payload).encode('utf-8')
-                                
-                                print(f"[DEBUG] Sending second request to GPTunnel with API data")
-                                print(f"[DEBUG] Second payload (first 500 chars): {json_dumps(second_payload, ensure_ascii=False)[:500]}")
-                                
-                                # Для второго запроса используем тот же endpoint
-                                second_req = urllib.request.Request(
-                                    endpoint,
-                                    data=second_request_data,
-                                    headers={
-                                        'Content-Type': 'application/json',
-                                        'Authorization': f'Bearer {gptunnel_api_key}'
-                                    },
-                                    method='POST'
-                                )
-                                
-                                with urllib.request.urlopen(second_req, timeout=60) as second_response:
-                                    second_response_data = second_response.read().decode('utf-8')
-                                    bot_response = json.loads(second_response_data)
-                                    
-                                    print(f"[DEBUG] Second GPT response (first 500 chars): {second_response_data[:500]}")
-                                    
-                                    # Extract final response from second GPT call
-                                    if 'choices' in bot_response and len(bot_response['choices']) > 0:
-                                        response_text = bot_response['choices'][0]['message'].get('content', 'Нет ответа')
-                                        print(f"[DEBUG] Final response text from GPT: {response_text[:200]}")
-                                    else:
-                                        response_text = 'Нет ответа от GPT после вызова API'
-                                        print(f"[DEBUG] No valid response from second GPT call")
-                                    
-                                    print(f"[DEBUG] Final response after tool call: {response_text[:200]}")
+                                print(f"[DEBUG] Final response after tool call: {response_text[:200]}")
             
             # Извлекаем метрики использования токенов
             if assistant_type == 'external':
