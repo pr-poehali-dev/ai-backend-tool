@@ -269,41 +269,7 @@ export const CreateAssistantDialog = ({
               </Select>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Базы знаний (RAG)</Label>
-                <span className="text-xs text-muted-foreground">
-                  {loadingDatabases ? 'Загрузка...' : `Выбрано: ${(config.ragDatabaseIds || []).length}`}
-                </span>
-              </div>
-              {databases.length > 0 ? (
-                <div className="grid gap-2 max-h-32 overflow-y-auto p-2 bg-muted/50 rounded-md">
-                  {databases.map((db) => (
-                    <div
-                      key={db.id}
-                      className="flex items-center gap-2 p-2 rounded hover:bg-muted cursor-pointer"
-                      onClick={() => toggleDatabase(db.id)}
-                    >
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                        (config.ragDatabaseIds || []).includes(db.id) 
-                          ? 'bg-primary border-primary' 
-                          : 'border-muted-foreground'
-                      }`}>
-                        {(config.ragDatabaseIds || []).includes(db.id) && (
-                          <Icon name="Check" size={12} className="text-primary-foreground" />
-                        )}
-                      </div>
-                      <span className="text-sm flex-1">{db.name}</span>
-                      <Icon name="Database" size={14} className="text-muted-foreground" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground p-2 bg-muted/50 rounded-md">
-                  Нет доступных баз знаний. Создайте их в разделе "База данных"
-                </p>
-              )}
-            </div>
+
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">

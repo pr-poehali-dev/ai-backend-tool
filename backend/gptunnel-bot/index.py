@@ -110,7 +110,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         cursor.execute('''
             SELECT name, first_message, instructions, model, 
-                   context_length, creativity, status, api_integration_id, rag_database_ids, assistant_code, type
+                   context_length, creativity, status, api_integration_id, assistant_code, type
             FROM assistants 
             WHERE id = %s
         ''', (assistant_id,))
@@ -126,7 +126,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        assistant_name, first_message, instructions, model, context_length, creativity, status, api_integration_id, rag_database_ids, assistant_code, assistant_type = assistant
+        assistant_name, first_message, instructions, model, context_length, creativity, status, api_integration_id, assistant_code, assistant_type = assistant
         
         # Получаем или создаём chat_id для сессии с GPTunnel
         cursor.execute('''
