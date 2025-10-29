@@ -72,12 +72,12 @@ export const AssistantsTab = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead key="name">Название</TableHead>
-                  <TableHead key="id">ID</TableHead>
-                  <TableHead key="type">Тип</TableHead>
-                  <TableHead key="model">Модель</TableHead>
-                  <TableHead key="stats">Статистика</TableHead>
-                  <TableHead key="actions" className="text-right">Действия</TableHead>
+                  <TableHead>Название</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Тип</TableHead>
+                  <TableHead>Модель</TableHead>
+                  <TableHead>Статистика</TableHead>
+                  <TableHead className="text-right">Действия</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
