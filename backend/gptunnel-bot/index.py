@@ -226,6 +226,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # GPTunnel Bot API формат
         import time
         
+        # Добавляем инструкции в текст сообщения если это первое сообщение
+        message_text = message
+        if instructions and message_count == 0:
+            message_text = f"[SYSTEM INSTRUCTION]: {instructions}\n\n[USER MESSAGE]: {message}"
+        
         gptunnel_payload = {
             'event': 'CLIENT_MESSAGE',
             'id': str(uuid.uuid4()),
@@ -233,13 +238,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'client_id': user_id,
             'message': {
                 'type': 'TEXT',
-                'text': message,
+                'text': message_text,
                 'timestamp': int(time.time())
             },
             'agents_online': False
         }
         
-        print(f"[DEBUG] GPTunnel Bot API payload with chat_id: {chat_id}")
+        # Попробуем добавить RAG базы и другие параметры
+        if rag_database_ids and len(rag_database_ids) > 0:
+            gptunnel_payload['databaseIds'] = rag_database_ids
+            gptunnel_payload['database_ids'] = rag_database_ids
+        
+        if model:
+            gptunnel_payload['model'] = model
+        
+        if creativity:
+            gptunnel_payload['temperature'] = float(creativity)
+        
+        print(f"[DEBUG] GPTunnel Bot API payload with chat_id: {chat_id}, RAG: {rag_database_ids if rag_database_ids else 'None'}")
         
         print(f"[DEBUG] Sending to GPTunnel: {json.dumps(gptunnel_payload, ensure_ascii=False)[:1000]}")
         
