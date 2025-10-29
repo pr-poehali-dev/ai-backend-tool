@@ -72,12 +72,14 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
       let responseText = 'Извините, не удалось получить ответ';
       
       if (data.response) {
-        if (data.mode === 'json' && Array.isArray(data.response)) {
+        if (Array.isArray(data.response)) {
           responseText = `Найдено ${data.response.length} вариантов жилья. В реальном виджете они отобразятся в виде красивых карточек с фото и ценами.`;
         } else if (typeof data.response === 'string') {
           responseText = data.response;
+        } else if (typeof data.response === 'object') {
+          responseText = JSON.stringify(data.response, null, 2);
         } else {
-          responseText = 'Получен ответ в специальном формате';
+          responseText = String(data.response);
         }
       }
 
