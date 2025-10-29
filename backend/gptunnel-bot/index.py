@@ -460,9 +460,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         print(f"[DEBUG] External API response (first 500 chars): {json_dumps(api_data)[:500]}")
                         print(f"[DEBUG] API response keys: {list(api_data.keys()) if isinstance(api_data, dict) else 'list'}")
                         
-                        # Check response mode
+                        # Check response mode (применяется для external и Chat Completions)
                         if api_config.get('response_mode') == 'json':
-                            print(f"[DEBUG] Response mode is 'json' - returning raw JSON to frontend")
+                            print(f"[DEBUG] Response mode is 'json' - returning raw JSON to frontend (assistant_type={assistant_type})")
                             
                             # Extract results array from response if it exists
                             results = api_data.get('results', []) if isinstance(api_data, dict) else api_data
