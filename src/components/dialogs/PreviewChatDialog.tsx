@@ -18,24 +18,31 @@ interface Message {
   timestamp: Date;
 }
 
+const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
+
 export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialogProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: chat?.config.welcomeMessage || 'Здравствуйте! Чем могу помочь?',
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   if (!chat) return null;
 
   const { config } = chat;
   const isDark = config.theme === 'dark';
 
-  const sendMessage = () => {
-    if (!inputValue.trim()) return;
+  const initMessages = () => {
+    if (messages.length === 0 && chat) {
+      setMessages([{
+        id: '1',
+        text: config.welcomeMessage,
+        isUser: false,
+        timestamp: new Date(),
+      }]);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!inputValue.trim() || isSending) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -45,18 +52,46 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageText = inputValue;
     setInputValue('');
+    setIsSending(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch(GPTUNNEL_BOT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assistant_id: config.assistantId,
+          message: messageText,
+          chat_id: chat.id,
+        }),
+      });
+
+      const data = await response.json();
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Это предпросмотр чата. В реальном режиме здесь будут ответы от выбранного ассистента.',
+        text: data.response || 'Извините, не удалось получить ответ',
         isUser: false,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, botMessage]);
-    }, 1000);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: 'Ошибка соединения. Проверьте настройки ассистента.',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsSending(false);
+    }
   };
+
+  if (open) {
+    initMessages();
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -136,6 +171,15 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
                   </div>
                 </div>
               ))}
+              {isSending && (
+                <div className="flex justify-start">
+                  <div className="flex gap-1 px-4 py-2 rounded-2xl" style={{ backgroundColor: isDark ? '#2a2a2a' : '#f0f0f0' }}>
+                    <span className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: isDark ? '#666' : '#999', animationDelay: '0ms' }}></span>
+                    <span className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: isDark ? '#666' : '#999', animationDelay: '150ms' }}></span>
+                    <span className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: isDark ? '#666' : '#999', animationDelay: '300ms' }}></span>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-4 border-t" style={{ borderColor: isDark ? '#333' : '#e0e0e0' }}>
@@ -154,9 +198,14 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
                 />
                 <Button
                   onClick={sendMessage}
+                  disabled={isSending}
                   style={{ backgroundColor: config.primaryColor, color: 'white' }}
                 >
-                  <Icon name="Send" size={16} />
+                  {isSending ? (
+                    <Icon name="Loader2" size={16} className="animate-spin" />
+                  ) : (
+                    <Icon name="Send" size={16} />
+                  )}
                 </Button>
               </div>
             </div>

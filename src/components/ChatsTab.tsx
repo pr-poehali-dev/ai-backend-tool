@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { Chat } from '@/components/admin/useChatsState';
 import { useState } from 'react';
@@ -56,6 +57,23 @@ export const ChatsTab = ({
         </Button>
       </div>
 
+      {chats.length > 0 && (
+        <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <div className="flex items-start gap-3">
+            <Icon name="Info" size={20} className="text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="flex-1 text-sm">
+              <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                Как использовать чаты
+              </p>
+              <p className="text-blue-700 dark:text-blue-300">
+                Скопируйте код и вставьте перед закрывающим тегом <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded">&lt;/body&gt;</code> на вашем сайте. 
+                Используйте предпросмотр для тестирования.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {chats.length === 0 ? (
         <Card className="p-12 text-center">
           <Icon name="MessageSquare" size={48} className="mx-auto mb-4 text-muted-foreground" />
@@ -72,20 +90,29 @@ export const ChatsTab = ({
             <Card key={chat.id} className="p-4">
               <div className="grid grid-cols-[1fr,2fr,auto] gap-4 items-center">
                 <div>
-                  <h3 className="font-semibold">{chat.name}</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(chat.created_at).toLocaleDateString('ru-RU')}
-                  </p>
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <span>{chat.config.buttonIcon}</span>
+                    <span>{chat.name}</span>
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary" className="text-xs">
+                      {chat.config.theme === 'light' ? '☀️ Светлая' : chat.config.theme === 'dark' ? '🌙 Темная' : '🔄 Авто'}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(chat.created_at).toLocaleDateString('ru-RU')}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <code className="flex-1 px-3 py-2 bg-muted rounded text-xs font-mono overflow-hidden text-ellipsis whitespace-nowrap">
-                    {chat.code}
+                    {chat.code.substring(0, 100)}...
                   </code>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyCode(chat.code, chat.id)}
+                    title="Скопировать код"
                   >
                     <Icon name={copiedId === chat.id ? "Check" : "Copy"} size={14} />
                   </Button>
