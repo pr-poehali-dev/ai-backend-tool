@@ -112,11 +112,11 @@ export const AssistantsTab = ({
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1 text-xs">
-                        <div key="messages" className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                           <Icon name="MessageCircle" size={12} className="text-muted-foreground" />
                           <span>{assistant.stats?.totalMessages || 0} сообщений</span>
                         </div>
-                        <div key="users" className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                           <Icon name="Users" size={12} className="text-muted-foreground" />
                           <span>{assistant.stats?.uniqueUsers || 0} пользователей</span>
                         </div>
@@ -125,7 +125,6 @@ export const AssistantsTab = ({
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
-                          key="test"
                           variant="ghost"
                           size="sm"
                           onClick={() => onTestAssistant(assistant.id, assistant.name)}
@@ -134,7 +133,6 @@ export const AssistantsTab = ({
                           <Icon name="MessageSquare" size={16} className="text-primary" />
                         </Button>
                         <Button
-                          key="edit"
                           variant="ghost"
                           size="sm"
                           onClick={() => onEditAssistant(assistant)}
@@ -142,7 +140,6 @@ export const AssistantsTab = ({
                           <Icon name="Settings" size={16} />
                         </Button>
                         <Button
-                          key="delete"
                           variant="ghost"
                           size="sm"
                           onClick={() => onDeleteAssistant(assistant.id, assistant.name)}
