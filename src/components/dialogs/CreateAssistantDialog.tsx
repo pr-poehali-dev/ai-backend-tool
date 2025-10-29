@@ -33,6 +33,7 @@ interface CreateAssistantDialogProps {
 
 const MODELS_URL = 'https://functions.poehali.dev/74151b51-97a6-4b7e-b229-d9020587c813';
 const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4';
+const GPTUNNEL_MODELS_URL = 'https://gptunnel.ru/v1/models';
 
 const defaultConfig: AssistantConfig = {
   type: 'simple',
@@ -59,6 +60,8 @@ export const CreateAssistantDialog = ({
   });
   const [models, setModels] = useState<Array<{id: string, name: string}>>([]);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [gptunnelModels, setGptunnelModels] = useState<Array<{id: string, name: string}>>([]);
+  const [loadingGptunnelModels, setLoadingGptunnelModels] = useState(false);
   const [databases, setDatabases] = useState<Array<{id: string, name: string}>>([]);
   const [loadingDatabases, setLoadingDatabases] = useState(false);
   
@@ -75,7 +78,10 @@ export const CreateAssistantDialog = ({
     if (open && databases.length === 0) {
       fetchDatabases();
     }
-  }, [open, models.length, databases.length]);
+    if (open && config.type === 'external' && gptunnelModels.length === 0) {
+      fetchGptunnelModels();
+    }
+  }, [open, models.length, databases.length, config.type, gptunnelModels.length]);
 
   const fetchModels = async () => {
     setLoadingModels(true);
@@ -106,6 +112,21 @@ export const CreateAssistantDialog = ({
       console.error('Error fetching databases:', error);
     } finally {
       setLoadingDatabases(false);
+    }
+  };
+
+  const fetchGptunnelModels = async () => {
+    setLoadingGptunnelModels(true);
+    try {
+      const response = await fetch(GPTUNNEL_MODELS_URL);
+      const data = await response.json();
+      if (data.data) {
+        setGptunnelModels(data.data.map((m: any) => ({ id: m.id, name: m.id })));
+      }
+    } catch (error) {
+      toast.error('Ошибка загрузки моделей GPTunnel');
+    } finally {
+      setLoadingGptunnelModels(false);
     }
   };
 
@@ -177,19 +198,35 @@ export const CreateAssistantDialog = ({
             </div>
 
             {config.type === 'external' && (
-              <div className="space-y-2">
-                <Label htmlFor="assistant-code">ID ассистента (GPTunnel)</Label>
-                <Input
-                  id="assistant-code"
-                  value={config.assistantCode || ''}
-                  onChange={(e) => updateConfig('assistantCode', e.target.value)}
-                  placeholder="Введите ID ассистента из GPTunnel"
-                  className="bg-muted border-border font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Укажите код ассистента созданного в GPTunnel UI
-                </p>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="assistant-code">ID ассистента (GPTunnel)</Label>
+                  <Input
+                    id="assistant-code"
+                    value={config.assistantCode || ''}
+                    onChange={(e) => updateConfig('assistantCode', e.target.value)}
+                    placeholder="Введите ID ассистента из GPTunnel"
+                    className="bg-muted border-border font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Укажите код ассистента созданного в GPTunnel UI
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="external-model">Модель ИИ</Label>
+                  <Select value={config.model} onValueChange={(v) => updateConfig('model', v)} disabled={loadingGptunnelModels}>
+                    <SelectTrigger className="bg-muted border-border">
+                      <SelectValue placeholder={loadingGptunnelModels ? "Загрузка моделей..." : "Выберите модель"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {gptunnelModels.map((model) => (
+                        <SelectItem key={model.id} value={model.id}>{model.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
             {config.type === 'simple' && (
