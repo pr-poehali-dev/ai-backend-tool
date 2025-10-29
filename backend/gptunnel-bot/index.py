@@ -110,7 +110,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cursor = conn.cursor()
         cursor.execute('''
             SELECT name, first_message, instructions, model, 
-                   context_length, creativity, status, api_integration_id, rag_database_ids, assistant_code
+                   context_length, creativity, status, api_integration_id, rag_database_ids, assistant_code, type
             FROM assistants 
             WHERE id = %s
         ''', (assistant_id,))
@@ -126,17 +126,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        assistant_name, first_message, instructions, model, context_length, creativity, status, api_integration_id, rag_database_ids, assistant_code = assistant
-        
-        if not assistant_code:
-            cursor.close()
-            conn.close()
-            return {
-                'statusCode': 400,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json_dumps({'error': 'assistant_code not configured'}),
-                'isBase64Encoded': False
-            }
+        assistant_name, first_message, instructions, model, context_length, creativity, status, api_integration_id, rag_database_ids, assistant_code, assistant_type = assistant
         
         # Получаем или создаём chat_id для сессии с GPTunnel
         cursor.execute('''
@@ -244,48 +234,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             }]
         
-        # GPTunnel Assistant Chat API формат для RAG
+        # Выбираем эндпоинт по ТИПУ ассистента (а не по наличию RAG базы)
         import time
         
-        # Выбираем эндпоинт в зависимости от наличия RAG базы
-        has_rag_database = rag_database_ids and len(rag_database_ids) > 0
-        
-        if has_rag_database:
-            # Если есть RAG база → используем /v1/assistant/chat
-            # Этот API требует специальный формат: chatId, assistantCode, message
-            endpoint = 'https://gptunnel.ru/v1/assistant/chat'
-            
-            # Получаем assistant_code из базы
-            conn = psycopg2.connect(database_url)
-            cursor = conn.cursor()
-            cursor.execute('SELECT assistant_code FROM assistants WHERE id = %s', (assistant_id,))
-            result = cursor.fetchone()
-            cursor.close()
-            conn.close()
-            
-            assistant_code = result[0] if result and result[0] else None
-            
+        if assistant_type == 'external':
+            # Тип "external" → используем /v1/assistant/chat с assistantCode
             if not assistant_code:
-                # Если нет assistant_code - возвращаем ошибку с инструкцией
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json_dumps({
                         'error': 'assistant_code not configured',
-                        'message': 'Для использования RAG базы необходимо настроить assistant_code в GPTunnel. Создайте ассистента в GPTunnel UI и добавьте его код в настройки.'
+                        'message': 'Для внешнего ассистента необходимо указать ID ассистента из GPTunnel UI'
                     }),
                     'isBase64Encoded': False
                 }
             
+            endpoint = 'https://gptunnel.ru/v1/assistant/chat'
             payload = {
                 'chatId': chat_id,
                 'assistantCode': assistant_code,
                 'message': message
             }
-            print(f"[DEBUG] Using Assistant Chat API: chatId={chat_id}, assistantCode={assistant_code}")
-            print(f"[DEBUG] Payload for /v1/assistant/chat: {json_dumps(payload, ensure_ascii=False)}")
+            print(f"[DEBUG] Using Assistant Chat API (external): chatId={chat_id}, assistantCode={assistant_code}")
+            print(f"[DEBUG] Payload: {json_dumps(payload, ensure_ascii=False)}")
         else:
-            # Если НЕТ RAG базы → используем /v1/chat/completions
+            # Тип "simple" → используем /v1/chat/completions (даже если есть RAG база)
             endpoint = 'https://gptunnel.ru/v1/chat/completions'
             payload = {
                 'model': model or 'gpt-4o-mini',
