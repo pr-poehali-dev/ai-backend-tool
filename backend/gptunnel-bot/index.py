@@ -336,6 +336,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             response_text = api_response.get('message', 'Нет ответа')
             tool_calls = []
             print(f"[DEBUG] Extracted response from external assistant: {response_text[:200]}")
+            
+            # Пытаемся извлечь JSON из ответа external ассистента
+            if api_config and response_text:
+                import re
+                # Ищем JSON в ответе (может быть в markdown блоке или просто в тексте)
+                json_match = re.search(r'\{[^{}]*"action"[^{}]*"params"[^{}]*\}', response_text, re.DOTALL)
+                if json_match:
+                    try:
+                        parsed_json = json.loads(json_match.group(0))
+                        if parsed_json.get('action') == 'search' and 'params' in parsed_json:
+                            print(f"[DEBUG] Parsed JSON from external assistant: {json_dumps(parsed_json)}")
+                            # Создаем искусственный tool_call из распарсенного JSON
+                            tool_calls = [{
+                                'id': 'external_' + str(uuid.uuid4())[:8],
+                                'type': 'function',
+                                'function': {
+                                    'name': api_config['function_name'],
+                                    'arguments': json_dumps(parsed_json['params'])
+                                }
+                            }]
+                            print(f"[DEBUG] Created tool_call from external assistant JSON")
+                    except json.JSONDecodeError as e:
+                        print(f"[DEBUG] Failed to parse JSON from external assistant: {e}")
         # Simple Assistant API (Chat Completions) возвращает OpenAI формат с 'choices'
         elif 'choices' in api_response and len(api_response['choices']) > 0:
             message_obj = api_response['choices'][0]['message']
