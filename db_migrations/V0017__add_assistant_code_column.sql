@@ -1,0 +1,1 @@
+ALTER TABLE assistants ADD COLUMN IF NOT EXISTS assistant_code TEXT;

@@ -133,6 +133,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result = {
                 'id': new_assistant['id'],
                 'name': new_assistant['name'],
+                'type': new_assistant.get('type', 'simple'),
                 'firstMessage': new_assistant['first_message'],
                 'instructions': new_assistant['instructions'],
                 'model': new_assistant['model'],
@@ -141,6 +142,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'creativity': float(new_assistant['creativity']),
                 'voiceRecognition': new_assistant['voice_recognition'],
                 'ragDatabaseIds': new_assistant.get('rag_database_ids') or [],
+                'assistantCode': new_assistant.get('assistant_code'),
                 'status': new_assistant['status'],
                 'created_at': new_assistant['created_at'].isoformat(),
                 'stats': {
@@ -229,6 +231,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result = {
                 'id': updated['id'],
                 'name': updated['name'],
+                'type': updated.get('type', 'simple'),
                 'firstMessage': updated['first_message'],
                 'instructions': updated['instructions'],
                 'model': updated['model'],
@@ -237,6 +240,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'creativity': float(updated['creativity']),
                 'voiceRecognition': updated['voice_recognition'],
                 'ragDatabaseIds': updated.get('rag_database_ids') or [],
+                'assistantCode': updated.get('assistant_code'),
                 'status': updated['status'],
                 'created_at': updated['created_at'].isoformat(),
                 'stats': {
