@@ -332,6 +332,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f"[DEBUG] Tool call: function={function_name}, args={json_dumps(function_args)}")
                     
                     if function_name == api_config['function_name']:
+                        # Validate required parameters
+                        required_params = ['city', 'checkin', 'nights', 'guests']
+                        missing_params = [p for p in required_params if not function_args.get(p)]
+                        
+                        if missing_params:
+                            error_msg = f"Не хватает обязательных параметров: {', '.join(missing_params)}. Пожалуйста, укажите город, дату заезда, количество ночей и количество гостей."
+                            print(f"[DEBUG] Missing required params: {missing_params}")
+                            return {
+                                'statusCode': 400,
+                                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                'body': json_dumps({'error': error_msg}),
+                                'isBase64Encoded': False
+                            }
+                        
                         # Extract max_price for client-side filtering
                         max_price = function_args.pop('max_price', None)
                         
