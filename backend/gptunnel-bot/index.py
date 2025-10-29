@@ -314,11 +314,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             else:
                 # Chat Completions API возвращает стандартный OpenAI формат
                 if 'choices' in api_response and len(api_response['choices']) > 0:
-                    response_text = api_response['choices'][0]['message']['content']
+                    message_obj = api_response['choices'][0]['message']
+                    response_text = message_obj.get('content')
+                    
+                    # Если content пустой, но есть tool_calls - обработаем их
+                    if not response_text and 'tool_calls' in message_obj:
+                        response_text = 'Обрабатываю ваш запрос через API...'
+                    elif not response_text:
+                        response_text = 'Нет ответа'
                 else:
                     response_text = 'Нет ответа'
             
-            print(f"[DEBUG] Extracted response text: {response_text[:200]}")
+            print(f"[DEBUG] Extracted response text: {response_text[:200] if response_text else 'None'}")
             
             # Bot API пока не поддерживает function calling в нашей интеграции
             # TODO: добавить поддержку tool_calls через Bot API если потребуется
