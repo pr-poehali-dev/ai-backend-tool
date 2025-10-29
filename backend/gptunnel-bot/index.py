@@ -259,7 +259,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             data=request_data,
             headers={
                 'Content-Type': 'application/json',
-                'Authorization': f'Bearer {gptunnel_api_key}'
+                'Authorization': gptunnel_api_key  # Bot API использует токен напрямую, без Bearer
             },
             method='POST'
         )
@@ -268,16 +268,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             response_data = response.read().decode('utf-8')
             bot_response = json.loads(response_data)
             
-            print(f"[DEBUG] GPTunnel Bot API response: {response_data[:500]}")
+            print(f"[DEBUG] GPTunnel Bot API response: {response_data[:1000]}")
             
-            # Bot API возвращает текст напрямую в поле 'response', 'text', или в message.text
-            response_text = bot_response.get('response', '')
-            if not response_text:
-                response_text = bot_response.get('text', '')
-            if not response_text and 'message' in bot_response:
+            # Bot API возвращает BOT_MESSAGE событие с message.text
+            event_type = bot_response.get('event', '')
+            if event_type == 'BOT_MESSAGE' and 'message' in bot_response:
                 response_text = bot_response['message'].get('text', 'Нет ответа')
-            if not response_text:
-                response_text = 'Нет ответа'
+            elif 'message' in bot_response and 'text' in bot_response['message']:
+                response_text = bot_response['message']['text']
+            else:
+                # Fallback для других форматов
+                response_text = bot_response.get('response', bot_response.get('text', 'Нет ответа'))
+            
+            print(f"[DEBUG] Extracted response text: {response_text[:200]}")
             
             # Bot API пока не поддерживает function calling в нашей интеграции
             # TODO: добавить поддержку tool_calls через Bot API если потребуется
