@@ -15,7 +15,8 @@ export const useAssistantsState = () => {
     contextLength: 5,
     humanEmulation: 5,
     creativity: 0.7,
-    voiceRecognition: false
+    voiceRecognition: false,
+    ragDatabaseIds: [] as string[]
   });
   const [assistantToEdit, setAssistantToEdit] = useState<string | null>(null);
   const [deleteAssistantOpen, setDeleteAssistantOpen] = useState(false);
@@ -60,7 +61,8 @@ export const useAssistantsState = () => {
       contextLength: assistant.contextLength || 5,
       humanEmulation: assistant.humanEmulation || 5,
       creativity: assistant.creativity || 0.7,
-      voiceRecognition: assistant.voiceRecognition || false
+      voiceRecognition: assistant.voiceRecognition || false,
+      ragDatabaseIds: assistant.ragDatabaseIds || []
     };
     console.log('Setting edit config:', config);
     setEditAssistantConfig(config);

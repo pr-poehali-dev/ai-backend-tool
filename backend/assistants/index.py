@@ -215,6 +215,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'humanEmulation': updated['human_emulation'],
                 'creativity': float(updated['creativity']),
                 'voiceRecognition': updated['voice_recognition'],
+                'ragDatabaseIds': updated.get('rag_database_ids') or [],
                 'status': updated['status'],
                 'created_at': updated['created_at'].isoformat(),
                 'stats': {
