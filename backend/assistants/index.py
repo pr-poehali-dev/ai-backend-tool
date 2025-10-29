@@ -2,8 +2,15 @@ import json
 import os
 from typing import Dict, Any
 from datetime import datetime, timedelta
+from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -31,7 +38,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Database not configured'}),
+            'body': json.dumps({'error': 'Database not configured'}, cls=DecimalEncoder),
             'isBase64Encoded': False
         }
     
@@ -82,7 +89,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'isBase64Encoded': False,
-                'body': json.dumps(result)
+                'body': json.dumps(result, cls=DecimalEncoder)
             }
         
         if method == 'POST':
@@ -140,7 +147,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'isBase64Encoded': False,
-                'body': json.dumps(result)
+                'body': json.dumps(result, cls=DecimalEncoder)
             }
         
         if method == 'PUT':
@@ -151,7 +158,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Assistant ID required'}),
+                    'body': json.dumps({'error': 'Assistant ID required'}, cls=DecimalEncoder),
                     'isBase64Encoded': False
                 }
             
@@ -188,7 +195,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 404,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Assistant not found'}),
+                    'body': json.dumps({'error': 'Assistant not found'}, cls=DecimalEncoder),
                     'isBase64Encoded': False
                 }
             
@@ -229,7 +236,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'isBase64Encoded': False,
-                'body': json.dumps(result)
+                'body': json.dumps(result, cls=DecimalEncoder)
             }
         
         if method == 'DELETE':
@@ -240,7 +247,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Assistant ID required'}),
+                    'body': json.dumps({'error': 'Assistant ID required'}, cls=DecimalEncoder),
                     'isBase64Encoded': False
                 }
             
@@ -251,13 +258,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'isBase64Encoded': False,
-                'body': json.dumps({'success': True})
+                'body': json.dumps({'success': True}, cls=DecimalEncoder)
             }
         
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Method not allowed'}),
+            'body': json.dumps({'error': 'Method not allowed'}, cls=DecimalEncoder),
             'isBase64Encoded': False
         }
     
@@ -267,7 +274,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': str(e)}),
+            'body': json.dumps({'error': str(e)}, cls=DecimalEncoder),
             'isBase64Encoded': False
         }
     
