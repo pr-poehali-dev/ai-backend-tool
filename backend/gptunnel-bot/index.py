@@ -332,11 +332,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f"[DEBUG] Tool call: function={function_name}, args={json_dumps(function_args)}")
                     
                     if function_name == api_config['function_name']:
-                        # Build API URL with parameters
+                        # Extract max_price for client-side filtering
+                        max_price = function_args.pop('max_price', None)
+                        
+                        # Build API URL with parameters (without max_price)
                         search_params = urllib.parse.urlencode(function_args)
                         api_url = f"{api_config['api_base_url']}?{search_params}"
                         
                         print(f"[DEBUG] Calling external API: {api_url}")
+                        if max_price:
+                            print(f"[DEBUG] Client-side filter: max_price={max_price}")
                         
                         api_req = urllib.request.Request(api_url, headers={'Accept': 'application/json'})
                         
@@ -355,6 +360,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 results = api_data.get('results', []) if isinstance(api_data, dict) else api_data
                                 
                                 print(f"[DEBUG] Extracted results: {len(results) if isinstance(results, list) else 'not a list'}")
+                                
+                                # Filter by max_price if specified
+                                if max_price and isinstance(results, list):
+                                    results = [r for r in results if r.get('price', 0) <= max_price]
+                                    print(f"[DEBUG] After price filter (<={max_price}): {len(results)} items")
                                 
                                 # Limit to 10 items
                                 results = results[:10] if isinstance(results, list) else results
