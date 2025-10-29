@@ -296,8 +296,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             print(f"[DEBUG] GPTunnel API response: {response_data[:1000]}")
             
-            # Оба API (Chat Completions и Assistant Chat) возвращают стандартный OpenAI формат
-            if 'choices' in api_response and len(api_response['choices']) > 0:
+            # External Assistant API возвращает прямой объект с полем 'message'
+            if assistant_type == 'external' and 'message' in api_response:
+                response_text = api_response.get('message', 'Нет ответа')
+                tool_calls = []
+                print(f"[DEBUG] Extracted response from external assistant: {response_text[:200]}")
+            # Simple Assistant API (Chat Completions) возвращает OpenAI формат с 'choices'
+            elif 'choices' in api_response and len(api_response['choices']) > 0:
                 message_obj = api_response['choices'][0]['message']
                 response_text = message_obj.get('content')
                 tool_calls = message_obj.get('tool_calls', [])
@@ -307,11 +312,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     print(f"[DEBUG] Processing {len(tool_calls)} tool calls")
                 elif not response_text:
                     response_text = 'Нет ответа'
+                
+                print(f"[DEBUG] Extracted response text: {response_text[:200] if response_text else 'None'}")
             else:
                 response_text = 'Нет ответа'
                 tool_calls = []
-            
-            print(f"[DEBUG] Extracted response text: {response_text[:200] if response_text else 'None'}")
+                print(f"[DEBUG] Unknown response format: {list(api_response.keys())}")
             
             # Обработка tool_calls для вызова внешних API
             if tool_calls and api_config:
