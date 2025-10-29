@@ -285,44 +285,77 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'Authorization': f'Bearer {gptunnel_api_key}'
         }
         
-        req = urllib.request.Request(
-            endpoint,
-            data=request_data,
-            headers=headers,
-            method='POST'
-        )
+        # Retry logic for GPTunnel API calls
+        max_retries = 3
+        retry_delay = 1
+        api_response = None
+        last_error = None
         
-        with urllib.request.urlopen(req, timeout=60) as response:
-            response_data = response.read().decode('utf-8')
-            api_response = json.loads(response_data)
-            
-            print(f"[DEBUG] GPTunnel API response: {response_data[:1000]}")
-            
-            # External Assistant API возвращает прямой объект с полем 'message'
-            if assistant_type == 'external' and 'message' in api_response:
-                response_text = api_response.get('message', 'Нет ответа')
-                tool_calls = []
-                print(f"[DEBUG] Extracted response from external assistant: {response_text[:200]}")
-            # Simple Assistant API (Chat Completions) возвращает OpenAI формат с 'choices'
-            elif 'choices' in api_response and len(api_response['choices']) > 0:
-                message_obj = api_response['choices'][0]['message']
-                response_text = message_obj.get('content')
-                tool_calls = message_obj.get('tool_calls', [])
+        for attempt in range(max_retries):
+            try:
+                req = urllib.request.Request(
+                    endpoint,
+                    data=request_data,
+                    headers=headers,
+                    method='POST'
+                )
                 
-                # Если есть tool_calls - обработаем их
-                if tool_calls and api_config:
-                    print(f"[DEBUG] Processing {len(tool_calls)} tool calls")
-                elif not response_text:
-                    response_text = 'Нет ответа'
+                with urllib.request.urlopen(req, timeout=60) as response:
+                    response_data = response.read().decode('utf-8')
+                    api_response = json.loads(response_data)
+                    print(f"[DEBUG] GPTunnel API response: {response_data[:1000]}")
+                    break
+                    
+            except (urllib.error.URLError, urllib.error.HTTPError, ConnectionResetError) as e:
+                last_error = e
+                print(f"[DEBUG] GPTunnel API attempt {attempt + 1}/{max_retries} failed: {str(e)}")
                 
-                print(f"[DEBUG] Extracted response text: {response_text[:200] if response_text else 'None'}")
-            else:
-                response_text = 'Нет ответа'
-                tool_calls = []
-                print(f"[DEBUG] Unknown response format: {list(api_response.keys())}")
+                if attempt < max_retries - 1:
+                    print(f"[DEBUG] Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                else:
+                    print(f"[DEBUG] All GPTunnel API retry attempts exhausted")
+                    return {
+                        'statusCode': 503,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json_dumps({'error': f'GPTunnel API unavailable: {str(last_error)}'}),
+                        'isBase64Encoded': False
+                    }
+        
+        if api_response is None:
+            return {
+                'statusCode': 503,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json_dumps({'error': 'GPTunnel API returned no data'}),
+                'isBase64Encoded': False
+            }
+        
+        # External Assistant API возвращает прямой объект с полем 'message'
+        if assistant_type == 'external' and 'message' in api_response:
+            response_text = api_response.get('message', 'Нет ответа')
+            tool_calls = []
+            print(f"[DEBUG] Extracted response from external assistant: {response_text[:200]}")
+        # Simple Assistant API (Chat Completions) возвращает OpenAI формат с 'choices'
+        elif 'choices' in api_response and len(api_response['choices']) > 0:
+            message_obj = api_response['choices'][0]['message']
+            response_text = message_obj.get('content')
+            tool_calls = message_obj.get('tool_calls', [])
             
-            # Обработка tool_calls для вызова внешних API
+            # Если есть tool_calls - обработаем их
             if tool_calls and api_config:
+                print(f"[DEBUG] Processing {len(tool_calls)} tool calls")
+            elif not response_text:
+                response_text = 'Нет ответа'
+            
+            print(f"[DEBUG] Extracted response text: {response_text[:200] if response_text else 'None'}")
+        else:
+            response_text = 'Нет ответа'
+            tool_calls = []
+            print(f"[DEBUG] Unknown response format: {list(api_response.keys())}")
+        
+        # Обработка tool_calls для вызова внешних API
+        if tool_calls and api_config:
                 print(f"[DEBUG] tool_calls detected: {len(tool_calls)} calls")
                 print(f"[DEBUG] API config: {api_config['function_name']}, base_url={api_config['api_base_url']}, response_mode={api_config.get('response_mode')}")
                 
@@ -488,24 +521,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     print(f"[DEBUG] No valid response from second GPT call")
                                 
                                 print(f"[DEBUG] Final response after tool call: {response_text[:200]}")
-            
-            # Извлекаем метрики использования токенов
-            if assistant_type == 'external':
-                # External API возвращает usage и spendTokenCount
-                usage = api_response.get('usage', {})
-                tokens_total = api_response.get('spendTokenCount') or usage.get('total_tokens', 0)
-                tokens_prompt = usage.get('prompt_tokens', 0)
-                tokens_completion = usage.get('completion_tokens', 0)
-                model_name = api_response.get('model') or model or 'unknown'
-            else:
-                # Simple API возвращает стандартный OpenAI формат
-                usage = api_response.get('usage', {})
-                tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split() if response_text else []))
-                tokens_prompt = usage.get('prompt_tokens', len(message.split()))
-                tokens_completion = usage.get('completion_tokens', len(response_text.split() if response_text else []))
-                model_name = model or 'gpt-4o'
-            
-            try:
+        
+        # Извлекаем метрики использования токенов
+        if assistant_type == 'external':
+            # External API возвращает usage и spendTokenCount
+            usage = api_response.get('usage', {})
+            tokens_total = api_response.get('spendTokenCount') or usage.get('total_tokens', 0)
+            tokens_prompt = usage.get('prompt_tokens', 0)
+            tokens_completion = usage.get('completion_tokens', 0)
+            model_name = api_response.get('model') or model or 'unknown'
+        else:
+            # Simple API возвращает стандартный OpenAI формат
+            usage = api_response.get('usage', {})
+            tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split() if response_text else []))
+            tokens_prompt = usage.get('prompt_tokens', len(message.split()))
+            tokens_completion = usage.get('completion_tokens', len(response_text.split() if response_text else []))
+            model_name = model or 'gpt-4o'
+        
+        try:
                 conn = psycopg2.connect(database_url)
                 cursor = conn.cursor()
                 
@@ -539,15 +572,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 conn.commit()
                 cursor.close()
                 conn.close()
-            except:
-                pass
-            
-            return {
-                'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json_dumps({'response': response_text, 'mode': 'text'}),
-                'isBase64Encoded': False
-            }
+        except:
+            pass
+        
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json_dumps({'response': response_text, 'mode': 'text'}),
+            'isBase64Encoded': False
+        }
     
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
