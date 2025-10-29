@@ -234,39 +234,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             }]
         
-        # GPTunnel Bot API формат
+        # GPTunnel Assistant Chat API формат для RAG
         import time
-        
-        # Добавляем инструкции в текст сообщения если это первое сообщение
-        message_text = message
-        if instructions and message_count == 0:
-            message_text = f"[SYSTEM INSTRUCTION]: {instructions}\n\n[USER MESSAGE]: {message}"
-        
-        # Bot API использует только базовые поля - настройки модели/RAG в GPTunnel UI
-        gptunnel_payload = {
-            'event': 'CLIENT_MESSAGE',
-            'id': str(uuid.uuid4()),
-            'chat_id': chat_id,
-            'client_id': user_id,
-            'message': {
-                'type': 'TEXT',
-                'text': message_text,
-                'timestamp': int(time.time())
-            },
-            'agents_online': False
-        }
         
         # Выбираем эндпоинт и формат запроса в зависимости от наличия базы знаний
         has_rag_database = rag_database_ids and len(rag_database_ids) > 0
         
-        # ВАЖНО: Bot API не поддерживает tools/function calling
+        # ВАЖНО: Assistant Chat API не поддерживает tools/function calling
         # Если есть tools И RAG - нужно выбрать что важнее
         # Приоритет: tools > RAG (function calling важнее для поиска)
         if has_rag_database and not tools:
-            # Bot API с RAG - используем формат CLIENT_MESSAGE
-            endpoint = 'https://gptunnel.ru/api/bot'
-            payload = gptunnel_payload
-            print(f"[DEBUG] Using Bot API (with RAG): chat_id={chat_id}, databases={rag_database_ids}")
+            # Assistant Chat API с RAG - используем /v1/assistant/chat
+            endpoint = 'https://gptunnel.ru/v1/assistant/chat'
+            payload = {
+                'model': model or 'gpt-4o-mini',
+                'messages': messages,
+                'temperature': creativity if creativity is not None else 0.7,
+                'stream': False,
+                'database_ids': rag_database_ids
+            }
+            print(f"[DEBUG] Using Assistant Chat API (with RAG): model={payload['model']}, databases={rag_database_ids}")
         else:
             # Chat Completions API - используем стандартный OpenAI формат
             endpoint = 'https://gptunnel.ru/v1/chat/completions'
@@ -286,12 +273,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         request_data = json_dumps(payload).encode('utf-8')
         
-        # Формируем заголовки в зависимости от API
-        headers = {'Content-Type': 'application/json'}
-        if has_rag_database and not tools:
-            headers['Authorization'] = gptunnel_api_key  # Bot API без Bearer
-        else:
-            headers['Authorization'] = f'Bearer {gptunnel_api_key}'  # Chat Completions с Bearer
+        # Формируем заголовки - всегда используем Bearer токен
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {gptunnel_api_key}'
+        }
         
         req = urllib.request.Request(
             endpoint,
@@ -306,31 +292,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             print(f"[DEBUG] GPTunnel API response: {response_data[:1000]}")
             
-            # Обрабатываем ответ в зависимости от типа API
-            if has_rag_database and not tools:
-                # Bot API возвращает BOT_MESSAGE событие с message.text
-                event_type = api_response.get('event', '')
-                if event_type == 'BOT_MESSAGE' and 'message' in api_response:
-                    response_text = api_response['message'].get('text', 'Нет ответа')
-                elif 'message' in api_response and 'text' in api_response['message']:
-                    response_text = api_response['message']['text']
-                else:
+            # Оба API (Chat Completions и Assistant Chat) возвращают стандартный OpenAI формат
+            if 'choices' in api_response and len(api_response['choices']) > 0:
+                message_obj = api_response['choices'][0]['message']
+                response_text = message_obj.get('content')
+                tool_calls = message_obj.get('tool_calls', [])
+                
+                # Если есть tool_calls - обработаем их
+                if tool_calls and api_config:
+                    print(f"[DEBUG] Processing {len(tool_calls)} tool calls")
+                elif not response_text:
                     response_text = 'Нет ответа'
             else:
-                # Chat Completions API возвращает стандартный OpenAI формат
-                if 'choices' in api_response and len(api_response['choices']) > 0:
-                    message_obj = api_response['choices'][0]['message']
-                    response_text = message_obj.get('content')
-                    tool_calls = message_obj.get('tool_calls', [])
-                    
-                    # Если есть tool_calls - обработаем их
-                    if tool_calls and api_config:
-                        print(f"[DEBUG] Processing {len(tool_calls)} tool calls")
-                    elif not response_text:
-                        response_text = 'Нет ответа'
-                else:
-                    response_text = 'Нет ответа'
-                    tool_calls = []
+                response_text = 'Нет ответа'
+                tool_calls = []
             
             print(f"[DEBUG] Extracted response text: {response_text[:200] if response_text else 'None'}")
             
