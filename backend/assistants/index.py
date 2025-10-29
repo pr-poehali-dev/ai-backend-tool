@@ -162,6 +162,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         if method == 'PUT':
             body_data = json.loads(event.get('body', '{}'))
+            print(f"[DEBUG] PUT request body_data: {body_data}")
             assistant_id = body_data.get('id')
             
             if not assistant_id:
@@ -174,6 +175,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             assistant_type = body_data.get('type', 'simple')
             assistant_code = body_data.get('assistantCode') if assistant_type == 'external' else None
+            
+            creativity_value = body_data.get('creativity')
+            print(f"[DEBUG] Updating creativity to: {creativity_value} (type: {type(creativity_value)})")
             
             cursor.execute('''
                 UPDATE assistants
@@ -199,7 +203,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 body_data.get('model'),
                 body_data.get('contextLength'),
                 body_data.get('humanEmulation'),
-                body_data.get('creativity'),
+                creativity_value,
                 body_data.get('voiceRecognition'),
                 body_data.get('ragDatabaseIds', []),
                 assistant_code,
