@@ -15,8 +15,9 @@ class DecimalEncoder(json.JSONEncoder):
             return float(obj)
         return super(DecimalEncoder, self).default(obj)
 
-def json_dumps(data):
-    return json.dumps(data, cls=DecimalEncoder)
+def json_dumps(data, **kwargs):
+    kwargs['cls'] = DecimalEncoder
+    return json.dumps(data, **kwargs)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
