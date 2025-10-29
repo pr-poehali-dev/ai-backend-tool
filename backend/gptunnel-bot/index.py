@@ -242,19 +242,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         if has_rag_database:
             # Если есть RAG база → используем /v1/assistant/chat
+            # Этот API требует специальный формат: chatId, assistantCode, message
             endpoint = 'https://gptunnel.ru/v1/assistant/chat'
+            
+            # Получаем assistant_code из базы (или используем assistant_id как fallback)
+            conn = psycopg2.connect(database_url)
+            cursor = conn.cursor()
+            cursor.execute('SELECT assistant_code FROM assistants WHERE id = %s', (assistant_id,))
+            result = cursor.fetchone()
+            assistant_code = result[0] if result and result[0] else assistant_id
+            cursor.close()
+            conn.close()
+            
             payload = {
-                'model': model or 'gpt-4o-mini',
-                'messages': messages,
-                'temperature': creativity if creativity is not None else 0.7,
-                'stream': False,
-                'database_ids': rag_database_ids
+                'chatId': chat_id,
+                'assistantCode': assistant_code,
+                'message': message
             }
-            if tools:
-                payload['tools'] = tools
-                print(f"[DEBUG] Using Assistant Chat API with RAG and tools: model={payload['model']}, databases={rag_database_ids}")
-            else:
-                print(f"[DEBUG] Using Assistant Chat API with RAG: model={payload['model']}, databases={rag_database_ids}")
+            print(f"[DEBUG] Using Assistant Chat API with RAG: chatId={chat_id}, assistantCode={assistant_code}, databases={rag_database_ids}")
         else:
             # Если НЕТ RAG базы → используем /v1/chat/completions
             endpoint = 'https://gptunnel.ru/v1/chat/completions'
