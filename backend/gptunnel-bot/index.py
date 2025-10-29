@@ -435,6 +435,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     except urllib.error.HTTPError as e:
         error_body = e.read().decode('utf-8')
+        print(f"[ERROR] GPTunnel API returned {e.code}: {error_body[:500]}")
         try:
             error_data = json.loads(error_body)
             error_obj = error_data.get('error', str(e))
@@ -449,7 +450,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': e.code,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': error_message}),
+            'body': json.dumps({'error': error_message, 'details': error_body[:500]}),
             'isBase64Encoded': False
         }
     
