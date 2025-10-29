@@ -83,16 +83,16 @@ export const AssistantsTab = ({
               <TableBody>
                 {assistants.map((assistant) => (
                   <TableRow key={assistant.id}>
-                    <TableCell key={`${assistant.id}-name`} className="font-medium">
+                    <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
                         <Icon name="Bot" size={16} className="text-primary" />
                         {assistant.name}
                       </div>
                     </TableCell>
-                    <TableCell key={`${assistant.id}-id`}>
+                    <TableCell>
                       <code className="text-xs bg-muted px-2 py-1 rounded">{assistant.id}</code>
                     </TableCell>
-                    <TableCell key={`${assistant.id}-type`}>
+                    <TableCell>
                       {assistant.type === 'simple' ? (
                         <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-600">
                           <Icon name="Settings" size={12} className="mr-1" />
@@ -105,12 +105,12 @@ export const AssistantsTab = ({
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell key={`${assistant.id}-model`}>
+                    <TableCell>
                       <Badge variant="outline" className="bg-secondary/10 border-secondary/30">
                         {assistant.model}
                       </Badge>
                     </TableCell>
-                    <TableCell key={`${assistant.id}-stats`}>
+                    <TableCell>
                       <div className="flex flex-col gap-1 text-xs">
                         <div className="flex items-center gap-2">
                           <Icon name="MessageCircle" size={12} className="text-muted-foreground" />
@@ -122,7 +122,7 @@ export const AssistantsTab = ({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell key={`${assistant.id}-actions`} className="text-right">
+                    <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
