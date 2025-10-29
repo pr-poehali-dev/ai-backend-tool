@@ -38,6 +38,7 @@ export const useAssistantsState = () => {
 
   const createAssistant = async (config: any) => {
     try {
+      console.log('[createAssistant] Sending config:', config);
       const response = await fetch(ASSISTANTS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -77,13 +78,15 @@ export const useAssistantsState = () => {
     if (!assistantToEdit) return;
     
     try {
+      const payload = {
+        id: assistantToEdit,
+        ...editAssistantConfig
+      };
+      console.log('[updateAssistant] Sending payload:', payload);
       const response = await fetch(ASSISTANTS_URL, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: assistantToEdit,
-          ...editAssistantConfig
-        })
+        body: JSON.stringify(payload)
       });
       const updatedAssistant = await response.json();
       setAssistants(assistants.map(a => a.id === assistantToEdit ? updatedAssistant : a));
