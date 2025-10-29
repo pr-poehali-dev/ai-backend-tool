@@ -223,32 +223,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             }]
         
+        # GPTunnel Bot API формат
+        import time
+        
         gptunnel_payload = {
-            'model': model or 'gpt-4o',
-            'messages': messages,
-            'temperature': float(creativity) if creativity else 0.7
+            'event': 'CLIENT_MESSAGE',
+            'id': str(uuid.uuid4()),
+            'chat_id': chat_id,
+            'client_id': user_id,
+            'message': {
+                'type': 'TEXT',
+                'text': message,
+                'timestamp': int(time.time())
+            },
+            'agents_online': False
         }
         
-        # Пробуем разные варианты передачи RAG баз в Chat Completions API
-        # GPTunnel может поддерживать: databaseIds, database_ids, databases, rag_databases
-        if rag_database_ids and len(rag_database_ids) > 0:
-            # Попробуем все возможные варианты параметра
-            gptunnel_payload['databaseIds'] = rag_database_ids
-            gptunnel_payload['database_ids'] = rag_database_ids
-            gptunnel_payload['databases'] = rag_database_ids
-        
-        print(f"[DEBUG] Chat Completions API with RAG attempt: {rag_database_ids if rag_database_ids else 'None'}")
-        
-        if tools:
-            gptunnel_payload['tools'] = tools
-            gptunnel_payload['tool_choice'] = 'auto'
+        print(f"[DEBUG] GPTunnel Bot API payload with chat_id: {chat_id}")
         
         print(f"[DEBUG] Sending to GPTunnel: {json.dumps(gptunnel_payload, ensure_ascii=False)[:1000]}")
         
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
         
-        # Используем только Chat Completions API (Assistant API требует assistantCode из GPTunnel)
-        endpoint = 'https://gptunnel.ru/v1/chat/completions'
+        # Используем GPTunnel Bot API
+        endpoint = 'https://gptunnel.ru/api/bot'
         
         req = urllib.request.Request(
             endpoint,
@@ -264,11 +262,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             response_data = response.read().decode('utf-8')
             bot_response = json.loads(response_data)
             
-            message_obj = bot_response.get('choices', [{}])[0].get('message', {})
-            tool_calls = message_obj.get('tool_calls', [])
+            print(f"[DEBUG] GPTunnel Bot API response: {response_data[:500]}")
             
-            # If model wants to call function
-            if tool_calls and api_config:
+            # Bot API возвращает текст напрямую в поле 'response', 'text', или в message.text
+            response_text = bot_response.get('response', '')
+            if not response_text:
+                response_text = bot_response.get('text', '')
+            if not response_text and 'message' in bot_response:
+                response_text = bot_response['message'].get('text', 'Нет ответа')
+            if not response_text:
+                response_text = 'Нет ответа'
+            
+            # Bot API пока не поддерживает function calling в нашей интеграции
+            # TODO: добавить поддержку tool_calls через Bot API если потребуется
+            if False and api_config:
                 for tool_call in tool_calls:
                     function_name = tool_call.get('function', {}).get('name')
                     function_args = json.loads(tool_call.get('function', {}).get('arguments', '{}'))
@@ -339,13 +346,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     second_response_data = second_response.read().decode('utf-8')
                                     bot_response = json.loads(second_response_data)
             
-            response_text = bot_response.get('choices', [{}])[0].get('message', {}).get('content', 'Нет ответа')
-            
+            # Для Bot API нет usage метрики от GPTunnel, примерно считаем
             usage = bot_response.get('usage', {})
             tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split()))
             tokens_prompt = usage.get('prompt_tokens', len(message.split()))
             tokens_completion = usage.get('completion_tokens', len(response_text.split()))
-            model = gptunnel_payload.get('model', 'gpt-4o-mini')
+            model_name = model or 'gpt-4o'
             
             try:
                 conn = psycopg2.connect(database_url)
@@ -366,7 +372,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         total_prompt_tokens = usage_stats.total_prompt_tokens + EXCLUDED.total_prompt_tokens,
                         total_completion_tokens = usage_stats.total_completion_tokens + EXCLUDED.total_completion_tokens,
                         updated_at = CURRENT_TIMESTAMP
-                ''', ('/gptunnel-bot', model, tokens_total, tokens_prompt, tokens_completion))
+                ''', ('/gptunnel-bot', model_name, tokens_total, tokens_prompt, tokens_completion))
                 
                 cursor.execute('''
                     INSERT INTO messages (assistant_id, user_id, role, content, tokens_used)
