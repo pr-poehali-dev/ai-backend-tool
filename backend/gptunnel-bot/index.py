@@ -1,10 +1,12 @@
 import json
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import urllib.request
 import urllib.parse
 import urllib.error
 import psycopg2
+import uuid
+from datetime import datetime
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -115,6 +117,50 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         assistant_name, first_message, instructions, model, context_length, creativity, status, api_integration_id, rag_database_ids = assistant
         
+        # Получаем или создаём chat_id для сессии с GPTunnel
+        cursor.execute('''
+            SELECT chat_id, message_count FROM chat_sessions
+            WHERE assistant_id = %s AND user_id = %s
+        ''', (assistant_id, user_id))
+        session = cursor.fetchone()
+        
+        chat_id: Optional[str] = None
+        message_count = 0
+        
+        if session:
+            chat_id = session[0]
+            message_count = session[1]
+            
+            # Если достигнут лимит сообщений (context_length * 2 для пары запрос-ответ)
+            # или прошло больше 20 сообщений (лимит GPTunnel), создаём новую сессию
+            if message_count >= min(context_length * 2, 20):
+                chat_id = str(uuid.uuid4())
+                message_count = 0
+                cursor.execute('''
+                    UPDATE chat_sessions 
+                    SET chat_id = %s, message_count = 0, updated_at = CURRENT_TIMESTAMP
+                    WHERE assistant_id = %s AND user_id = %s
+                ''', (chat_id, assistant_id, user_id))
+                conn.commit()
+                print(f"[DEBUG] Created new chat session: {chat_id}")
+            else:
+                # Обновляем счётчик сообщений
+                cursor.execute('''
+                    UPDATE chat_sessions 
+                    SET message_count = message_count + 2, updated_at = CURRENT_TIMESTAMP
+                    WHERE assistant_id = %s AND user_id = %s
+                ''', (assistant_id, user_id))
+                conn.commit()
+        else:
+            # Создаём новую сессию
+            chat_id = str(uuid.uuid4())
+            cursor.execute('''
+                INSERT INTO chat_sessions (id, assistant_id, user_id, chat_id, message_count)
+                VALUES (%s, %s, %s, %s, 2)
+            ''', (str(uuid.uuid4()), assistant_id, user_id, chat_id))
+            conn.commit()
+            print(f"[DEBUG] Created first chat session: {chat_id}")
+        
         # Load API integration config if exists
         api_config = None
         if api_integration_id:
@@ -188,8 +234,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         if use_assistant_api:
             gptunnel_payload['databaseIds'] = rag_database_ids
+            # Добавляем chat_id для сохранения контекста в GPTunnel
+            if chat_id:
+                gptunnel_payload['chat_id'] = chat_id
         
-        print(f"[DEBUG] Using {'Assistant' if use_assistant_api else 'Chat Completions'} API, RAG: {rag_database_ids if rag_database_ids else 'None'}")
+        print(f"[DEBUG] Using {'Assistant' if use_assistant_api else 'Chat Completions'} API, RAG: {rag_database_ids if rag_database_ids else 'None'}, chat_id: {chat_id if use_assistant_api else 'N/A'}")
         
         if tools:
             gptunnel_payload['tools'] = tools
@@ -268,6 +317,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     'messages': messages,
                                     'temperature': float(creativity) if creativity else 0.7
                                 }
+                                
+                                # Добавляем databaseIds и chat_id для второго запроса если используем Assistant API
+                                if use_assistant_api:
+                                    second_payload['databaseIds'] = rag_database_ids
+                                    if chat_id:
+                                        second_payload['chat_id'] = chat_id
                                 
                                 second_request_data = json.dumps(second_payload).encode('utf-8')
                                 # Для второго запроса используем тот же endpoint
