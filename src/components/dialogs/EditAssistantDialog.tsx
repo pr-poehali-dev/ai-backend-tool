@@ -117,6 +117,46 @@ export const EditAssistantDialog = ({
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-6 py-4">
             <div className="space-y-2">
+              <Label>Тип ассистента</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => updateConfig('type', 'simple')}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    config.type === 'simple'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-muted hover:border-primary/50'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Icon name="Bot" size={24} className={config.type === 'simple' ? 'text-primary' : 'text-muted-foreground'} />
+                    <div className="text-sm font-medium">GPTunnel AI</div>
+                    <div className="text-xs text-muted-foreground text-center">
+                      Создайте своего ИИ-ассистента
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateConfig('type', 'external')}
+                  className={`p-4 rounded-lg border-2 transition-all ${
+                    config.type === 'external'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border bg-muted hover:border-primary/50'
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Icon name="Link" size={24} className={config.type === 'external' ? 'text-primary' : 'text-muted-foreground'} />
+                    <div className="text-sm font-medium">Внешний ассистент</div>
+                    <div className="text-xs text-muted-foreground text-center">
+                      Используйте готового ассистента
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="edit-assistant-name">Название ассистента</Label>
               <Input
                 id="edit-assistant-name"
@@ -127,6 +167,24 @@ export const EditAssistantDialog = ({
               />
             </div>
 
+            {config.type === 'external' && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-assistant-code">ID внешнего ассистента</Label>
+                <Input
+                  id="edit-assistant-code"
+                  value={config.assistantCode || ''}
+                  onChange={(e) => updateConfig('assistantCode', e.target.value)}
+                  placeholder="Введите ID ассистента из GPTunnel"
+                  className="bg-muted border-border font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Укажите код ассистента созданного в GPTunnel UI
+                </p>
+              </div>
+            )}
+
+            {config.type === 'simple' && (
+              <>
             <div className="space-y-2">
               <Label htmlFor="edit-first-message">Первое сообщение</Label>
               <Textarea
@@ -266,6 +324,8 @@ export const EditAssistantDialog = ({
                 onCheckedChange={(v) => updateConfig('voiceRecognition', v)}
               />
             </div>
+              </>
+            )}
           </div>
         </ScrollArea>
 

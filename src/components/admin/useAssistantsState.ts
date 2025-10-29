@@ -8,6 +8,7 @@ export const useAssistantsState = () => {
   const [createAssistantOpen, setCreateAssistantOpen] = useState(false);
   const [editAssistantOpen, setEditAssistantOpen] = useState(false);
   const [editAssistantConfig, setEditAssistantConfig] = useState({
+    type: 'simple' as 'simple' | 'external',
     name: '',
     firstMessage: '',
     instructions: '',
@@ -16,7 +17,8 @@ export const useAssistantsState = () => {
     humanEmulation: 5,
     creativity: 0.7,
     voiceRecognition: false,
-    ragDatabaseIds: [] as string[]
+    ragDatabaseIds: [] as string[],
+    assistantCode: ''
   });
   const [assistantToEdit, setAssistantToEdit] = useState<string | null>(null);
   const [deleteAssistantOpen, setDeleteAssistantOpen] = useState(false);
@@ -54,6 +56,7 @@ export const useAssistantsState = () => {
     console.log('Opening edit for assistant:', assistant);
     setAssistantToEdit(assistant.id);
     const config = {
+      type: assistant.type || 'simple',
       name: assistant.name || '',
       firstMessage: assistant.firstMessage || '',
       instructions: assistant.instructions || '',
@@ -62,7 +65,8 @@ export const useAssistantsState = () => {
       humanEmulation: assistant.humanEmulation || 5,
       creativity: assistant.creativity || 0.7,
       voiceRecognition: assistant.voiceRecognition || false,
-      ragDatabaseIds: assistant.ragDatabaseIds || []
+      ragDatabaseIds: assistant.ragDatabaseIds || [],
+      assistantCode: assistant.assistantCode || ''
     };
     console.log('Setting edit config:', config);
     setEditAssistantConfig(config);
