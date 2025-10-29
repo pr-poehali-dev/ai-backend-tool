@@ -116,7 +116,7 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
               style={{ backgroundColor: config.primaryColor }}
             >
               <span>{config.buttonIcon}</span>
-              <span>{config.buttonText}</span>
+              <span>{chat.name}</span>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
