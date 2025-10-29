@@ -254,9 +254,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             payload = {
                 'chatId': chat_id,
                 'assistantCode': assistant_code,
-                'message': message
+                'message': message,
+                'maxContext': context_length * 2 if context_length else 10
             }
-            print(f"[DEBUG] Using Assistant Chat API (external): chatId={chat_id}, assistantCode={assistant_code}")
+            print(f"[DEBUG] Using Assistant Chat API (external): chatId={chat_id}, assistantCode={assistant_code}, maxContext={payload['maxContext']}")
             print(f"[DEBUG] Payload: {json_dumps(payload, ensure_ascii=False)}")
         else:
             # Тип "simple" → используем /v1/chat/completions (даже если есть RAG база)
@@ -399,12 +400,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     
                                     print(f"[DEBUG] Final response after tool call: {response_text[:200]}")
             
-            # Для Bot API нет usage метрики от GPTunnel, примерно считаем
-            usage = api_response.get('usage', {})
-            tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split() if response_text else []))
-            tokens_prompt = usage.get('prompt_tokens', len(message.split()))
-            tokens_completion = usage.get('completion_tokens', len(response_text.split() if response_text else []))
-            model_name = model or 'gpt-4o'
+            # Извлекаем метрики использования токенов
+            if assistant_type == 'external':
+                # External API возвращает usage и spendTokenCount
+                usage = api_response.get('usage', {})
+                tokens_total = api_response.get('spendTokenCount') or usage.get('total_tokens', 0)
+                tokens_prompt = usage.get('prompt_tokens', 0)
+                tokens_completion = usage.get('completion_tokens', 0)
+                model_name = api_response.get('model') or model or 'unknown'
+            else:
+                # Simple API возвращает стандартный OpenAI формат
+                usage = api_response.get('usage', {})
+                tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split() if response_text else []))
+                tokens_prompt = usage.get('prompt_tokens', len(message.split()))
+                tokens_completion = usage.get('completion_tokens', len(response_text.split() if response_text else []))
+                model_name = model or 'gpt-4o'
             
             try:
                 conn = psycopg2.connect(database_url)
