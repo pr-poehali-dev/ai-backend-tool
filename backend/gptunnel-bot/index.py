@@ -245,14 +245,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'agents_online': False
         }
         
-        print(f"[DEBUG] Bot API request (RAG настраивается в GPTunnel UI): chat_id={chat_id}")
+        # Выбираем эндпоинт и формат запроса в зависимости от наличия базы знаний
+        has_rag_database = rag_database_ids and len(rag_database_ids) > 0
         
-        print(f"[DEBUG] Sending to GPTunnel: {json.dumps(gptunnel_payload, ensure_ascii=False)[:1000]}")
+        if has_rag_database:
+            # Bot API с RAG - используем формат CLIENT_MESSAGE
+            endpoint = 'https://gptunnel.ru/api/bot'
+            payload = gptunnel_payload
+            print(f"[DEBUG] Using Bot API (with RAG): chat_id={chat_id}, databases={rag_database_ids}")
+        else:
+            # Chat Completions API - используем стандартный OpenAI формат
+            endpoint = 'https://gptunnel.ru/v1/chat/completions'
+            payload = {
+                'model': model or 'gpt-4o-mini',
+                'messages': messages,
+                'temperature': creativity if creativity is not None else 0.7,
+                'stream': False
+            }
+            if tools:
+                payload['tools'] = tools
+            print(f"[DEBUG] Using Chat Completions API (no RAG): model={payload['model']}")
         
-        request_data = json.dumps(gptunnel_payload).encode('utf-8')
+        print(f"[DEBUG] Sending to GPTunnel: {json.dumps(payload, ensure_ascii=False)[:1000]}")
         
-        # Используем GPTunnel Bot API
-        endpoint = 'https://gptunnel.ru/api/bot'
+        request_data = json.dumps(payload).encode('utf-8')
         
         req = urllib.request.Request(
             endpoint,
