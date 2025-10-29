@@ -519,6 +519,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                             result['bookingUrl'] = f"https://qqrenta.ru/hotels/{obj_id}?{url_params}"
                                         else:
                                             result['bookingUrl'] = f"https://qqrenta.ru/rooms/{obj_id}?{url_params}"
+                                        print(f"[DEBUG] Added bookingUrl for {obj_id}: {result['bookingUrl']}")
                             
                             print(f"[DEBUG] Returning to frontend: {len(results) if isinstance(results, list) else 1} items")
                             

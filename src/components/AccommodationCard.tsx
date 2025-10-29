@@ -36,6 +36,9 @@ interface AccommodationCardProps {
 
 export const AccommodationCard = ({ item }: AccommodationCardProps) => {
   const getBookingUrl = (id: string | number) => {
+    console.log('[AccommodationCard] item.bookingUrl:', item.bookingUrl);
+    console.log('[AccommodationCard] item.id:', item.id);
+    
     // Если есть готовая ссылка из API - используем её
     if (item.bookingUrl) {
       return item.bookingUrl;
