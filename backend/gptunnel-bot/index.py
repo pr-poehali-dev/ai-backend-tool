@@ -401,10 +401,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     bot_response = json.loads(second_response_data)
             
             # Для Bot API нет usage метрики от GPTunnel, примерно считаем
-            usage = bot_response.get('usage', {})
-            tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split()))
+            usage = api_response.get('usage', {})
+            tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split() if response_text else []))
             tokens_prompt = usage.get('prompt_tokens', len(message.split()))
-            tokens_completion = usage.get('completion_tokens', len(response_text.split()))
+            tokens_completion = usage.get('completion_tokens', len(response_text.split() if response_text else []))
             model_name = model or 'gpt-4o'
             
             try:
