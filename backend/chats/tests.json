@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "Get all chats",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "type"
+    },
+    {
+      "name": "Create chat",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "id": "test_chat_123",
+        "name": "Test Chat",
+        "config": {
+          "position": "bottom-right",
+          "theme": "light",
+          "primaryColor": "#3B82F6"
+        },
+        "code": "<script>test</script>"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "id": "string",
+        "name": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
