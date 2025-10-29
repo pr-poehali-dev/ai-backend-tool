@@ -348,7 +348,11 @@ export const CreateAssistantDialog = ({
           </Button>
           <Button 
             onClick={handleConfirm}
-            disabled={!config.name?.trim() || !config.model}
+            disabled={
+              !config.name?.trim() || 
+              (config.type === 'simple' && !config.model) ||
+              (config.type === 'external' && !config.assistantCode?.trim())
+            }
             className="bg-primary hover:bg-primary/90"
           >
             <Icon name="Check" size={16} className="mr-2" />
