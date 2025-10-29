@@ -260,7 +260,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         has_rag_database = rag_database_ids and len(rag_database_ids) > 0
         
         # ВАЖНО: Bot API не поддерживает tools/function calling
-        # Если есть tools - используем Chat Completions API даже с RAG
+        # Если есть tools И RAG - нужно выбрать что важнее
+        # Приоритет: tools > RAG (function calling важнее для поиска)
         if has_rag_database and not tools:
             # Bot API с RAG - используем формат CLIENT_MESSAGE
             endpoint = 'https://gptunnel.ru/api/bot'
@@ -277,12 +278,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
             if tools:
                 payload['tools'] = tools
-            # Добавляем RAG базы если они есть (Chat Completions тоже поддерживает RAG)
-            if has_rag_database:
-                payload['database_ids'] = rag_database_ids
-                print(f"[DEBUG] Using Chat Completions API with RAG and tools: model={payload['model']}, databases={rag_database_ids}")
+                print(f"[DEBUG] Using Chat Completions API with tools (RAG disabled): model={payload['model']}")
             else:
-                print(f"[DEBUG] Using Chat Completions API (no RAG): model={payload['model']}")
+                print(f"[DEBUG] Using Chat Completions API (no RAG, no tools): model={payload['model']}")
         
         print(f"[DEBUG] Sending to GPTunnel: {json_dumps(payload, ensure_ascii=False)[:1000]}")
         
