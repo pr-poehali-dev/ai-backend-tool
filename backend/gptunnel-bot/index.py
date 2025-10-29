@@ -255,7 +255,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'chatId': chat_id,
                 'assistantCode': assistant_code,
                 'message': message,
-                'maxContext': context_length * 2 if context_length else 10
+                'maxContext': context_length if context_length else 10
             }
             print(f"[DEBUG] Using Assistant Chat API (external): chatId={chat_id}, assistantCode={assistant_code}, maxContext={payload['maxContext']}")
             print(f"[DEBUG] Payload: {json_dumps(payload, ensure_ascii=False)}")

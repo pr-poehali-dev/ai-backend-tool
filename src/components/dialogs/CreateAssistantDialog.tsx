@@ -228,6 +228,24 @@ export const CreateAssistantDialog = ({
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Длина контекста</Label>
+                    <span className="text-sm text-muted-foreground">{config.contextLength}</span>
+                  </div>
+                  <Slider
+                    value={[config.contextLength]}
+                    onValueChange={(v) => updateConfig('contextLength', v[0])}
+                    min={1}
+                    max={20}
+                    step={1}
+                    className="py-4"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Количество предыдущих сообщений, которые помнит ассистент
+                  </p>
+                </div>
               </>
             )}
 
