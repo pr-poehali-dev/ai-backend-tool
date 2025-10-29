@@ -42,19 +42,19 @@ export const useChatsState = () => {
   const loadChats = async () => {
     setIsLoading(true);
     try {
-      const stored = localStorage.getItem('chats');
-      if (stored) {
-        setChats(JSON.parse(stored));
-      }
+      const response = await fetch('https://functions.poehali.dev/533d0cc9-ea8a-4dc2-94a2-6f0b0850b815');
+      if (!response.ok) throw new Error('Failed to load chats');
+      const data = await response.json();
+      setChats(data);
     } catch (error) {
       console.error('Failed to load chats:', error);
+      toast.error('Не удалось загрузить чаты');
     } finally {
       setIsLoading(false);
     }
   };
 
   const saveChats = (newChats: Chat[]) => {
-    localStorage.setItem('chats', JSON.stringify(newChats));
     setChats(newChats);
   };
 
@@ -213,38 +213,80 @@ ${config.autoOpen ? `setTimeout(function(){win.classList.add('open');input.focus
     const chatId = `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const code = generateEmbedCode(chatId, config);
     
-    const newChat: Chat = {
+    const newChat = {
       id: chatId,
       name,
       config,
       code,
-      created_at: new Date().toISOString(),
     };
     
-    const newChats = [...chats, newChat];
-    saveChats(newChats);
-    toast.success('Чат создан успешно!');
-    return newChat;
+    try {
+      const response = await fetch('https://functions.poehali.dev/533d0cc9-ea8a-4dc2-94a2-6f0b0850b815', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newChat),
+      });
+      
+      if (!response.ok) throw new Error('Failed to create chat');
+      const data = await response.json();
+      
+      await loadChats();
+      toast.success('Чат создан успешно!');
+      return data;
+    } catch (error) {
+      console.error('Failed to create chat:', error);
+      toast.error('Не удалось создать чат');
+      throw error;
+    }
   };
 
   const updateChat = async (id: string, name: string, config: ChatConfig) => {
     const code = generateEmbedCode(id, config);
     
-    const newChats = chats.map(chat => 
-      chat.id === id 
-        ? { ...chat, name, config, code }
-        : chat
-    );
+    const updatedChat = {
+      id,
+      name,
+      config,
+      code,
+    };
     
-    saveChats(newChats);
-    toast.success('Чат обновлён успешно!');
-    return newChats.find(c => c.id === id)!;
+    try {
+      const response = await fetch('https://functions.poehali.dev/533d0cc9-ea8a-4dc2-94a2-6f0b0850b815', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedChat),
+      });
+      
+      if (!response.ok) throw new Error('Failed to update chat');
+      const data = await response.json();
+      
+      await loadChats();
+      toast.success('Чат обновлён успешно!');
+      return data;
+    } catch (error) {
+      console.error('Failed to update chat:', error);
+      toast.error('Не удалось обновить чат');
+      throw error;
+    }
   };
 
   const deleteChat = async (id: string) => {
-    const newChats = chats.filter(chat => chat.id !== id);
-    saveChats(newChats);
-    toast.success('Чат удалён');
+    try {
+      const response = await fetch('https://functions.poehali.dev/533d0cc9-ea8a-4dc2-94a2-6f0b0850b815', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete chat');
+      
+      await loadChats();
+      toast.success('Чат удалён');
+    } catch (error) {
+      console.error('Failed to delete chat:', error);
+      toast.error('Не удалось удалить чат');
+      throw error;
+    }
   };
 
   return {
