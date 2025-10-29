@@ -43,7 +43,7 @@ const Index = () => {
   const monitoringState = useMonitoringState();
   const usageState = useUsageState();
   const databaseState = useDatabaseState();
-  const { balance, isLoading: isBalanceLoading } = useBalance();
+  const { balance, isLoading: isBalanceLoading, refetch: refetchBalance } = useBalance();
 
   useEffect(() => {
     if (activeTab === 'keys' && apiKeysState.apiKeys.length === 0) {
@@ -89,17 +89,27 @@ const Index = () => {
             <h1 className="text-3xl font-bold">GPTunnel Admin</h1>
             <p className="text-muted-foreground">Управление API ключами и ассистентами</p>
           </div>
-          <div className="text-right">
-            <h2 className="text-3xl font-bold">
-              {isBalanceLoading ? (
-                <span className="text-muted-foreground">...</span>
-              ) : balance !== null ? (
-                `${balance.toFixed(2)} ₽`
-              ) : (
-                <span className="text-muted-foreground">—</span>
-              )}
-            </h2>
-            <p className="text-muted-foreground">Баланс</p>
+          <div className="text-right flex items-start gap-3">
+            <div>
+              <h2 className="text-3xl font-bold">
+                {isBalanceLoading ? (
+                  <span className="text-muted-foreground">...</span>
+                ) : balance !== null ? (
+                  `${balance.toFixed(2)} ₽`
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </h2>
+              <p className="text-muted-foreground">Баланс</p>
+            </div>
+            <button
+              onClick={refetchBalance}
+              disabled={isBalanceLoading}
+              className="mt-1 p-1.5 rounded-md hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Обновить баланс"
+            >
+              <Icon name="RefreshCw" size={18} className={isBalanceLoading ? 'animate-spin' : ''} />
+            </button>
           </div>
         </div>
 
