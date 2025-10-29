@@ -249,7 +249,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
         
         # Выбираем endpoint в зависимости от наличия RAG баз
-        endpoint = 'https://gptunnel.ru/api/assistant/chat' if use_assistant_api else 'https://gptunnel.ru/v1/chat/completions'
+        endpoint = 'https://gptunnel.ru/v1/assistant/chat' if use_assistant_api else 'https://gptunnel.ru/v1/chat/completions'
         
         req = urllib.request.Request(
             endpoint,
