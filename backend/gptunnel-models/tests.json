@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Get GPTunnel models",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "data": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

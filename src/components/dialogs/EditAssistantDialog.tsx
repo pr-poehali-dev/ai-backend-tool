@@ -35,7 +35,7 @@ interface EditAssistantDialogProps {
 
 const MODELS_URL = 'https://functions.poehali.dev/74151b51-97a6-4b7e-b229-d9020587c813';
 const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4';
-const GPTUNNEL_MODELS_URL = 'https://gptunnel.ru/v1/models';
+const GPTUNNEL_MODELS_URL = 'https://functions.poehali.dev/8658254a-114c-4d9a-a2ec-afd076cbe85b';
 
 export const EditAssistantDialog = ({ 
   open, 
