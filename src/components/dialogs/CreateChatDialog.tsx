@@ -81,18 +81,32 @@ export const CreateChatDialog = ({ open, onOpenChange, onSubmit, assistants }: C
 
           <div className="space-y-2">
             <Label htmlFor="assistant">Ассистент *</Label>
-            <Select value={config.assistantId} onValueChange={(value) => updateConfig({ assistantId: value })}>
-              <SelectTrigger id="assistant">
-                <SelectValue placeholder="Выберите ассистента" />
-              </SelectTrigger>
-              <SelectContent>
-                {assistants.map((assistant) => (
-                  <SelectItem key={assistant.id} value={assistant.id}>
-                    {assistant.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {assistants.length === 0 ? (
+              <div className="p-4 border border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800 rounded-md">
+                <div className="flex items-start gap-2">
+                  <Icon name="AlertTriangle" size={18} className="text-amber-600 dark:text-amber-400 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-amber-900 dark:text-amber-100">Нет ассистентов</p>
+                    <p className="text-amber-700 dark:text-amber-300 mt-1">
+                      Сначала создайте ассистента на вкладке "Ассистенты", затем вернитесь сюда
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Select value={config.assistantId} onValueChange={(value) => updateConfig({ assistantId: value })}>
+                <SelectTrigger id="assistant">
+                  <SelectValue placeholder="Выберите ассистента" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assistants.map((assistant) => (
+                    <SelectItem key={assistant.id} value={assistant.id}>
+                      {assistant.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <Tabs defaultValue="appearance">
@@ -288,7 +302,7 @@ export const CreateChatDialog = ({ open, onOpenChange, onSubmit, assistants }: C
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Отмена
           </Button>
-          <Button onClick={handleSubmit} disabled={!name.trim() || !config.assistantId || isSubmitting}>
+          <Button onClick={handleSubmit} disabled={!name.trim() || !config.assistantId || isSubmitting || assistants.length === 0}>
             {isSubmitting ? (
               <>
                 <Icon name="Loader2" className="animate-spin mr-2" size={16} />

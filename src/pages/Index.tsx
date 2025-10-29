@@ -89,10 +89,15 @@ const Index = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'chats' && chatsState.chats.length === 0) {
-      chatsState.loadChats();
+    if (activeTab === 'chats') {
+      if (chatsState.chats.length === 0) {
+        chatsState.loadChats();
+      }
+      if (assistantsState.assistants.length === 0) {
+        assistantsState.fetchAssistants();
+      }
     }
-  }, [activeTab, chatsState.chats.length]);
+  }, [activeTab, chatsState.chats.length, assistantsState.assistants.length]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -189,6 +194,7 @@ const Index = () => {
             <ChatsTab
               chats={chatsState.chats}
               isLoading={chatsState.isLoading}
+              hasAssistants={assistantsState.assistants.length > 0}
               onCreateChat={() => chatsState.setCreateChatOpen(true)}
               onEditChat={(chat) => {
                 chatsState.setChatToEdit(chat);

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 interface ChatsTabProps {
   chats: Chat[];
   isLoading: boolean;
+  hasAssistants: boolean;
   onCreateChat: () => void;
   onEditChat: (chat: Chat) => void;
   onDeleteChat: (chat: Chat) => void;
@@ -18,6 +19,7 @@ interface ChatsTabProps {
 export const ChatsTab = ({
   chats,
   isLoading,
+  hasAssistants,
   onCreateChat,
   onEditChat,
   onDeleteChat,
@@ -51,10 +53,17 @@ export const ChatsTab = ({
           <h2 className="text-2xl font-bold">Встраиваемые чаты</h2>
           <p className="text-muted-foreground">Создавайте и настраивайте чат-виджеты для ваших сайтов</p>
         </div>
-        <Button onClick={onCreateChat}>
-          <Icon name="Plus" size={16} className="mr-2" />
-          Создать чат
-        </Button>
+        <div className="flex flex-col items-end gap-2">
+          <Button onClick={onCreateChat} disabled={!hasAssistants}>
+            <Icon name="Plus" size={16} className="mr-2" />
+            Создать чат
+          </Button>
+          {!hasAssistants && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Создайте ассистента для начала
+            </p>
+          )}
+        </div>
       </div>
 
       {chats.length > 0 && (
@@ -78,8 +87,19 @@ export const ChatsTab = ({
         <Card className="p-12 text-center">
           <Icon name="MessageSquare" size={48} className="mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">Нет чатов</h3>
-          <p className="text-muted-foreground mb-4">Создайте первый чат-виджет для вашего сайта</p>
-          <Button onClick={onCreateChat}>
+          <p className="text-muted-foreground mb-4">
+            {hasAssistants 
+              ? 'Создайте первый чат-виджет для вашего сайта'
+              : 'Сначала создайте ассистента на вкладке "Ассистенты"'}
+          </p>
+          {!hasAssistants && (
+            <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md inline-block">
+              <p className="text-sm text-amber-700 dark:text-amber-300">
+                💡 Для работы чата нужен AI-ассистент
+              </p>
+            </div>
+          )}
+          <Button onClick={onCreateChat} disabled={!hasAssistants}>
             <Icon name="Plus" size={16} className="mr-2" />
             Создать чат
           </Button>
