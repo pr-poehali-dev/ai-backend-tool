@@ -237,14 +237,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # GPTunnel Assistant Chat API формат для RAG
         import time
         
-        # Выбираем эндпоинт и формат запроса в зависимости от наличия базы знаний
+        # Выбираем эндпоинт в зависимости от наличия RAG базы
         has_rag_database = rag_database_ids and len(rag_database_ids) > 0
         
-        # ВАЖНО: Assistant Chat API не поддерживает tools/function calling
-        # Если есть tools И RAG - нужно выбрать что важнее
-        # Приоритет: tools > RAG (function calling важнее для поиска)
-        if has_rag_database and not tools:
-            # Assistant Chat API с RAG - используем /v1/assistant/chat
+        if has_rag_database:
+            # Если есть RAG база → используем /v1/assistant/chat
             endpoint = 'https://gptunnel.ru/v1/assistant/chat'
             payload = {
                 'model': model or 'gpt-4o-mini',
@@ -253,9 +250,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'stream': False,
                 'database_ids': rag_database_ids
             }
-            print(f"[DEBUG] Using Assistant Chat API (with RAG): model={payload['model']}, databases={rag_database_ids}")
+            if tools:
+                payload['tools'] = tools
+                print(f"[DEBUG] Using Assistant Chat API with RAG and tools: model={payload['model']}, databases={rag_database_ids}")
+            else:
+                print(f"[DEBUG] Using Assistant Chat API with RAG: model={payload['model']}, databases={rag_database_ids}")
         else:
-            # Chat Completions API - используем стандартный OpenAI формат
+            # Если НЕТ RAG базы → используем /v1/chat/completions
             endpoint = 'https://gptunnel.ru/v1/chat/completions'
             payload = {
                 'model': model or 'gpt-4o-mini',
@@ -265,9 +266,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
             if tools:
                 payload['tools'] = tools
-                print(f"[DEBUG] Using Chat Completions API with tools (RAG disabled): model={payload['model']}")
+                print(f"[DEBUG] Using Chat Completions API with tools: model={payload['model']}")
             else:
-                print(f"[DEBUG] Using Chat Completions API (no RAG, no tools): model={payload['model']}")
+                print(f"[DEBUG] Using Chat Completions API: model={payload['model']}")
         
         print(f"[DEBUG] Sending to GPTunnel: {json_dumps(payload, ensure_ascii=False)[:1000]}")
         
