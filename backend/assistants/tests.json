@@ -12,6 +12,7 @@
       "path": "/",
       "body": {
         "name": "Test Assistant",
+        "type": "simple",
         "model": "gpt-4o"
       },
       "expectedStatus": 200,

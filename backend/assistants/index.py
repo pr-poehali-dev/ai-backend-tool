@@ -68,6 +68,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 result.append({
                     'id': assistant['id'],
                     'name': assistant['name'],
+                    'type': assistant.get('type', 'simple'),
                     'firstMessage': assistant['first_message'],
                     'instructions': assistant['instructions'],
                     'model': assistant['model'],
@@ -76,6 +77,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'creativity': float(assistant['creativity']),
                     'voiceRecognition': assistant['voice_recognition'],
                     'ragDatabaseIds': assistant.get('rag_database_ids') or [],
+                    'assistantCode': assistant.get('assistant_code'),
                     'status': assistant['status'],
                     'created_at': assistant['created_at'].isoformat() if assistant['created_at'] else None,
                     'stats': {
@@ -99,16 +101,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             rag_database_ids = body_data.get('ragDatabaseIds', [])
             
+            assistant_type = body_data.get('type', 'simple')
+            assistant_code = body_data.get('assistantCode') if assistant_type == 'external' else None
+            
             cursor.execute('''
                 INSERT INTO assistants (
-                    id, name, first_message, instructions, model,
+                    id, name, type, first_message, instructions, model,
                     context_length, human_emulation, creativity,
-                    voice_recognition, rag_database_ids, status
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    voice_recognition, rag_database_ids, assistant_code, status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING *
             ''', (
                 assistant_id,
                 body_data.get('name', 'Новый ассистент'),
+                assistant_type,
                 body_data.get('firstMessage', ''),
                 body_data.get('instructions', ''),
                 body_data.get('model', 'gpt-4o'),
@@ -117,6 +123,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 body_data.get('creativity', 0.7),
                 body_data.get('voiceRecognition', False),
                 rag_database_ids,
+                assistant_code,
                 'active'
             ))
             
@@ -162,9 +169,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
+            assistant_type = body_data.get('type', 'simple')
+            assistant_code = body_data.get('assistantCode') if assistant_type == 'external' else None
+            
             cursor.execute('''
                 UPDATE assistants
                 SET name = %s,
+                    type = %s,
                     first_message = %s,
                     instructions = %s,
                     model = %s,
@@ -173,11 +184,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     creativity = %s,
                     voice_recognition = %s,
                     rag_database_ids = %s,
+                    assistant_code = %s,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = %s
                 RETURNING *
             ''', (
                 body_data.get('name'),
+                assistant_type,
                 body_data.get('firstMessage'),
                 body_data.get('instructions'),
                 body_data.get('model'),
@@ -186,6 +199,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 body_data.get('creativity'),
                 body_data.get('voiceRecognition'),
                 body_data.get('ragDatabaseIds', []),
+                assistant_code,
                 assistant_id
             ))
             

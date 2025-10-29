@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 interface AssistantConfig {
+  type: 'simple' | 'external';
   name: string;
   firstMessage: string;
   instructions: string;
@@ -21,6 +22,7 @@ interface AssistantConfig {
   creativity: number;
   voiceRecognition: boolean;
   ragDatabaseIds?: string[];
+  assistantCode?: string;
 }
 
 interface CreateAssistantDialogProps {
@@ -33,6 +35,7 @@ const MODELS_URL = 'https://functions.poehali.dev/74151b51-97a6-4b7e-b229-d90205
 const RAG_API_URL = 'https://functions.poehali.dev/101d01cd-5cab-43fa-a4c9-87a37f3b38b4';
 
 const defaultConfig: AssistantConfig = {
+  type: 'simple',
   name: '',
   firstMessage: '',
   instructions: '',
@@ -41,7 +44,8 @@ const defaultConfig: AssistantConfig = {
   humanEmulation: 5,
   creativity: 0.7,
   voiceRecognition: false,
-  ragDatabaseIds: []
+  ragDatabaseIds: [],
+  assistantCode: ''
 };
 
 export const CreateAssistantDialog = ({ 
@@ -139,6 +143,29 @@ export const CreateAssistantDialog = ({
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-6 py-4">
             <div className="space-y-2">
+              <Label>Тип ассистента</Label>
+              <Select value={config.type} onValueChange={(v: 'simple' | 'external') => updateConfig('type', v)}>
+                <SelectTrigger className="bg-muted border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="simple">
+                    <div className="flex items-center gap-2">
+                      <Icon name="Settings" size={16} />
+                      <span>Простой (настраиваемый)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="external">
+                    <div className="flex items-center gap-2">
+                      <Icon name="ExternalLink" size={16} />
+                      <span>Сторонний (GPTunnel)</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="assistant-name">Название ассистента</Label>
               <Input
                 id="assistant-name"
@@ -149,6 +176,24 @@ export const CreateAssistantDialog = ({
               />
             </div>
 
+            {config.type === 'external' && (
+              <div className="space-y-2">
+                <Label htmlFor="assistant-code">ID ассистента (GPTunnel)</Label>
+                <Input
+                  id="assistant-code"
+                  value={config.assistantCode || ''}
+                  onChange={(e) => updateConfig('assistantCode', e.target.value)}
+                  placeholder="Введите ID ассистента из GPTunnel"
+                  className="bg-muted border-border font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Укажите код ассистента созданного в GPTunnel UI
+                </p>
+              </div>
+            )}
+
+            {config.type === 'simple' && (
+              <>
             <div className="space-y-2">
               <Label htmlFor="first-message">Первое сообщение</Label>
               <Textarea
@@ -185,6 +230,24 @@ export const CreateAssistantDialog = ({
               </Select>
             </div>
 
+            {config.type === 'external' && (
+              <div className="space-y-2">
+                <Label htmlFor="assistant-code">ID ассистента (GPTunnel)</Label>
+                <Input
+                  id="assistant-code"
+                  value={config.assistantCode || ''}
+                  onChange={(e) => updateConfig('assistantCode', e.target.value)}
+                  placeholder="Введите ID ассистента из GPTunnel"
+                  className="bg-muted border-border font-mono text-sm"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Укажите код ассистента созданного в GPTunnel UI
+                </p>
+              </div>
+            )}
+
+            {config.type === 'simple' && (
+              <>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Базы знаний (RAG)</Label>
@@ -288,6 +351,8 @@ export const CreateAssistantDialog = ({
                 onCheckedChange={(v) => updateConfig('voiceRecognition', v)}
               />
             </div>
+              </>
+            )}
           </div>
         </ScrollArea>
 

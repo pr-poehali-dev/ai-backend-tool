@@ -14,6 +14,7 @@ import {
 interface Assistant {
   id: string;
   name: string;
+  type: 'simple' | 'external';
   model: string;
   created_at: string;
   status: 'active' | 'inactive';
@@ -73,6 +74,7 @@ export const AssistantsTab = ({
                 <TableRow>
                   <TableHead>Название</TableHead>
                   <TableHead>ID</TableHead>
+                  <TableHead>Тип</TableHead>
                   <TableHead>Модель</TableHead>
                   <TableHead>Статистика</TableHead>
                   <TableHead className="text-right">Действия</TableHead>
@@ -89,6 +91,19 @@ export const AssistantsTab = ({
                     </TableCell>
                     <TableCell>
                       <code className="text-xs bg-muted px-2 py-1 rounded">{assistant.id}</code>
+                    </TableCell>
+                    <TableCell>
+                      {assistant.type === 'simple' ? (
+                        <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-600">
+                          <Icon name="Settings" size={12} className="mr-1" />
+                          Простой
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-purple-500/10 border-purple-500/30 text-purple-600">
+                          <Icon name="ExternalLink" size={12} className="mr-1" />
+                          Сторонний
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-secondary/10 border-secondary/30">

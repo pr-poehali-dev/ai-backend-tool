@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 interface AssistantConfig {
+  type: 'simple' | 'external';
   name: string;
   firstMessage: string;
   instructions: string;
@@ -21,6 +22,7 @@ interface AssistantConfig {
   creativity: number;
   voiceRecognition: boolean;
   ragDatabaseIds?: string[];
+  assistantCode?: string;
 }
 
 interface EditAssistantDialogProps {
