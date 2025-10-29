@@ -64,7 +64,7 @@ export const useAssistantsState = () => {
       model: assistant.model || 'gpt-4o',
       contextLength: assistant.contextLength || 5,
       humanEmulation: assistant.humanEmulation || 5,
-      creativity: assistant.creativity || 0.7,
+      creativity: assistant.creativity !== undefined && assistant.creativity !== null ? assistant.creativity : 0.7,
       voiceRecognition: assistant.voiceRecognition || false,
       ragDatabaseIds: assistant.ragDatabaseIds || [],
       assistantCode: assistant.assistantCode || ''
