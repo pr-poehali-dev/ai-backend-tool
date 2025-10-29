@@ -112,11 +112,11 @@ export const AssistantsTab = ({
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1 text-xs">
-                        <div className="flex items-center gap-2">
+                        <div key="messages" className="flex items-center gap-2">
                           <Icon name="MessageCircle" size={12} className="text-muted-foreground" />
                           <span>{assistant.stats?.totalMessages || 0} сообщений</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div key="users" className="flex items-center gap-2">
                           <Icon name="Users" size={12} className="text-muted-foreground" />
                           <span>{assistant.stats?.uniqueUsers || 0} пользователей</span>
                         </div>
