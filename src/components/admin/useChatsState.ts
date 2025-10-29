@@ -202,6 +202,10 @@ async function sendMsg(){
   }
 }
 
+var messageBg='${messageBg}';
+var borderColor='${borderColor}';
+var textColor='${textColor}';
+
 function addResults(results){
   if(!results||results.length===0){
     addMsg('К сожалению, ничего не найдено. Попробуйте изменить параметры поиска.',false);
@@ -211,14 +215,14 @@ function addResults(results){
   container.style.cssText='display:flex;flex-direction:column;gap:12px;max-width:100%;';
   results.forEach(function(r){
     var card=document.createElement('div');
-    card.style.cssText='background:${messageBg};border:1px solid ${borderColor};border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;';
+    card.style.cssText='background:'+messageBg+';border:1px solid '+borderColor+';border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;';
     card.onmouseover=function(){this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';};
     card.onmouseout=function(){this.style.transform='none';this.style.boxShadow='none';};
     var img=r.photos&&r.photos[0]?'<img src="'+r.photos[0]+'" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px;">':'';
-    var price=r.price?'<div style="font-size:18px;font-weight:700;color:${config.primaryColor};margin:4px 0;">'+r.price+' ₽/сутки</div>':'';
-    var addr=r.full_address?'<div style="font-size:13px;color:${textColor};opacity:0.7;margin:4px 0;">'+r.full_address+'</div>':'';
-    var cat=r.category?'<div style="font-size:12px;color:${textColor};opacity:0.6;margin:4px 0;">'+r.category+'</div>':'';
-    card.innerHTML=img+price+addr+cat+'<div style="margin-top:8px;padding:8px 16px;background:${config.primaryColor};color:#fff;border-radius:8px;text-align:center;font-weight:600;">Забронировать</div>';
+    var price=r.price?'<div style="font-size:18px;font-weight:700;color:'+cfg.primaryColor+';margin:4px 0;">'+r.price+' ₽/сутки</div>':'';
+    var addr=r.full_address?'<div style="font-size:13px;color:'+textColor+';opacity:0.7;margin:4px 0;">'+r.full_address+'</div>':'';
+    var cat=r.category?'<div style="font-size:12px;color:'+textColor+';opacity:0.6;margin:4px 0;">'+r.category+'</div>':'';
+    card.innerHTML=img+price+addr+cat+'<div style="margin-top:8px;padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border-radius:8px;text-align:center;font-weight:600;">Забронировать</div>';
     card.onclick=function(){window.open(r.bookingUrl||'https://qqrenta.ru/rooms/'+r.id,'_blank');};
     container.appendChild(card);
   });
