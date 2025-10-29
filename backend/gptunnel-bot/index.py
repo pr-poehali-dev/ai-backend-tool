@@ -6,6 +6,7 @@ import urllib.parse
 import urllib.error
 import psycopg2
 import uuid
+import time
 from datetime import datetime
 from decimal import Decimal
 
@@ -357,11 +358,45 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         if max_price:
                             print(f"[DEBUG] Client-side filter: max_price={max_price}")
                         
-                        api_req = urllib.request.Request(api_url, headers={'Accept': 'application/json'})
+                        # Retry logic with exponential backoff
+                        max_retries = 3
+                        retry_delay = 1
+                        api_data = None
+                        last_error = None
                         
-                        with urllib.request.urlopen(api_req, timeout=30) as api_response:
-                            api_response_text = api_response.read().decode('utf-8')
-                            api_data = json.loads(api_response_text)
+                        for attempt in range(max_retries):
+                            try:
+                                api_req = urllib.request.Request(api_url, headers={'Accept': 'application/json'})
+                                
+                                with urllib.request.urlopen(api_req, timeout=30) as api_response:
+                                    api_response_text = api_response.read().decode('utf-8')
+                                    api_data = json.loads(api_response_text)
+                                    break
+                                    
+                            except (urllib.error.URLError, urllib.error.HTTPError, ConnectionResetError) as e:
+                                last_error = e
+                                print(f"[DEBUG] Attempt {attempt + 1}/{max_retries} failed: {str(e)}")
+                                
+                                if attempt < max_retries - 1:
+                                    print(f"[DEBUG] Retrying in {retry_delay} seconds...")
+                                    time.sleep(retry_delay)
+                                    retry_delay *= 2
+                                else:
+                                    print(f"[DEBUG] All retry attempts exhausted")
+                                    return {
+                                        'statusCode': 503,
+                                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                        'body': json_dumps({'error': f'External API unavailable: {str(last_error)}'}),
+                                        'isBase64Encoded': False
+                                    }
+                        
+                        if api_data is None:
+                            return {
+                                'statusCode': 503,
+                                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                'body': json_dumps({'error': 'External API returned no data'}),
+                                'isBase64Encoded': False
+                            }
                             
                             print(f"[DEBUG] External API response (first 500 chars): {api_response_text[:500]}")
                             print(f"[DEBUG] API response keys: {list(api_data.keys()) if isinstance(api_data, dict) else 'list'}")
