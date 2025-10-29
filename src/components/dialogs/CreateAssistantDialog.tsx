@@ -230,24 +230,6 @@ export const CreateAssistantDialog = ({
               </Select>
             </div>
 
-            {config.type === 'external' && (
-              <div className="space-y-2">
-                <Label htmlFor="assistant-code">ID ассистента (GPTunnel)</Label>
-                <Input
-                  id="assistant-code"
-                  value={config.assistantCode || ''}
-                  onChange={(e) => updateConfig('assistantCode', e.target.value)}
-                  placeholder="Введите ID ассистента из GPTunnel"
-                  className="bg-muted border-border font-mono text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Укажите код ассистента созданного в GPTunnel UI
-                </p>
-              </div>
-            )}
-
-            {config.type === 'simple' && (
-              <>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Базы знаний (RAG)</Label>
