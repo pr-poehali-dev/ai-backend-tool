@@ -104,9 +104,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         body_data = json.loads(event.get('body', '{}'))
         model = body_data.get('model', 'unknown')
         
+        # Определяем URL для запроса в зависимости от типа ассистента
+        gptunnel_url = 'https://gptunnel.ru/v1/chat/completions'
+        assistant_id = body_data.get('assistant_id') or body_data.get('assistant')
+        
+        if assistant_id:
+            # Проверяем тип ассистента в БД
+            conn = psycopg2.connect(database_url)
+            cursor = conn.cursor()
+            cursor.execute('SELECT type, assistant_code FROM assistants WHERE id = %s', (assistant_id,))
+            assistant_info = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if assistant_info:
+                assistant_type, assistant_code = assistant_info
+                if assistant_type == 'external' and assistant_code:
+                    gptunnel_url = 'https://gptunnel.ru/v1/assistant/chat'
+                    # Заменяем assistant_id на код из GPTunnel
+                    body_data['assistant_id'] = assistant_code
+        
         start_time = time.time()
         response = requests.post(
-            'https://gptunnel.ru/v1/chat/completions',
+            gptunnel_url,
             headers={
                 'Authorization': f'Bearer {gptunnel_api_key}',
                 'Content-Type': 'application/json'
