@@ -125,8 +125,8 @@ export const ChatsTab = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 px-3 py-1.5 bg-muted rounded text-xs font-mono overflow-hidden text-ellipsis whitespace-nowrap h-[50px] flex items-center">
-                    {chat.code.substring(0, 100)}...
+                  <code className="w-[100px] px-2 py-1.5 bg-muted rounded text-xs font-mono overflow-hidden text-ellipsis whitespace-nowrap h-[50px] flex items-center">
+                    {chat.code.substring(0, 15)}...
                   </code>
                   <Button
                     variant="outline"
