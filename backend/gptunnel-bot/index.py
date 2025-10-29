@@ -229,16 +229,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'temperature': float(creativity) if creativity else 0.7
         }
         
-        # Если у ассистента настроены RAG базы, используем Assistant API endpoint
-        use_assistant_api = rag_database_ids and len(rag_database_ids) > 0
-        
-        if use_assistant_api:
+        # Пробуем разные варианты передачи RAG баз в Chat Completions API
+        # GPTunnel может поддерживать: databaseIds, database_ids, databases, rag_databases
+        if rag_database_ids and len(rag_database_ids) > 0:
+            # Попробуем все возможные варианты параметра
             gptunnel_payload['databaseIds'] = rag_database_ids
-            # Добавляем chat_id для сохранения контекста в GPTunnel
-            if chat_id:
-                gptunnel_payload['chat_id'] = chat_id
+            gptunnel_payload['database_ids'] = rag_database_ids
+            gptunnel_payload['databases'] = rag_database_ids
         
-        print(f"[DEBUG] Using {'Assistant' if use_assistant_api else 'Chat Completions'} API, RAG: {rag_database_ids if rag_database_ids else 'None'}, chat_id: {chat_id if use_assistant_api else 'N/A'}")
+        print(f"[DEBUG] Chat Completions API with RAG attempt: {rag_database_ids if rag_database_ids else 'None'}")
         
         if tools:
             gptunnel_payload['tools'] = tools
@@ -248,8 +247,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         request_data = json.dumps(gptunnel_payload).encode('utf-8')
         
-        # Выбираем endpoint в зависимости от наличия RAG баз
-        endpoint = 'https://gptunnel.ru/v1/assistant/chat' if use_assistant_api else 'https://gptunnel.ru/v1/chat/completions'
+        # Используем только Chat Completions API (Assistant API требует assistantCode из GPTunnel)
+        endpoint = 'https://gptunnel.ru/v1/chat/completions'
         
         req = urllib.request.Request(
             endpoint,
@@ -318,11 +317,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     'temperature': float(creativity) if creativity else 0.7
                                 }
                                 
-                                # Добавляем databaseIds и chat_id для второго запроса если используем Assistant API
-                                if use_assistant_api:
+                                # Добавляем RAG базы для второго запроса
+                                if rag_database_ids and len(rag_database_ids) > 0:
                                     second_payload['databaseIds'] = rag_database_ids
-                                    if chat_id:
-                                        second_payload['chat_id'] = chat_id
+                                    second_payload['database_ids'] = rag_database_ids
+                                    second_payload['databases'] = rag_database_ids
                                 
                                 second_request_data = json.dumps(second_payload).encode('utf-8')
                                 # Для второго запроса используем тот же endpoint
