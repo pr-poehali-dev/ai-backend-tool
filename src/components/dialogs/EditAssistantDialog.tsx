@@ -52,16 +52,18 @@ export const EditAssistantDialog = ({
   const [loadingDatabases, setLoadingDatabases] = useState(false);
 
   useEffect(() => {
-    if (open && models.length === 0) {
-      fetchModels();
+    if (open) {
+      if (models.length === 0) {
+        fetchModels();
+      }
+      if (databases.length === 0) {
+        fetchDatabases();
+      }
+      if (config.type === 'external') {
+        fetchGptunnelModels();
+      }
     }
-    if (open && databases.length === 0) {
-      fetchDatabases();
-    }
-    if (open && config.type === 'external' && gptunnelModels.length === 0) {
-      fetchGptunnelModels();
-    }
-  }, [open, models.length, databases.length, config.type, gptunnelModels.length]);
+  }, [open, config.type]);
 
   const fetchModels = async () => {
     setLoadingModels(true);
