@@ -245,21 +245,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Этот API требует специальный формат: chatId, assistantCode, message
             endpoint = 'https://gptunnel.ru/v1/assistant/chat'
             
-            # Получаем assistant_code из базы (или используем assistant_id как fallback)
+            # Получаем assistant_code из базы
             conn = psycopg2.connect(database_url)
             cursor = conn.cursor()
             cursor.execute('SELECT assistant_code FROM assistants WHERE id = %s', (assistant_id,))
             result = cursor.fetchone()
-            assistant_code = result[0] if result and result[0] else assistant_id
             cursor.close()
             conn.close()
+            
+            assistant_code = result[0] if result and result[0] else None
+            
+            if not assistant_code:
+                # Если нет assistant_code - возвращаем ошибку с инструкцией
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json_dumps({
+                        'error': 'assistant_code not configured',
+                        'message': 'Для использования RAG базы необходимо настроить assistant_code в GPTunnel. Создайте ассистента в GPTunnel UI и добавьте его код в настройки.'
+                    }),
+                    'isBase64Encoded': False
+                }
             
             payload = {
                 'chatId': chat_id,
                 'assistantCode': assistant_code,
                 'message': message
             }
-            print(f"[DEBUG] Using Assistant Chat API with RAG: chatId={chat_id}, assistantCode={assistant_code}, databases={rag_database_ids}")
+            print(f"[DEBUG] Using Assistant Chat API with RAG: chatId={chat_id}, assistantCode={assistant_code}")
         else:
             # Если НЕТ RAG базы → используем /v1/chat/completions
             endpoint = 'https://gptunnel.ru/v1/chat/completions'
