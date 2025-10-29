@@ -69,9 +69,21 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
 
       const data = await response.json();
 
+      let responseText = 'Извините, не удалось получить ответ';
+      
+      if (data.response) {
+        if (data.mode === 'json' && Array.isArray(data.response)) {
+          responseText = `Найдено ${data.response.length} вариантов жилья. В реальном виджете они отобразятся в виде красивых карточек с фото и ценами.`;
+        } else if (typeof data.response === 'string') {
+          responseText = data.response;
+        } else {
+          responseText = 'Получен ответ в специальном формате';
+        }
+      }
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: data.response || 'Извините, не удалось получить ответ',
+        text: responseText,
         isUser: false,
         timestamp: new Date(),
       };
