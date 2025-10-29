@@ -33,6 +33,7 @@ import { useBalance } from '@/hooks/useBalance';
 
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState(() => {
     return localStorage.getItem('activeTab') || 'keys';
