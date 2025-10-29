@@ -259,7 +259,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Выбираем эндпоинт и формат запроса в зависимости от наличия базы знаний
         has_rag_database = rag_database_ids and len(rag_database_ids) > 0
         
-        if has_rag_database:
+        # ВАЖНО: Bot API не поддерживает tools/function calling
+        # Если есть tools - используем Chat Completions API даже с RAG
+        if has_rag_database and not tools:
             # Bot API с RAG - используем формат CLIENT_MESSAGE
             endpoint = 'https://gptunnel.ru/api/bot'
             payload = gptunnel_payload
@@ -275,7 +277,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
             if tools:
                 payload['tools'] = tools
-            print(f"[DEBUG] Using Chat Completions API (no RAG): model={payload['model']}")
+            # Добавляем RAG базы если они есть (Chat Completions тоже поддерживает RAG)
+            if has_rag_database:
+                payload['database_ids'] = rag_database_ids
+                print(f"[DEBUG] Using Chat Completions API with RAG and tools: model={payload['model']}, databases={rag_database_ids}")
+            else:
+                print(f"[DEBUG] Using Chat Completions API (no RAG): model={payload['model']}")
         
         print(f"[DEBUG] Sending to GPTunnel: {json_dumps(payload, ensure_ascii=False)[:1000]}")
         
@@ -283,7 +290,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Формируем заголовки в зависимости от API
         headers = {'Content-Type': 'application/json'}
-        if has_rag_database:
+        if has_rag_database and not tools:
             headers['Authorization'] = gptunnel_api_key  # Bot API без Bearer
         else:
             headers['Authorization'] = f'Bearer {gptunnel_api_key}'  # Chat Completions с Bearer
@@ -302,7 +309,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f"[DEBUG] GPTunnel API response: {response_data[:1000]}")
             
             # Обрабатываем ответ в зависимости от типа API
-            if has_rag_database:
+            if has_rag_database and not tools:
                 # Bot API возвращает BOT_MESSAGE событие с message.text
                 event_type = api_response.get('event', '')
                 if event_type == 'BOT_MESSAGE' and 'message' in api_response:
