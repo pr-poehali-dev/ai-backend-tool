@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { ApiKeysTab } from '@/components/ApiKeysTab';
-import { MonitoringTab } from '@/components/MonitoringTab';
+
 import { SettingsTab } from '@/components/SettingsTab';
 import { AssistantsTab } from '@/components/AssistantsTab';
 import { UsageTab } from '@/components/UsageTab';
@@ -25,7 +25,7 @@ import { PreviewChatDialog } from '@/components/dialogs/PreviewChatDialog';
 import { useApiKeysState } from '@/components/admin/useApiKeysState';
 import { useAssistantsState } from '@/components/admin/useAssistantsState';
 import { useSecretsState } from '@/components/admin/useSecretsState';
-import { useMonitoringState } from '@/components/admin/useMonitoringState';
+
 import { useUsageState } from '@/components/admin/useUsageState';
 import { useDatabaseState } from '@/components/admin/useDatabaseState';
 import { useChatsState } from '@/components/admin/useChatsState';
@@ -46,7 +46,7 @@ const Index = () => {
   const apiKeysState = useApiKeysState();
   const assistantsState = useAssistantsState();
   const secretsState = useSecretsState();
-  const monitoringState = useMonitoringState();
+
   const usageState = useUsageState();
   const databaseState = useDatabaseState();
   const chatsState = useChatsState();
@@ -76,11 +76,7 @@ const Index = () => {
     }
   }, [activeTab, secretsState.secrets.length]);
 
-  useEffect(() => {
-    if (activeTab === 'monitoring') {
-      monitoringState.fetchMonitoring();
-    }
-  }, [activeTab]);
+
 
   useEffect(() => {
     if (activeTab === 'database') {
@@ -137,7 +133,7 @@ const Index = () => {
             <TabsTrigger value="assistants">Ассистенты</TabsTrigger>
             <TabsTrigger value="chats">Чаты</TabsTrigger>
             <TabsTrigger value="database">База данных</TabsTrigger>
-            <TabsTrigger value="monitoring">Мониторинг</TabsTrigger>
+
             <TabsTrigger value="usage">Статистика</TabsTrigger>
             <TabsTrigger value="settings">Настройки</TabsTrigger>
           </TabsList>
@@ -173,9 +169,7 @@ const Index = () => {
             />
           </TabsContent>
 
-          <TabsContent value="monitoring">
-            <MonitoringTab monitoringData={monitoringState.monitoringData} />
-          </TabsContent>
+
 
           <TabsContent value="usage">
             <UsageTab usageStats={usageState.usageStats} isLoading={usageState.isLoadingUsage} />
