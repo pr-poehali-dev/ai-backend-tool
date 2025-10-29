@@ -58,6 +58,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     COUNT(DISTINCT u.user_id) as unique_users
                 FROM assistants a
                 LEFT JOIN assistant_usage u ON a.id = u.assistant_id
+                WHERE a.status = 'active'
                 GROUP BY a.id
                 ORDER BY a.created_at DESC
             ''')
