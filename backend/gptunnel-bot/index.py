@@ -7,6 +7,16 @@ import urllib.error
 import psycopg2
 import uuid
 from datetime import datetime
+from decimal import Decimal
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
+
+def json_dumps(data):
+    return json.dumps(data, cls=DecimalEncoder)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -34,7 +44,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Method not allowed'}),
+            'body': json_dumps({'error': 'Method not allowed'}),
             'isBase64Encoded': False
         }
     
@@ -43,7 +53,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Database not configured'}),
+            'body': json_dumps({'error': 'Database not configured'}),
             'isBase64Encoded': False
         }
     
@@ -59,7 +69,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'GPTunnel API key not configured in secrets'}),
+                'body': json_dumps({'error': 'GPTunnel API key not configured in secrets'}),
                 'isBase64Encoded': False
             }
         
@@ -68,7 +78,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'Failed to load API key from database: {str(e)}'}),
+            'body': json_dumps({'error': f'Failed to load API key from database: {str(e)}'}),
             'isBase64Encoded': False
         }
     
@@ -83,7 +93,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Message is required'}),
+                'body': json_dumps({'error': 'Message is required'}),
                 'isBase64Encoded': False
             }
         
@@ -91,7 +101,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Assistant ID is required'}),
+                'body': json_dumps({'error': 'Assistant ID is required'}),
                 'isBase64Encoded': False
             }
         
@@ -111,7 +121,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 404,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Assistant not found'}),
+                'body': json_dumps({'error': 'Assistant not found'}),
                 'isBase64Encoded': False
             }
         
@@ -188,7 +198,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 403,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Assistant is not active'}),
+                'body': json_dumps({'error': 'Assistant is not active'}),
                 'isBase64Encoded': False
             }
         
@@ -203,7 +213,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 content = msg.get('content', '')
                 # Если content - массив/объект, конвертируем в строку
                 if isinstance(content, (list, dict)):
-                    content = json.dumps(content, ensure_ascii=False)
+                    content = json_dumps(content, ensure_ascii=False)
                 messages.append({
                     'role': msg.get('role', 'user'),
                     'content': content
@@ -266,9 +276,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 payload['tools'] = tools
             print(f"[DEBUG] Using Chat Completions API (no RAG): model={payload['model']}")
         
-        print(f"[DEBUG] Sending to GPTunnel: {json.dumps(payload, ensure_ascii=False)[:1000]}")
+        print(f"[DEBUG] Sending to GPTunnel: {json_dumps(payload, ensure_ascii=False)[:1000]}")
         
-        request_data = json.dumps(payload).encode('utf-8')
+        request_data = json_dumps(payload).encode('utf-8')
         
         # Формируем заголовки в зависимости от API
         headers = {'Content-Type': 'application/json'}
@@ -337,7 +347,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 return {
                                     'statusCode': 200,
                                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                                    'body': json.dumps({'response': results, 'mode': 'json'}),
+                                    'body': json_dumps({'response': results, 'mode': 'json'}),
                                     'isBase64Encoded': False
                                 }
                             else:
@@ -351,7 +361,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 messages.append({
                                     'role': 'tool',
                                     'tool_call_id': tool_call.get('id'),
-                                    'content': json.dumps(api_data, ensure_ascii=False)
+                                    'content': json_dumps(api_data, ensure_ascii=False)
                                 })
                                 
                                 second_payload = {
@@ -366,7 +376,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                     second_payload['database_ids'] = rag_database_ids
                                     second_payload['databases'] = rag_database_ids
                                 
-                                second_request_data = json.dumps(second_payload).encode('utf-8')
+                                second_request_data = json_dumps(second_payload).encode('utf-8')
                                 # Для второго запроса используем тот же endpoint
                                 second_req = urllib.request.Request(
                                     endpoint,
@@ -429,7 +439,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'response': response_text, 'mode': 'text'}),
+                'body': json_dumps({'response': response_text, 'mode': 'text'}),
                 'isBase64Encoded': False
             }
     
@@ -450,7 +460,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': e.code,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': error_message, 'details': error_body[:500]}),
+            'body': json_dumps({'error': error_message, 'details': error_body[:500]}),
             'isBase64Encoded': False
         }
     
@@ -458,7 +468,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 503,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': f'GPTunnel API unavailable: {str(e)}'}),
+            'body': json_dumps({'error': f'GPTunnel API unavailable: {str(e)}'}),
             'isBase64Encoded': False
         }
     
@@ -466,6 +476,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': str(e)}),
+            'body': json_dumps({'error': str(e)}),
             'isBase64Encoded': False
         }
