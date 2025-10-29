@@ -130,8 +130,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
         
         if method == 'DELETE':
-            params = event.get('queryStringParameters') or {}
-            chat_id = params.get('id')
+            body_data = json.loads(event.get('body', '{}'))
+            chat_id = body_data.get('id')
             
             if not chat_id:
                 return {
