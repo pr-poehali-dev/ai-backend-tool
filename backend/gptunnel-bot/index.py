@@ -380,16 +380,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 'isBase64Encoded': False
                             }
                         
-                        # Extract max_price for client-side filtering
+                        # Extract client-side filters (not supported by API)
                         max_price = function_args.pop('max_price', None)
+                        exclude_property_types = function_args.pop('exclude_property_types', None)
                         
-                        # Build API URL with parameters (without max_price)
+                        # Build API URL with parameters (without client-side filters)
                         search_params = urllib.parse.urlencode(function_args)
                         api_url = f"{api_config['api_base_url']}?{search_params}"
                         
                         print(f"[DEBUG] Calling external API: {api_url}")
                         if max_price:
                             print(f"[DEBUG] Client-side filter: max_price={max_price}")
+                        if exclude_property_types:
+                            print(f"[DEBUG] Client-side filter: exclude_property_types={exclude_property_types}")
                         
                         # Retry logic with exponential backoff
                         max_retries = 3
@@ -447,6 +450,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             if max_price and isinstance(results, list):
                                 results = [r for r in results if r.get('price', 0) <= max_price]
                                 print(f"[DEBUG] After price filter (<={max_price}): {len(results)} items")
+                            
+                            # Filter by property type if specified
+                            if exclude_property_types and isinstance(results, list):
+                                # exclude_property_types can be string or list
+                                excluded = exclude_property_types if isinstance(exclude_property_types, list) else [exclude_property_types]
+                                # Normalize to lowercase for comparison
+                                excluded_lower = [e.lower() for e in excluded]
+                                
+                                original_count = len(results)
+                                results = [
+                                    r for r in results 
+                                    if r.get('category', '').lower() not in excluded_lower
+                                ]
+                                print(f"[DEBUG] After property type filter (excluding {excluded}): {len(results)} items (removed {original_count - len(results)})")
                             
                             # Limit to 10 items
                             results = results[:10] if isinstance(results, list) else results
