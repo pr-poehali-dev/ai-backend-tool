@@ -231,6 +231,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if instructions and message_count == 0:
             message_text = f"[SYSTEM INSTRUCTION]: {instructions}\n\n[USER MESSAGE]: {message}"
         
+        # Bot API использует только базовые поля - настройки модели/RAG в GPTunnel UI
         gptunnel_payload = {
             'event': 'CLIENT_MESSAGE',
             'id': str(uuid.uuid4()),
@@ -244,18 +245,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'agents_online': False
         }
         
-        # Попробуем добавить RAG базы и другие параметры
-        if rag_database_ids and len(rag_database_ids) > 0:
-            gptunnel_payload['databaseIds'] = rag_database_ids
-            gptunnel_payload['database_ids'] = rag_database_ids
-        
-        if model:
-            gptunnel_payload['model'] = model
-        
-        if creativity:
-            gptunnel_payload['temperature'] = float(creativity)
-        
-        print(f"[DEBUG] GPTunnel Bot API payload with chat_id: {chat_id}, RAG: {rag_database_ids if rag_database_ids else 'None'}")
+        print(f"[DEBUG] Bot API request (RAG настраивается в GPTunnel UI): chat_id={chat_id}")
         
         print(f"[DEBUG] Sending to GPTunnel: {json.dumps(gptunnel_payload, ensure_ascii=False)[:1000]}")
         
