@@ -14,7 +14,7 @@ export const useBalance = () => {
     setError(null);
     
     try {
-      const apiKey = localStorage.getItem('gptunnel_api_key');
+      const apiKey = localStorage.getItem('gptunnel_default_key');
       
       if (!apiKey) {
         console.warn('[useBalance] API ключ не найден в localStorage');
