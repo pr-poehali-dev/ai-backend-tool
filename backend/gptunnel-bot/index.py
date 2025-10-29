@@ -272,7 +272,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'assistantCode': assistant_code,
                 'message': message
             }
-            print(f"[DEBUG] Using Assistant Chat API with RAG: chatId={chat_id}, assistantCode={assistant_code}")
+            print(f"[DEBUG] Using Assistant Chat API: chatId={chat_id}, assistantCode={assistant_code}")
+            print(f"[DEBUG] Payload for /v1/assistant/chat: {json_dumps(payload, ensure_ascii=False)}")
         else:
             # Если НЕТ RAG базы → используем /v1/chat/completions
             endpoint = 'https://gptunnel.ru/v1/chat/completions'
