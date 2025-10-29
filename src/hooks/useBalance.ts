@@ -17,7 +17,10 @@ export const useBalance = () => {
       const apiKey = localStorage.getItem('gptunnel_api_key');
       
       if (!apiKey) {
-        throw new Error('API ключ не найден');
+        console.warn('[useBalance] API ключ не найден в localStorage');
+        setBalance(0);
+        setIsLoading(false);
+        return;
       }
 
       const response = await fetch('https://gptunnel.ru/v1/balance', {
@@ -29,14 +32,18 @@ export const useBalance = () => {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[useBalance] API error:', response.status, errorText);
         throw new Error(`Ошибка загрузки баланса: ${response.status}`);
       }
 
       const data: BalanceData = await response.json();
+      console.log('[useBalance] Loaded balance:', data.balance);
       setBalance(data.balance);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
       console.error('[useBalance] Error:', err);
+      setBalance(0);
     } finally {
       setIsLoading(false);
     }
