@@ -23,6 +23,7 @@ import { useSecretsState } from '@/components/admin/useSecretsState';
 import { useMonitoringState } from '@/components/admin/useMonitoringState';
 import { useUsageState } from '@/components/admin/useUsageState';
 import { useDatabaseState } from '@/components/admin/useDatabaseState';
+import { useBalance } from '@/hooks/useBalance';
 
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 
@@ -42,6 +43,7 @@ const Index = () => {
   const monitoringState = useMonitoringState();
   const usageState = useUsageState();
   const databaseState = useDatabaseState();
+  const { balance, isLoading: isBalanceLoading } = useBalance();
 
   useEffect(() => {
     if (activeTab === 'keys' && apiKeysState.apiKeys.length === 0) {
@@ -82,9 +84,23 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">GPTunnel Admin</h1>
-          <p className="text-muted-foreground">Управление API ключами и ассистентами</p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold">GPTunnel Admin</h1>
+            <p className="text-muted-foreground">Управление API ключами и ассистентами</p>
+          </div>
+          <div className="text-right">
+            <h2 className="text-3xl font-bold">
+              {isBalanceLoading ? (
+                <span className="text-muted-foreground">...</span>
+              ) : balance !== null ? (
+                `${balance.toFixed(2)} ₽`
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              )}
+            </h2>
+            <p className="text-muted-foreground">Баланс</p>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
