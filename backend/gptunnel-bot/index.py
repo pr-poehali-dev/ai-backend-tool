@@ -270,31 +270,42 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         request_data = json.dumps(payload).encode('utf-8')
         
+        # Формируем заголовки в зависимости от API
+        headers = {'Content-Type': 'application/json'}
+        if has_rag_database:
+            headers['Authorization'] = gptunnel_api_key  # Bot API без Bearer
+        else:
+            headers['Authorization'] = f'Bearer {gptunnel_api_key}'  # Chat Completions с Bearer
+        
         req = urllib.request.Request(
             endpoint,
             data=request_data,
-            headers={
-                'Content-Type': 'application/json',
-                'Authorization': gptunnel_api_key  # Bot API использует токен напрямую, без Bearer
-            },
+            headers=headers,
             method='POST'
         )
         
         with urllib.request.urlopen(req, timeout=60) as response:
             response_data = response.read().decode('utf-8')
-            bot_response = json.loads(response_data)
+            api_response = json.loads(response_data)
             
-            print(f"[DEBUG] GPTunnel Bot API response: {response_data[:1000]}")
+            print(f"[DEBUG] GPTunnel API response: {response_data[:1000]}")
             
-            # Bot API возвращает BOT_MESSAGE событие с message.text
-            event_type = bot_response.get('event', '')
-            if event_type == 'BOT_MESSAGE' and 'message' in bot_response:
-                response_text = bot_response['message'].get('text', 'Нет ответа')
-            elif 'message' in bot_response and 'text' in bot_response['message']:
-                response_text = bot_response['message']['text']
+            # Обрабатываем ответ в зависимости от типа API
+            if has_rag_database:
+                # Bot API возвращает BOT_MESSAGE событие с message.text
+                event_type = api_response.get('event', '')
+                if event_type == 'BOT_MESSAGE' and 'message' in api_response:
+                    response_text = api_response['message'].get('text', 'Нет ответа')
+                elif 'message' in api_response and 'text' in api_response['message']:
+                    response_text = api_response['message']['text']
+                else:
+                    response_text = 'Нет ответа'
             else:
-                # Fallback для других форматов
-                response_text = bot_response.get('response', bot_response.get('text', 'Нет ответа'))
+                # Chat Completions API возвращает стандартный OpenAI формат
+                if 'choices' in api_response and len(api_response['choices']) > 0:
+                    response_text = api_response['choices'][0]['message']['content']
+                else:
+                    response_text = 'Нет ответа'
             
             print(f"[DEBUG] Extracted response text: {response_text[:200]}")
             
