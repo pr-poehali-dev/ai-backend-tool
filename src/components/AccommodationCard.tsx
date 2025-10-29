@@ -26,6 +26,7 @@ interface AccommodationItem {
   rating?: number;
   city?: string;
   guests?: number;
+  bookingUrl?: string;
   [key: string]: any;
 }
 
@@ -35,6 +36,12 @@ interface AccommodationCardProps {
 
 export const AccommodationCard = ({ item }: AccommodationCardProps) => {
   const getBookingUrl = (id: string | number) => {
+    // Если есть готовая ссылка из API - используем её
+    if (item.bookingUrl) {
+      return item.bookingUrl;
+    }
+    
+    // Fallback на старую логику, если bookingUrl отсутствует
     const idStr = String(id);
     if (idStr.includes('hotels')) {
       return `https://qqrenta.ru/hotels/${idStr}`;

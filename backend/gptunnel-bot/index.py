@@ -501,19 +501,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 checkout_date = checkin_date + timedelta(days=nights)
                                 
                                 # Параметры бронирования для ссылок
-                                booking_params = {
+                                url_params = urllib.parse.urlencode({
                                     'dateStart': function_args.get('checkin'),
                                     'dateEnd': checkout_date.strftime('%Y-%m-%d'),
                                     'adults': function_args.get('guests', 1),
                                     'children': function_args.get('children', 0),
                                     'infants': function_args.get('infants', 0),
                                     'pets': function_args.get('pets', 0)
-                                }
+                                })
                                 
-                                # Добавляем параметры к каждому результату
+                                # Добавляем готовую ссылку с параметрами к каждому результату
                                 for result in results:
-                                    if isinstance(result, dict):
-                                        result['bookingParams'] = booking_params
+                                    if isinstance(result, dict) and 'id' in result:
+                                        obj_id = str(result['id'])
+                                        # Логика формирования ссылки: отели содержат "hotels" в ID
+                                        if 'hotels' in obj_id:
+                                            result['bookingUrl'] = f"https://qqrenta.ru/hotels/{obj_id}?{url_params}"
+                                        else:
+                                            result['bookingUrl'] = f"https://qqrenta.ru/rooms/{obj_id}?{url_params}"
                             
                             print(f"[DEBUG] Returning to frontend: {len(results) if isinstance(results, list) else 1} items")
                             
