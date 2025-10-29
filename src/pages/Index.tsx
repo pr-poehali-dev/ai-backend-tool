@@ -8,6 +8,7 @@ import { SettingsTab } from '@/components/SettingsTab';
 import { AssistantsTab } from '@/components/AssistantsTab';
 import { UsageTab } from '@/components/UsageTab';
 import { DatabaseTab } from '@/components/DatabaseTab';
+import { ChatsTab } from '@/components/ChatsTab';
 import { DeleteKeyDialog } from '@/components/dialogs/DeleteKeyDialog';
 import { EditKeyDialog } from '@/components/dialogs/EditKeyDialog';
 import { CreateAssistantDialog } from '@/components/dialogs/CreateAssistantDialog';
@@ -17,12 +18,17 @@ import { TestAssistantDialog } from '@/components/dialogs/TestAssistantDialog';
 import { AddSecretDialog } from '@/components/dialogs/AddSecretDialog';
 import { CreateDatabaseDialog } from '@/components/dialogs/CreateDatabaseDialog';
 import { ViewDatabaseDialog } from '@/components/dialogs/ViewDatabaseDialog';
+import { CreateChatDialog } from '@/components/dialogs/CreateChatDialog';
+import { EditChatDialog } from '@/components/dialogs/EditChatDialog';
+import { DeleteChatDialog } from '@/components/dialogs/DeleteChatDialog';
+import { PreviewChatDialog } from '@/components/dialogs/PreviewChatDialog';
 import { useApiKeysState } from '@/components/admin/useApiKeysState';
 import { useAssistantsState } from '@/components/admin/useAssistantsState';
 import { useSecretsState } from '@/components/admin/useSecretsState';
 import { useMonitoringState } from '@/components/admin/useMonitoringState';
 import { useUsageState } from '@/components/admin/useUsageState';
 import { useDatabaseState } from '@/components/admin/useDatabaseState';
+import { useChatsState } from '@/components/admin/useChatsState';
 import { useBalance } from '@/hooks/useBalance';
 
 const GPTUNNEL_BOT_URL = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
@@ -43,6 +49,7 @@ const Index = () => {
   const monitoringState = useMonitoringState();
   const usageState = useUsageState();
   const databaseState = useDatabaseState();
+  const chatsState = useChatsState();
   const { balance, isLoading: isBalanceLoading, refetch: refetchBalance } = useBalance();
 
   useEffect(() => {
@@ -81,6 +88,12 @@ const Index = () => {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'chats' && chatsState.chats.length === 0) {
+      chatsState.loadChats();
+    }
+  }, [activeTab, chatsState.chats.length]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -117,6 +130,7 @@ const Index = () => {
           <TabsList>
             <TabsTrigger value="keys">API Ключи</TabsTrigger>
             <TabsTrigger value="assistants">Ассистенты</TabsTrigger>
+            <TabsTrigger value="chats">Чаты</TabsTrigger>
             <TabsTrigger value="database">База данных</TabsTrigger>
             <TabsTrigger value="monitoring">Мониторинг</TabsTrigger>
             <TabsTrigger value="usage">Статистика</TabsTrigger>
@@ -168,6 +182,26 @@ const Index = () => {
               isLoading={secretsState.isLoadingSecrets}
               onAddSecret={() => secretsState.setAddSecretOpen(true)}
               onDeleteSecret={secretsState.deleteSecret}
+            />
+          </TabsContent>
+
+          <TabsContent value="chats">
+            <ChatsTab
+              chats={chatsState.chats}
+              isLoading={chatsState.isLoading}
+              onCreateChat={() => chatsState.setCreateChatOpen(true)}
+              onEditChat={(chat) => {
+                chatsState.setChatToEdit(chat);
+                chatsState.setEditChatOpen(true);
+              }}
+              onDeleteChat={(chat) => {
+                chatsState.setChatToDelete(chat);
+                chatsState.setDeleteChatOpen(true);
+              }}
+              onPreviewChat={(chat) => {
+                chatsState.setChatToPreview(chat);
+                chatsState.setPreviewChatOpen(true);
+              }}
             />
           </TabsContent>
         </Tabs>
@@ -226,6 +260,34 @@ const Index = () => {
         onSecretValueChange={secretsState.setNewSecretValue}
         isChecking={secretsState.isCheckingSecret}
         onConfirm={secretsState.addSecret}
+      />
+
+      <CreateChatDialog
+        open={chatsState.createChatOpen}
+        onOpenChange={chatsState.setCreateChatOpen}
+        onSubmit={chatsState.createChat}
+        assistants={assistantsState.assistants}
+      />
+
+      <EditChatDialog
+        open={chatsState.editChatOpen}
+        onOpenChange={chatsState.setEditChatOpen}
+        chat={chatsState.chatToEdit}
+        onSubmit={chatsState.updateChat}
+        assistants={assistantsState.assistants}
+      />
+
+      <DeleteChatDialog
+        open={chatsState.deleteChatOpen}
+        onOpenChange={chatsState.setDeleteChatOpen}
+        chat={chatsState.chatToDelete}
+        onConfirm={chatsState.deleteChat}
+      />
+
+      <PreviewChatDialog
+        open={chatsState.previewChatOpen}
+        onOpenChange={chatsState.setPreviewChatOpen}
+        chat={chatsState.chatToPreview}
       />
 
       <CreateDatabaseDialog
