@@ -316,20 +316,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if 'choices' in api_response and len(api_response['choices']) > 0:
                     message_obj = api_response['choices'][0]['message']
                     response_text = message_obj.get('content')
+                    tool_calls = message_obj.get('tool_calls', [])
                     
-                    # Если content пустой, но есть tool_calls - обработаем их
-                    if not response_text and 'tool_calls' in message_obj:
-                        response_text = 'Обрабатываю ваш запрос через API...'
+                    # Если есть tool_calls - обработаем их
+                    if tool_calls and api_config:
+                        print(f"[DEBUG] Processing {len(tool_calls)} tool calls")
                     elif not response_text:
                         response_text = 'Нет ответа'
                 else:
                     response_text = 'Нет ответа'
+                    tool_calls = []
             
             print(f"[DEBUG] Extracted response text: {response_text[:200] if response_text else 'None'}")
             
-            # Bot API пока не поддерживает function calling в нашей интеграции
-            # TODO: добавить поддержку tool_calls через Bot API если потребуется
-            if False and api_config:
+            # Обработка tool_calls для вызова внешних API
+            if tool_calls and api_config:
                 for tool_call in tool_calls:
                     function_name = tool_call.get('function', {}).get('name')
                     function_args = json.loads(tool_call.get('function', {}).get('arguments', '{}'))
@@ -399,6 +400,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 with urllib.request.urlopen(second_req, timeout=60) as second_response:
                                     second_response_data = second_response.read().decode('utf-8')
                                     bot_response = json.loads(second_response_data)
+                                    
+                                    # Extract final response from second GPT call
+                                    if 'choices' in bot_response and len(bot_response['choices']) > 0:
+                                        response_text = bot_response['choices'][0]['message'].get('content', 'Нет ответа')
+                                    else:
+                                        response_text = 'Нет ответа от GPT после вызова API'
+                                    
+                                    print(f"[DEBUG] Final response after tool call: {response_text[:200]}")
             
             # Для Bot API нет usage метрики от GPTunnel, примерно считаем
             usage = api_response.get('usage', {})
