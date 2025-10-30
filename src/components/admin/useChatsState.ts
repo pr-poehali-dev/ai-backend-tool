@@ -89,6 +89,7 @@ var chatId='${chatId}';
 var apiUrl='https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 var messages=[];
 var isModal=${isModal};
+var storageKey='gpt-chat-history-'+chatId;
 
 var css=document.createElement('style');
 css.textContent=\`
@@ -153,7 +154,29 @@ var msgsDiv=document.getElementById('gpt-msgs');
 var input=document.getElementById('gpt-input');
 var sendBtn=document.getElementById('gpt-send-btn');
 
-function addMsg(text,isUser){
+function saveHistory(){
+  try{
+    localStorage.setItem(storageKey,JSON.stringify(messages));
+  }catch(e){console.error('Failed to save history',e);}
+}
+
+function loadHistory(){
+  try{
+    var saved=localStorage.getItem(storageKey);
+    if(saved){
+      var history=JSON.parse(saved);
+      history.forEach(function(m){
+        if(m.type==='result'){
+          addResults(m.data,true);
+        }else{
+          renderMsg(m.text,m.isUser,true);
+        }
+      });
+    }
+  }catch(e){console.error('Failed to load history',e);}
+}
+
+function renderMsg(text,isUser,skipSave){
   var msg=document.createElement('div');
   msg.className='gpt-msg '+(isUser?'user':'bot');
   msg.textContent=text;
@@ -165,7 +188,12 @@ function addMsg(text,isUser){
     msgsDiv.appendChild(time);
   }
   msgsDiv.scrollTop=msgsDiv.scrollHeight;
-  messages.push({text:text,isUser:isUser,time:new Date()});
+}
+
+function addMsg(text,isUser){
+  renderMsg(text,isUser,false);
+  messages.push({text:text,isUser:isUser,time:new Date(),type:'message'});
+  saveHistory();
 }
 
 function showTyping(){
@@ -230,7 +258,7 @@ var messageBg='${messageBg}';
 var borderColor='${borderColor}';
 var textColor='${textColor}';
 
-function addResults(results){
+function addResults(results,skipSave){
   if(!results||results.length===0){
     addMsg('К сожалению, ничего не найдено. Попробуйте изменить параметры поиска.',false);
     return;
@@ -275,6 +303,10 @@ function addResults(results){
   });
   msgsDiv.appendChild(container);
   msgsDiv.scrollTop=msgsDiv.scrollHeight;
+  if(!skipSave){
+    messages.push({type:'result',data:results,time:new Date()});
+    saveHistory();
+  }
 }
 
 function openChat(){
@@ -304,7 +336,10 @@ if(overlay)overlay.onclick=closeChat;
 sendBtn.onclick=sendMsg;
 input.onkeypress=function(e){if(e.key==='Enter')sendMsg()};
 
-addMsg(cfg.welcomeMessage,false);
+loadHistory();
+if(messages.length===0){
+  addMsg(cfg.welcomeMessage,false);
+}
 ${config.autoOpen ? `setTimeout(openChat,${config.autoOpenDelay})` : ''};
 })();
 </script>`;
