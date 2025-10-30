@@ -309,7 +309,7 @@ function addResults(results,skipSave){
       imgGallery='<div class="gpt-slider" id="'+sliderId+'" data-current="0" data-total="'+photoUrls.length+'">';
       imgGallery+='<div class="gpt-slider-track" id="'+sliderId+'-track">';
       for(var j=0;j<photoUrls.length;j++){
-        imgGallery+='<div class="gpt-slider-slide"><img src="'+photoUrls[j]+'" alt="Фото '+j+'" onerror="console.error(\'[ERROR] Failed to load image for object '+r.id+', photo '+j+':\',this.src)" onload="console.log(\'[SUCCESS] Loaded image for object '+r.id+', photo '+j+':\',this.src)"></div>';
+        imgGallery+='<div class="gpt-slider-slide"><img src="'+photoUrls[j]+'" alt="Фото '+j+'"></div>';
       }
       imgGallery+='</div>';
       if(photoUrls.length>1){
