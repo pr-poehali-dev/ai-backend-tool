@@ -620,9 +620,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 ''', (assistant_id, user_id, 1, tokens_total))
                 
                 cursor.execute('''
-                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens, total_prompt_tokens, total_completion_tokens, total_cost)
-                    VALUES (%s, %s, 1, %s, %s, %s, %s)
-                    ON CONFLICT (endpoint, model, date) 
+                    INSERT INTO usage_stats (endpoint, model, assistant_id, request_count, total_tokens, total_prompt_tokens, total_completion_tokens, total_cost)
+                    VALUES (%s, %s, %s, 1, %s, %s, %s, %s)
+                    ON CONFLICT (endpoint, model, COALESCE(assistant_id, ''), date) 
                     DO UPDATE SET 
                         request_count = usage_stats.request_count + 1,
                         total_tokens = usage_stats.total_tokens + EXCLUDED.total_tokens,
@@ -630,7 +630,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         total_completion_tokens = usage_stats.total_completion_tokens + EXCLUDED.total_completion_tokens,
                         total_cost = usage_stats.total_cost + EXCLUDED.total_cost,
                         updated_at = CURRENT_TIMESTAMP
-                ''', ('/gptunnel-bot', model_name, tokens_total, tokens_prompt, tokens_completion, total_cost))
+                ''', ('/gptunnel-bot', model_name, assistant_id, tokens_total, tokens_prompt, tokens_completion, total_cost))
                 
                 cursor.execute('''
                     INSERT INTO messages (assistant_id, user_id, role, content, tokens_used)

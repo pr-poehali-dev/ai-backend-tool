@@ -64,10 +64,15 @@ const Index = () => {
   }, [activeTab, assistantsState.assistants.length]);
 
   useEffect(() => {
-    if (activeTab === 'usage' && usageState.usageStats.length === 0) {
-      usageState.fetchUsageStats();
+    if (activeTab === 'usage') {
+      if (usageState.usageStats.length === 0) {
+        usageState.fetchUsageStats();
+      }
+      if (assistantsState.assistants.length === 0) {
+        assistantsState.fetchAssistants();
+      }
     }
-  }, [activeTab, usageState.usageStats.length]);
+  }, [activeTab, usageState.usageStats.length, assistantsState.assistants.length]);
 
   useEffect(() => {
     if (activeTab === 'settings' && secretsState.secrets.length === 0) {
@@ -154,7 +159,11 @@ const Index = () => {
 
 
           <TabsContent value="usage">
-            <UsageTab usageStats={usageState.usageStats} isLoading={usageState.isLoadingUsage} />
+            <UsageTab 
+              usageStats={usageState.usageStats} 
+              assistants={assistantsState.assistants}
+              isLoading={usageState.isLoadingUsage} 
+            />
           </TabsContent>
 
           <TabsContent value="settings">

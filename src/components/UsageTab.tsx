@@ -3,6 +3,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
+interface Assistant {
+  id: string;
+  name: string;
+  type: 'simple' | 'external';
+  model: string;
+}
+
 interface UsageStats {
   endpoint: string;
   model: string;
@@ -12,14 +19,16 @@ interface UsageStats {
   total_prompt_tokens: number;
   total_completion_tokens: number;
   total_cost: number;
+  assistant_id?: string;
 }
 
 interface UsageTabProps {
   usageStats: UsageStats[];
+  assistants: Assistant[];
   isLoading: boolean;
 }
 
-export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
+export const UsageTab = ({ usageStats, assistants, isLoading }: UsageTabProps) => {
   const totalTokens = usageStats.reduce((sum, stat) => sum + stat.total_tokens, 0);
   const totalRequests = usageStats.reduce((sum, stat) => sum + stat.request_count, 0);
   const totalPromptTokens = usageStats.reduce((sum, stat) => sum + stat.total_prompt_tokens, 0);
@@ -32,13 +41,10 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
     return new Intl.NumberFormat('ru-RU').format(num);
   };
 
-  const getEndpointName = (endpoint: string) => {
-    const names: Record<string, string> = {
-      '/v1/chat/completions': 'Chat Completions',
-      '/v1/embeddings': 'Embeddings',
-      '/v1/moderations': 'Moderations'
-    };
-    return names[endpoint] || endpoint;
+  const getAssistantName = (assistantId?: string) => {
+    if (!assistantId) return 'Неизвестный ассистент';
+    const assistant = assistants.find(a => a.id === assistantId);
+    return assistant?.name || 'Неизвестный ассистент';
   };
 
   if (isLoading) {
@@ -118,8 +124,8 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
                 <div key={index} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium">{getAssistantName(stat.assistant_id)}</span>
                       <Badge variant="outline">{stat.model}</Badge>
-                      <span className="text-sm text-muted-foreground">{getEndpointName(stat.endpoint)}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {new Date(stat.date).toLocaleDateString('ru-RU')} • {formatNumber(stat.request_count)} запросов • {formatNumber(stat.total_tokens)} токенов
@@ -150,7 +156,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Эндпоинт</TableHead>
+                  <TableHead>Ассистент</TableHead>
                   <TableHead>Модель</TableHead>
                   <TableHead>Дата</TableHead>
                   <TableHead className="text-right">Запросы</TableHead>
@@ -164,7 +170,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
                 {usageStats.map((stat, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">
-                      {getEndpointName(stat.endpoint)}
+                      {getAssistantName(stat.assistant_id)}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{stat.model}</Badge>
