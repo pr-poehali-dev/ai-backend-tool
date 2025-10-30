@@ -107,10 +107,10 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
       </div>
 
       {sortedByCost.length > 0 && sortedByCost[0].total_cost > 0 && (
-        <Card className="border-red-500/50 bg-red-500/10">
+        <Card>
           <CardHeader>
             <CardTitle className="text-white">💸 Самые дорогие запросы</CardTitle>
-            <CardDescription className="text-muted-foreground">Топ-5 по расходам</CardDescription>
+            <CardDescription>Топ-5 по расходам</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -126,7 +126,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-bold text-red-400">{stat.total_cost.toFixed(2)} ₽</div>
+                    <div className="text-xl font-bold">{stat.total_cost.toFixed(2)} ₽</div>
                   </div>
                 </div>
               ))}
