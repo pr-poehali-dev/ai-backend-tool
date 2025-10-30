@@ -199,6 +199,7 @@
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
+          console.log('[Widget] Backend response:', data);
           hideTyping();
           input.disabled = false;
           sendBtn.disabled = false;
@@ -208,6 +209,9 @@
             addMsg(data.message, false);
           } else if (data.type === 'results') {
             addResults(data.results, false);
+          } else {
+            console.warn('[Widget] Unknown response type:', data);
+            addMsg('Получен неожиданный формат ответа', false);
           }
         })
         .catch(function(err) {
