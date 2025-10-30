@@ -211,7 +211,11 @@
           } else if (data.type === 'results') {
             addResults(data.results, false);
           } else if (data.mode === 'json' && data.response) {
-            addResults(data.response, false);
+            if (Array.isArray(data.response) && data.response.length === 0) {
+              addMsg('К сожалению, по запросу ничего не найдено. Измените критерии поиска.', false);
+            } else {
+              addResults(data.response, false);
+            }
           } else if (data.mode === 'text' && data.response) {
             addMsg(data.response, false);
           } else {
@@ -223,7 +227,7 @@
           hideTyping();
           input.disabled = false;
           sendBtn.disabled = false;
-          addMsg('Ошибка при отправке сообщения', false);
+          addMsg('Упс, что-то сломалось, попробуйте еще раз!', false);
           console.error(err);
         });
       }
