@@ -125,8 +125,8 @@ css.textContent=\`
 @keyframes typing{0%,60%,100%{opacity:0.3}30%{opacity:1}}
 .gpt-slider{position:relative;width:100%;height:150px;border-radius:8px;margin-bottom:8px;overflow:hidden;cursor:pointer}
 .gpt-slider-track{display:flex;height:100%;transition:transform 0.3s ease}
-.gpt-slider-slide{min-width:100%;height:100%;flex-shrink:0}
-.gpt-slider-slide img{width:100%;height:100%;object-fit:cover}
+.gpt-slider-slide{min-width:100%;height:100%;flex-shrink:0;background:linear-gradient(135deg,${config.primaryColor}10,${config.primaryColor}20);display:flex;align-items:center;justify-content:center}
+.gpt-slider-slide img{width:100%;height:100%;object-fit:cover;background:transparent}
 .gpt-slider-counter{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;z-index:1}
 \`;
 document.head.appendChild(css);
@@ -326,6 +326,17 @@ function addResults(results,skipSave){
     var btnText=r.price_total?'Забронировать за '+r.price_total+' ₽':'Забронировать';
     var btnId='btn-'+r.id;
     card.innerHTML=imgGallery+price+addr+cat+'<div class="booking-btn" data-url="'+(r.bookingUrl||'https://qqrenta.ru/rooms/'+r.id)+'" style="margin-top:8px;padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border-radius:8px;text-align:center;font-weight:600;cursor:pointer;">'+btnText+'</div>';
+    
+    if(photoUrls.length>0){
+      var images=card.querySelectorAll('.gpt-slider-slide img');
+      images.forEach(function(img){
+        img.onerror=function(){
+          console.log('[ERROR] Failed to load image for object '+r.id+':',this.src);
+          this.style.display='none';
+          this.parentElement.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;color:'+cfg.primaryColor+';">🏠</div>';
+        };
+      });
+    }
     
     card.onclick=function(e){
       if(e.target.classList.contains('booking-btn')){
