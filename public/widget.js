@@ -317,10 +317,15 @@
           slider.appendChild(counter);
           container.appendChild(slider);
 
-          slider.addEventListener('click', function() {
-            currentSlide = (currentSlide + 1) % photoUrls.length;
-            track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
-            counter.textContent = (currentSlide + 1) + ' / ' + photoUrls.length;
+          slider.addEventListener('click', function(e) {
+            var currentSlideEl = track.children[currentSlide];
+            var hasError = currentSlideEl && currentSlideEl.querySelector('button');
+            
+            if (!hasError) {
+              currentSlide = (currentSlide + 1) % photoUrls.length;
+              track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
+              counter.textContent = (currentSlide + 1) + ' / ' + photoUrls.length;
+            }
           });
         }
 
