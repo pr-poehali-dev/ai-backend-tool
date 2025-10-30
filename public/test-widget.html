@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест виджета</title>
+</head>
+<body>
+    <h1>Тестовая страница для виджета</h1>
+    <p>Если виджет загрузился, вы увидите кнопку чата в правом нижнем углу.</p>
+
+    <script src="/widget.js"></script>
+    <script>
+        console.log('Скрипт загружен');
+        console.log('window.initChatWidget:', window.initChatWidget);
+        
+        window.addEventListener('load', function() {
+            console.log('Window loaded');
+            if (window.initChatWidget) {
+                console.log('Инициализация виджета...');
+                window.initChatWidget('test-chat-123');
+            } else {
+                console.error('window.initChatWidget не найден!');
+            }
+        });
+    </script>
+</body>
+</html>
