@@ -416,10 +416,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         # Remove nights from API request (always)
                         function_args.pop('nights', None)
                         
-                        # Add hotels=1 if user mentioned "отели" in the original message
+                        # Add hotels=1 and group_id=4 if user mentioned "отели" in the original message
                         if user_wants_hotels:
                             function_args['hotels'] = 1
-                            print(f"[DEBUG] Detected 'отели' in user message, added hotels=1")
+                            function_args['group_id'] = 4
+                            print(f"[DEBUG] Detected 'отели' in user message, added hotels=1&group_id=4")
                         
                         # Extract client-side filters (not supported by API)
                         max_price = function_args.pop('max_price', None)
