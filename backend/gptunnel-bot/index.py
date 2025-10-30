@@ -157,20 +157,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 ''', (chat_id, assistant_id, user_id))
                 conn.commit()
                 print(f"[DEBUG] Created new chat session: {chat_id}")
-            else:
-                # Обновляем счётчик сообщений
-                cursor.execute('''
-                    UPDATE chat_sessions 
-                    SET message_count = message_count + 2, updated_at = CURRENT_TIMESTAMP
-                    WHERE assistant_id = %s AND user_id = %s
-                ''', (assistant_id, user_id))
-                conn.commit()
+            # НЕ обновляем счётчик здесь - обновим после успешного ответа от GPT
         else:
-            # Создаём новую сессию
+            # Создаём новую сессию (счётчик обновим после успешного ответа)
             chat_id = str(uuid.uuid4())
             cursor.execute('''
                 INSERT INTO chat_sessions (id, assistant_id, user_id, chat_id, message_count)
-                VALUES (%s, %s, %s, %s, 2)
+                VALUES (%s, %s, %s, %s, 0)
             ''', (str(uuid.uuid4()), assistant_id, user_id, chat_id))
             conn.commit()
             print(f"[DEBUG] Created first chat session: {chat_id}")
@@ -694,6 +687,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     INSERT INTO messages (assistant_id, user_id, role, content, tokens_used)
                     VALUES (%s, %s, 'assistant', %s, %s)
                 ''', (assistant_id, user_id, response_text, tokens_completion))
+                
+                # ОБНОВЛЯЕМ СЧЁТЧИК ТОЛЬКО ПОСЛЕ УСПЕШНОГО ОТВЕТА ОТ GPT
+                cursor.execute('''
+                    UPDATE chat_sessions 
+                    SET message_count = message_count + 2, updated_at = CURRENT_TIMESTAMP
+                    WHERE assistant_id = %s AND user_id = %s
+                ''', (assistant_id, user_id))
+                print(f"[DEBUG] Updated message_count +2 after successful response")
                 
                 conn.commit()
                 cursor.close()
