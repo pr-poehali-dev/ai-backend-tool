@@ -89,11 +89,12 @@ css.textContent=\`
 .gpt-widget{position:fixed;${positionStyle}z-index:9999;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 .gpt-btn{cursor:pointer;padding:14px 24px;border-radius:${config.borderRadius}px;background:${config.primaryColor};color:#fff;border:none;font-size:15px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.15);display:flex;align-items:center;gap:8px;transition:all 0.2s}
 .gpt-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.2)}
-.gpt-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9998;backdrop-filter:blur(2px)}
-.gpt-overlay.open{display:block}
-.gpt-window{display:none;width:${config.width}px;height:${config.height}px;background:${bgColor};border-radius:${config.borderRadius}px;box-shadow:0 8px 32px rgba(0,0,0,0.2);flex-direction:column;overflow:hidden}
-.gpt-window.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999}
-.gpt-window.open{display:flex}
+.gpt-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0);z-index:9998;backdrop-filter:blur(0px);transition:background 0.3s ease,backdrop-filter 0.3s ease}
+.gpt-overlay.open{display:block;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px)}
+.gpt-window{display:none;width:${config.width}px;height:${config.height}px;background:${bgColor};border-radius:${config.borderRadius}px;box-shadow:0 8px 32px rgba(0,0,0,0.2);flex-direction:column;overflow:hidden;opacity:0;transform:scale(0.95);transition:opacity 0.3s ease,transform 0.3s ease}
+.gpt-window.modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);z-index:9999}
+.gpt-window.modal.open{transform:translate(-50%,-50%) scale(1);opacity:1}
+.gpt-window.open{display:flex;opacity:1;transform:scale(1)}
 .gpt-header{padding:16px 20px;background:${config.primaryColor};color:#fff;font-weight:600;display:flex;justify-content:space-between;align-items:center;font-size:16px}
 .gpt-close{cursor:pointer;background:rgba(255,255,255,0.2);border:none;color:#fff;font-size:24px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
 .gpt-close:hover{background:rgba(255,255,255,0.3)}
@@ -245,14 +246,24 @@ function addResults(results){
 }
 
 function openChat(){
-  win.classList.add('open');
-  if(overlay)overlay.classList.add('open');
-  input.focus();
+  if(overlay){
+    overlay.style.display='block';
+    setTimeout(function(){overlay.classList.add('open')},10);
+  }
+  win.style.display='flex';
+  setTimeout(function(){
+    win.classList.add('open');
+    input.focus();
+  },10);
 }
 
 function closeChat(){
   win.classList.remove('open');
   if(overlay)overlay.classList.remove('open');
+  setTimeout(function(){
+    win.style.display='none';
+    if(overlay)overlay.style.display='none';
+  },300);
 }
 
 document.getElementById('gpt-open-btn').onclick=openChat;
