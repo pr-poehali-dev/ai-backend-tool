@@ -270,23 +270,27 @@
             img.style.objectFit = 'cover';
             
             img.addEventListener('error', function() {
-              slide.style.display = 'flex';
-              slide.style.flexDirection = 'column';
-              slide.style.alignItems = 'center';
-              slide.style.justifyContent = 'center';
-              slide.style.gap = '12px';
-              slide.innerHTML = '';
+              img.style.display = 'none';
+              
+              var errorWrapper = document.createElement('div');
+              errorWrapper.style.display = 'flex';
+              errorWrapper.style.flexDirection = 'column';
+              errorWrapper.style.alignItems = 'center';
+              errorWrapper.style.justifyContent = 'center';
+              errorWrapper.style.gap = '12px';
+              errorWrapper.style.width = '100%';
+              errorWrapper.style.height = '100%';
               
               var errorIcon = document.createElement('div');
               errorIcon.style.fontSize = '32px';
               errorIcon.textContent = '⚠️';
-              slide.appendChild(errorIcon);
+              errorWrapper.appendChild(errorIcon);
               
               var errorText = document.createElement('div');
               errorText.style.fontSize = '12px';
               errorText.style.color = '#666';
               errorText.textContent = 'Ошибка загрузки';
-              slide.appendChild(errorText);
+              errorWrapper.appendChild(errorText);
               
               var retryBtn = document.createElement('button');
               retryBtn.textContent = '🔄 Обновить';
@@ -298,23 +302,13 @@
               retryBtn.style.cursor = 'pointer';
               retryBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
-                slide.innerHTML = '';
-                slide.style.display = '';
-                slide.style.flexDirection = '';
-                slide.style.alignItems = '';
-                slide.style.justifyContent = '';
-                slide.style.gap = '';
-                
-                var newImg = document.createElement('img');
-                newImg.src = url + '?retry=' + Date.now();
-                newImg.alt = 'Фото ' + (idx + 1);
-                newImg.style.width = '100%';
-                newImg.style.height = '100%';
-                newImg.style.objectFit = 'cover';
-                newImg.addEventListener('error', arguments.callee);
-                slide.appendChild(newImg);
+                errorWrapper.remove();
+                img.style.display = '';
+                img.src = url + '?retry=' + Date.now();
               });
-              slide.appendChild(retryBtn);
+              errorWrapper.appendChild(retryBtn);
+              
+              slide.appendChild(errorWrapper);
             });
             
             slide.appendChild(img);
