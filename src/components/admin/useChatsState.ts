@@ -46,12 +46,7 @@ export const useChatsState = () => {
       if (!response.ok) throw new Error('Failed to load chats');
       const data = await response.json();
       
-      const updatedChats = data.map((chat: Chat) => ({
-        ...chat,
-        code: generateEmbedCode(chat.id, chat.config)
-      }));
-      
-      setChats(updatedChats);
+      setChats(data);
     } catch (error) {
       console.error('Failed to load chats:', error);
       toast.error('Не удалось загрузить чаты');
