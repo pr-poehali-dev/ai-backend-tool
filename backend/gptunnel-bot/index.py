@@ -535,6 +535,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 results = [r for r in results if r.get('price', 0) <= max_price]
                                 print(f"[DEBUG] After price filter (<={max_price}): {len(results)} items")
                             
+                            # Filter by hotels if specified (category_id: 1=отель, 4=квартира)
+                            if function_args.get('hotels') == 1 and isinstance(results, list):
+                                original_count = len(results)
+                                results = [r for r in results if r.get('category_id') == 1]
+                                print(f"[DEBUG] After hotels filter (category_id=1): {len(results)} items (removed {original_count - len(results)} non-hotels)")
+                            
                             # Filter by property type if specified
                             if exclude_property_types and isinstance(results, list):
                                 # exclude_property_types can be string or list
