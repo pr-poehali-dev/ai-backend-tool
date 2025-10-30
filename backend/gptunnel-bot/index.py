@@ -592,6 +592,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 
                                 print(f"[DEBUG] Final response after tool call: {response_text[:200]}")
         
+        # Если ожидается JSON ответ, но GPT вернул длинный текст без tool_calls - обрезаем
+        if api_config and api_config.get('response_mode') == 'json' and not tool_calls:
+            if response_text and len(response_text) > 500:
+                print(f"[DEBUG] Response mode is 'json' but got long text ({len(response_text)} chars) without tool calls - truncating")
+                response_text = response_text[:500] + '...\n\n(Ответ обрезан. Пожалуйста, уточните запрос с конкретными параметрами поиска)'
+        
         # Извлекаем метрики использования токенов
         if assistant_type == 'external':
             # External API возвращает usage и spendTokenCount
