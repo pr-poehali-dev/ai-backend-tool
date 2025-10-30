@@ -203,6 +203,12 @@
           if (data.response && data.response[0]) {
             console.log('[Widget] First result item:', JSON.stringify(data.response[0], null, 2));
           }
+          if (data.response) {
+            var obj12298 = data.response.find(function(item) { return item.id === 12298; });
+            if (obj12298) {
+              console.log('[Widget] Object 12298 found:', JSON.stringify(obj12298, null, 2));
+            }
+          }
           hideTyping();
           input.disabled = false;
           sendBtn.disabled = false;
