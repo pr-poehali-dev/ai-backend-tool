@@ -306,10 +306,13 @@
       .then(function(r) { return r.json(); })
       .then(function(config) {
         console.log('[Widget] Chat config loaded:', config);
-        if (config.name) {
-          chatName = config.name;
-          document.getElementById('gpt-header-text').textContent = config.buttonIcon ? config.buttonIcon + ' ' + config.name : config.name;
-          document.getElementById('gpt-btn-text').textContent = config.buttonIcon ? config.buttonIcon + ' ' + config.name : config.name;
+        if (config.buttonText) {
+          var headerText = (config.buttonIcon || '💬') + ' ' + config.buttonText;
+          document.getElementById('gpt-header-text').textContent = headerText;
+          document.getElementById('gpt-btn-text').textContent = headerText;
+        }
+        if (config.primaryColor) {
+          cfg.primaryColor = config.primaryColor;
         }
       })
       .catch(function(err) {
