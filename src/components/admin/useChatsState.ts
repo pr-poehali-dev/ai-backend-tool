@@ -233,12 +233,39 @@ function addResults(results){
     card.style.cssText='background:'+messageBg+';border:1px solid '+borderColor+';border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;';
     card.onmouseover=function(){this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';};
     card.onmouseout=function(){this.style.transform='none';this.style.boxShadow='none';};
-    var photoUrl=r.photos&&r.photos.length>0?r.photos[0]:r.photo;
-    var img=photoUrl?'<img src="'+photoUrl+'" alt="Фото" onerror="this.style.display=\\'none\\'" style="width:100%;height:150px;object-fit:cover;border-radius:8px;margin-bottom:8px;">':'<div style="width:100%;height:150px;background:linear-gradient(135deg,'+cfg.primaryColor+'20,'+cfg.primaryColor+'40);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:48px;">🏠</div>';
+    
+    var photos=r.photos&&r.photos.length>0?r.photos:(r.photo?[r.photo]:[]);
+    var imgGallery='';
+    
+    if(photos.length>0){
+      var galleryId='gallery-'+r.id;
+      imgGallery='<div style="position:relative;width:100%;height:150px;border-radius:8px;margin-bottom:8px;overflow:hidden;">';
+      imgGallery+='<div id="'+galleryId+'" style="display:flex;width:100%;height:100%;transition:transform 0.3s ease;">';
+      photos.forEach(function(photo,idx){
+        imgGallery+='<img src="'+photo+'" alt="Фото '+(idx+1)+'" onerror="this.style.display=\\'none\\'" style="width:100%;height:100%;object-fit:cover;flex-shrink:0;">';
+      });
+      imgGallery+='</div>';
+      
+      if(photos.length>1){
+        imgGallery+='<div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;">';
+        photos.forEach(function(_,idx){
+          imgGallery+='<div class="dot-'+galleryId+'" data-index="'+idx+'" style="width:8px;height:8px;border-radius:50%;background:'+(idx===0?'#fff':'rgba(255,255,255,0.5)')+';cursor:pointer;transition:all 0.2s;"></div>';
+        });
+        imgGallery+='</div>';
+        
+        imgGallery+='<div style="position:absolute;top:50%;left:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;" onclick="event.stopPropagation();var g=document.getElementById(\\''+galleryId+'\\');var w=g.offsetWidth;var curr=parseInt(g.dataset.current||0);var prev=(curr-1+'+photos.length+')%'+photos.length+';g.style.transform=\\'translateX(-\\'+(prev*100)+\\'%)\\'g.dataset.current=prev;document.querySelectorAll(\\'.dot-'+galleryId+'\\').forEach(function(d,i){d.style.background=i===prev?\\'#fff\\':\\'rgba(255,255,255,0.5)\\';});">‹</div>';
+        
+        imgGallery+='<div style="position:absolute;top:50%;right:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;" onclick="event.stopPropagation();var g=document.getElementById(\\''+galleryId+'\\');var w=g.offsetWidth;var curr=parseInt(g.dataset.current||0);var next=(curr+1)%'+photos.length+';g.style.transform=\\'translateX(-\\'+(next*100)+\\'%)\\'g.dataset.current=next;document.querySelectorAll(\\'.dot-'+galleryId+'\\').forEach(function(d,i){d.style.background=i===next?\\'#fff\\':\\'rgba(255,255,255,0.5)\\';});">›</div>';
+      }
+      imgGallery+='</div>';
+    }else{
+      imgGallery='<div style="width:100%;height:150px;background:linear-gradient(135deg,'+cfg.primaryColor+'20,'+cfg.primaryColor+'40);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:48px;">🏠</div>';
+    }
+    
     var price=r.price?'<div style="font-size:18px;font-weight:700;color:'+cfg.primaryColor+';margin:4px 0;">'+r.price+' ₽/сутки</div>':'';
     var addr=r.full_address?'<div style="font-size:13px;color:'+textColor+';opacity:0.7;margin:4px 0;">'+r.full_address+'</div>':'';
     var cat=r.category?'<div style="font-size:12px;color:'+textColor+';opacity:0.6;margin:4px 0;">'+r.category+'</div>':'';
-    card.innerHTML=img+price+addr+cat+'<div style="margin-top:8px;padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border-radius:8px;text-align:center;font-weight:600;">Забронировать</div>';
+    card.innerHTML=imgGallery+price+addr+cat+'<div style="margin-top:8px;padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border-radius:8px;text-align:center;font-weight:600;">Забронировать</div>';
     card.onclick=function(){window.open(r.bookingUrl||'https://qqrenta.ru/rooms/'+r.id,'_blank');};
     container.appendChild(card);
   });
