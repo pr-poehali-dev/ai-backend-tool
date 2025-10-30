@@ -1,5 +1,9 @@
 (function(window) {
+  console.log('[Widget] Script loaded successfully');
+  
   window.initChatWidget = function(chatId) {
+    console.log('[Widget] Initializing chat widget with ID:', chatId);
+    
     var apiUrl = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
     var messages = [];
     var storageKey = 'gpt-chat-history-' + chatId;
@@ -292,6 +296,10 @@
       loadHistory();
     }
 
+    console.log('[Widget] Calling initWidget with config:', defaultCfg);
     initWidget(defaultCfg);
+    console.log('[Widget] Widget initialized successfully');
   };
+  
+  console.log('[Widget] initChatWidget function created');
 })(window);
