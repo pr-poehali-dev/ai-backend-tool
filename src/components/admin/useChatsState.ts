@@ -123,6 +123,13 @@ css.textContent=\`
 .gpt-typing span:nth-child(2){animation-delay:0.2s}
 .gpt-typing span:nth-child(3){animation-delay:0.4s}
 @keyframes typing{0%,60%,100%{opacity:0.3}30%{opacity:1}}
+.gpt-slider{position:relative;width:100%;height:150px;border-radius:8px;margin-bottom:8px;overflow:hidden;cursor:pointer}
+.gpt-slider-track{display:flex;height:100%;transition:transform 0.3s ease}
+.gpt-slider-slide{min-width:100%;height:100%;flex-shrink:0}
+.gpt-slider-slide img{width:100%;height:100%;object-fit:cover}
+.gpt-slider-dots{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:1}
+.gpt-slider-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);transition:background 0.3s}
+.gpt-slider-dot.active{background:rgba(255,255,255,0.9);width:20px;border-radius:3px}
 \`;
 document.head.appendChild(css);
 
@@ -276,20 +283,34 @@ function addResults(results,skipSave){
     var photos=r.photos&&r.photos.length>0?r.photos:(r.photo?[r.photo]:[]);
     console.log('[DEBUG] Photos for result',r.id,':',photos);
     var imgGallery='';
-    var photoUrl='';
+    var photoUrls=[];
     
-    if(photos.length>0){
-      var firstPhoto=photos[0];
-      if(typeof firstPhoto==='string'){
-        photoUrl=firstPhoto;
-      }else if(firstPhoto&&typeof firstPhoto==='object'){
-        photoUrl=firstPhoto.sm||firstPhoto.md||firstPhoto.lg||firstPhoto.url||'';
+    for(var i=0;i<photos.length;i++){
+      var photo=photos[i];
+      var url='';
+      if(typeof photo==='string'){
+        url=photo;
+      }else if(photo&&typeof photo==='object'){
+        url=photo.sm||photo.md||photo.lg||photo.url||'';
       }
+      if(url)photoUrls.push(url);
     }
     
-    if(photoUrl){
-      imgGallery='<div style="width:100%;height:150px;border-radius:8px;margin-bottom:8px;overflow:hidden;">';
-      imgGallery+='<img src="'+photoUrl+'" alt="Фото объекта" style="width:100%;height:100%;object-fit:cover;">';
+    if(photoUrls.length>0){
+      var sliderId='slider-'+r.id;
+      imgGallery='<div class="gpt-slider" id="'+sliderId+'" data-current="0">';
+      imgGallery+='<div class="gpt-slider-track" id="'+sliderId+'-track">';
+      for(var j=0;j<photoUrls.length;j++){
+        imgGallery+='<div class="gpt-slider-slide"><img src="'+photoUrls[j]+'" alt="Фото '+j+'"></div>';
+      }
+      imgGallery+='</div>';
+      if(photoUrls.length>1){
+        imgGallery+='<div class="gpt-slider-dots" id="'+sliderId+'-dots">';
+        for(var k=0;k<photoUrls.length;k++){
+          imgGallery+='<div class="gpt-slider-dot'+(k===0?' active':'')+'"></div>';
+        }
+        imgGallery+='</div>';
+      }
       imgGallery+='</div>';
     }else{
       imgGallery='<div style="width:100%;height:150px;background:linear-gradient(135deg,'+cfg.primaryColor+'20,'+cfg.primaryColor+'40);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:48px;">🏠</div>';
@@ -308,6 +329,25 @@ function addResults(results,skipSave){
         window.open(e.target.getAttribute('data-url'),'_blank');
       }
     };
+    
+    if(photoUrls.length>1){
+      var sliderEl=card.querySelector('.gpt-slider');
+      if(sliderEl){
+        sliderEl.onclick=function(e){
+          e.stopPropagation();
+          var current=parseInt(this.getAttribute('data-current')||'0');
+          var next=(current+1)%photoUrls.length;
+          this.setAttribute('data-current',next);
+          var track=this.querySelector('.gpt-slider-track');
+          track.style.transform='translateX(-'+(next*100)+'%)';
+          var dots=this.querySelectorAll('.gpt-slider-dot');
+          for(var d=0;d<dots.length;d++){
+            dots[d].classList.remove('active');
+          }
+          if(dots[next])dots[next].classList.add('active');
+        };
+      }
+    }
     
     container.appendChild(card);
   });
