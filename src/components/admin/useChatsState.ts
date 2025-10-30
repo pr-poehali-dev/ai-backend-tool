@@ -127,9 +127,7 @@ css.textContent=\`
 .gpt-slider-track{display:flex;height:100%;transition:transform 0.3s ease}
 .gpt-slider-slide{min-width:100%;height:100%;flex-shrink:0}
 .gpt-slider-slide img{width:100%;height:100%;object-fit:cover}
-.gpt-slider-dots{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:1}
-.gpt-slider-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);transition:background 0.3s}
-.gpt-slider-dot.active{background:rgba(255,255,255,0.9);width:20px;border-radius:3px}
+.gpt-slider-counter{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;z-index:1}
 \`;
 document.head.appendChild(css);
 
@@ -298,18 +296,14 @@ function addResults(results,skipSave){
     
     if(photoUrls.length>0){
       var sliderId='slider-'+r.id;
-      imgGallery='<div class="gpt-slider" id="'+sliderId+'" data-current="0">';
+      imgGallery='<div class="gpt-slider" id="'+sliderId+'" data-current="0" data-total="'+photoUrls.length+'">';
       imgGallery+='<div class="gpt-slider-track" id="'+sliderId+'-track">';
       for(var j=0;j<photoUrls.length;j++){
         imgGallery+='<div class="gpt-slider-slide"><img src="'+photoUrls[j]+'" alt="Фото '+j+'"></div>';
       }
       imgGallery+='</div>';
       if(photoUrls.length>1){
-        imgGallery+='<div class="gpt-slider-dots" id="'+sliderId+'-dots">';
-        for(var k=0;k<photoUrls.length;k++){
-          imgGallery+='<div class="gpt-slider-dot'+(k===0?' active':'')+'"></div>';
-        }
-        imgGallery+='</div>';
+        imgGallery+='<div class="gpt-slider-counter" id="'+sliderId+'-counter">1/'+photoUrls.length+'</div>';
       }
       imgGallery+='</div>';
     }else{
@@ -336,15 +330,13 @@ function addResults(results,skipSave){
         sliderEl.onclick=function(e){
           e.stopPropagation();
           var current=parseInt(this.getAttribute('data-current')||'0');
-          var next=(current+1)%photoUrls.length;
+          var total=parseInt(this.getAttribute('data-total')||'1');
+          var next=(current+1)%total;
           this.setAttribute('data-current',next);
           var track=this.querySelector('.gpt-slider-track');
           track.style.transform='translateX(-'+(next*100)+'%)';
-          var dots=this.querySelectorAll('.gpt-slider-dot');
-          for(var d=0;d<dots.length;d++){
-            dots[d].classList.remove('active');
-          }
-          if(dots[next])dots[next].classList.add('active');
+          var counter=this.querySelector('.gpt-slider-counter');
+          if(counter)counter.textContent=(next+1)+'/'+total;
         };
       }
     }
