@@ -44,12 +44,14 @@ export const AccommodationCard = ({ item }: AccommodationCardProps) => {
       return item.bookingUrl;
     }
     
-    // Fallback на старую логику, если bookingUrl отсутствует
+    // Fallback: извлекаем числовой ID из строки
     const idStr = String(id);
-    if (idStr.includes('hotels')) {
-      return `https://qqrenta.ru/hotels/${idStr}`;
+    const numericId = idStr.replace(/^(hotel-|flat-|room-|hostel-)/, '');
+    
+    if (idStr.startsWith('hotel-') || idStr.startsWith('hostel-')) {
+      return `https://qqrenta.ru/hotels/${numericId}`;
     }
-    return `https://qqrenta.ru/rooms/${idStr}`;
+    return `https://qqrenta.ru/rooms/${numericId}`;
   };
 
   const title = item.title || item.name || 'Без названия';
