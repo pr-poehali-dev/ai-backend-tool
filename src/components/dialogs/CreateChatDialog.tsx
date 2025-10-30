@@ -129,6 +129,7 @@ export const CreateChatDialog = ({ open, onOpenChange, onSubmit, assistants }: C
                       <SelectItem value="bottom-left">Слева внизу</SelectItem>
                       <SelectItem value="top-right">Справа вверху</SelectItem>
                       <SelectItem value="top-left">Слева вверху</SelectItem>
+                      <SelectItem value="center-modal">По центру (модальное окно)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
