@@ -95,30 +95,30 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
           </CardContent>
         </Card>
 
-        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+        <Card className="border-amber-500/50 bg-amber-500/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-amber-900 dark:text-amber-100">Общие расходы</CardTitle>
-            <Icon name="DollarSign" className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <CardTitle className="text-sm font-medium text-amber-400">Общие расходы</CardTitle>
+            <Icon name="DollarSign" className="h-4 w-4 text-amber-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-900 dark:text-amber-100">{totalCost.toFixed(2)} ₽</div>
+            <div className="text-2xl font-bold text-white">{totalCost.toFixed(2)} ₽</div>
           </CardContent>
         </Card>
       </div>
 
       {sortedByCost.length > 0 && sortedByCost[0].total_cost > 0 && (
-        <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
+        <Card className="border-red-500/50 bg-red-500/10">
           <CardHeader>
-            <CardTitle className="text-red-900 dark:text-red-100">💸 Самые дорогие запросы</CardTitle>
-            <CardDescription className="text-red-700 dark:text-red-300">Топ-5 по расходам</CardDescription>
+            <CardTitle className="text-white">💸 Самые дорогие запросы</CardTitle>
+            <CardDescription className="text-muted-foreground">Топ-5 по расходам</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {sortedByCost.slice(0, 5).map((stat, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                <div key={index} className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="outline" className="bg-red-100 dark:bg-red-900">{stat.model}</Badge>
+                      <Badge variant="outline">{stat.model}</Badge>
                       <span className="text-sm text-muted-foreground">{getEndpointName(stat.endpoint)}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -126,7 +126,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-bold text-red-600 dark:text-red-400">{stat.total_cost.toFixed(2)} ₽</div>
+                    <div className="text-xl font-bold text-red-400">{stat.total_cost.toFixed(2)} ₽</div>
                   </div>
                 </div>
               ))}
@@ -137,7 +137,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Детальная статистика по эндпоинтам</CardTitle>
+          <CardTitle className="text-white">Детальная статистика по эндпоинтам</CardTitle>
           <CardDescription>Использование токенов и расходы</CardDescription>
         </CardHeader>
         <CardContent>
@@ -162,7 +162,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
               </TableHeader>
               <TableBody>
                 {usageStats.map((stat, index) => (
-                  <TableRow key={index} className={stat.total_cost > 10 ? 'bg-amber-50 dark:bg-amber-950/20' : ''}>
+                  <TableRow key={index} className={stat.total_cost > 10 ? 'bg-amber-500/10' : ''}>
                     <TableCell className="font-medium">
                       {getEndpointName(stat.endpoint)}
                     </TableCell>
@@ -175,7 +175,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
                     <TableCell className="text-right">{formatNumber(stat.total_completion_tokens)}</TableCell>
                     <TableCell className="text-right font-medium">{formatNumber(stat.total_tokens)}</TableCell>
                     <TableCell className="text-right">
-                      <span className={stat.total_cost > 10 ? 'font-bold text-amber-600 dark:text-amber-400' : ''}>
+                      <span className={stat.total_cost > 10 ? 'font-bold text-amber-400' : ''}>
                         {stat.total_cost.toFixed(2)} ₽
                       </span>
                     </TableCell>
