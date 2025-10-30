@@ -369,6 +369,9 @@ function addResults(results,skipSave){
       var sliderEl=card.querySelector('.gpt-slider');
       if(sliderEl){
         sliderEl.onclick=function(e){
+          if(e.target.classList.contains('retry-img-btn')){
+            return;
+          }
           e.stopPropagation();
           var current=parseInt(this.getAttribute('data-current')||'0');
           var total=parseInt(this.getAttribute('data-total')||'1');
