@@ -561,6 +561,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                             result['bookingUrl'] = f"https://qqrenta.ru/rooms/{obj_id}?{url_params}"
                                         print(f"[DEBUG] Added bookingUrl for {obj_id}: {result['bookingUrl']}")
                                         
+                                        # Рассчитываем общую стоимость: price * nights
+                                        if 'price' in result and result['price']:
+                                            result['price_total'] = result['price'] * nights
+                                            print(f"[DEBUG] Calculated price_total for {obj_id}: {result['price']} * {nights} = {result['price_total']}")
+                                        
                                         # Маппинг фотографий: если есть preview_img, добавляем в массив photos
                                         if 'preview_img' in result and result['preview_img']:
                                             result['photos'] = [result['preview_img']]
