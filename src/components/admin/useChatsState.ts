@@ -330,10 +330,24 @@ function addResults(results,skipSave){
     if(photoUrls.length>0){
       var images=card.querySelectorAll('.gpt-slider-slide img');
       images.forEach(function(img){
+        var originalSrc=img.src;
         img.onerror=function(){
           console.log('[ERROR] Failed to load image for object '+r.id+':',this.src);
           this.style.display='none';
-          this.parentElement.innerHTML='<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:32px;color:'+cfg.primaryColor+';">🏠</div>';
+          this.parentElement.innerHTML='<div style="width:100%;height:100%;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;font-size:32px;color:'+cfg.primaryColor+';"><div>🏠</div><button class="retry-img-btn" data-src="'+originalSrc+'" style="padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Обновить фото</button></div>';
+          var retryBtn=this.parentElement.querySelector('.retry-img-btn');
+          if(retryBtn){
+            retryBtn.onclick=function(e){
+              e.stopPropagation();
+              var src=this.getAttribute('data-src');
+              this.parentElement.parentElement.innerHTML='<img src="'+src+'?retry='+Date.now()+'" alt="Фото" style="width:100%;height:100%;object-fit:cover;">';
+              var newImg=this.parentElement.parentElement.querySelector('img');
+              newImg.onerror=function(){
+                this.style.display='none';
+                this.parentElement.innerHTML='<div style="width:100%;height:100%;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;font-size:24px;color:#999;"><div>🏠</div><div style="font-size:12px;">Фото недоступно</div></div>';
+              };
+            };
+          }
         };
       });
     }
