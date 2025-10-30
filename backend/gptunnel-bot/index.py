@@ -578,12 +578,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 for result in results:
                                     if isinstance(result, dict) and 'id' in result:
                                         obj_id = str(result['id'])
+                                        # Убираем префикс (hotel-, hostel-, flat-, room-) из ID
+                                        numeric_id = obj_id.replace('hotel-', '').replace('hostel-', '').replace('flat-', '').replace('room-', '')
                                         # Логика формирования ссылки: если hotels=1, то /hotels/, иначе /rooms/
                                         if is_hotels:
-                                            result['bookingUrl'] = f"https://qqrenta.ru/hotels/{obj_id}?{url_params}"
+                                            result['bookingUrl'] = f"https://qqrenta.ru/hotels/{numeric_id}?{url_params}"
                                         else:
-                                            result['bookingUrl'] = f"https://qqrenta.ru/rooms/{obj_id}?{url_params}"
-                                        print(f"[DEBUG] Added bookingUrl for {obj_id}: {result['bookingUrl']}")
+                                            result['bookingUrl'] = f"https://qqrenta.ru/rooms/{numeric_id}?{url_params}"
+                                        print(f"[DEBUG] Added bookingUrl for {obj_id} -> {numeric_id}: {result['bookingUrl']}")
                                         
                                         # Маппинг фотографий: если есть preview_img, добавляем в массив photos
                                         if 'preview_img' in result and result['preview_img']:
