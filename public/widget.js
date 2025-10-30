@@ -11,6 +11,7 @@
     var cfg = null;
     var isModal = false;
     var chatName = 'Чат';
+    var assistantId = '';
 
     var defaultCfg = {
       position: 'bottom-right',
@@ -182,10 +183,19 @@
         addMsg(text, true);
         showTyping();
 
+        var history = messages.map(function(m) {
+          return { role: m.isUser ? 'user' : 'assistant', content: m.text };
+        });
+        
         fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, chatId: chatId })
+          body: JSON.stringify({ 
+            message: text, 
+            chatId: chatId,
+            assistant_id: assistantId,
+            history: history
+          })
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -313,6 +323,10 @@
         }
         if (config.primaryColor) {
           cfg.primaryColor = config.primaryColor;
+        }
+        if (config.assistantId) {
+          assistantId = config.assistantId;
+          console.log('[Widget] Assistant ID set:', assistantId);
         }
       })
       .catch(function(err) {
