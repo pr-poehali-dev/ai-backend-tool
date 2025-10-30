@@ -575,8 +575,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 for result in results:
                                     if isinstance(result, dict) and 'id' in result:
                                         obj_id = str(result['id'])
-                                        # Логика формирования ссылки: отели содержат "hotels" в ID
-                                        if 'hotels' in obj_id:
+                                        # Логика формирования ссылки: если hotels=1, то /hotels/, иначе /rooms/
+                                        if function_args.get('hotels') == 1:
                                             result['bookingUrl'] = f"https://qqrenta.ru/hotels/{obj_id}?{url_params}"
                                         else:
                                             result['bookingUrl'] = f"https://qqrenta.ru/rooms/{obj_id}?{url_params}"
