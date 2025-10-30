@@ -194,8 +194,6 @@
           history: history
         };
         
-        console.log('[Widget] Sending request:', requestData);
-        
         fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -203,15 +201,6 @@
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-          console.log('[Widget] Backend response:', data);
-          
-          if (data.mode === 'json' && data.response && Array.isArray(data.response)) {
-            console.log('[Widget] Total results:', data.response.length);
-            data.response.forEach(function(item, idx) {
-              console.log('[Widget] Item ' + idx + ' - ID:', item.id, 'price_total:', item.price_total, 'price:', item.price);
-            });
-          }
-          
           hideTyping();
           input.disabled = false;
           sendBtn.disabled = false;
@@ -422,9 +411,6 @@
         if (config.showTimestamp !== undefined) finalCfg.showTimestamp = config.showTimestamp;
         if (config.assistantId) {
           assistantId = config.assistantId;
-          console.log('[Widget] Assistant ID loaded:', assistantId);
-        } else {
-          console.warn('[Widget] No assistantId in config!');
         }
         
         console.log('[Widget] Final config:', finalCfg);
