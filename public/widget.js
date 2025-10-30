@@ -1,6 +1,5 @@
 (function(window) {
   window.initChatWidget = function(chatId) {
-    var configUrl = 'https://functions.poehali.dev/533d0cc9-ea8a-4dc2-94a2-6f0b0850b815?id=' + chatId;
     var apiUrl = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
     var messages = [];
     var storageKey = 'gpt-chat-history-' + chatId;
@@ -294,26 +293,5 @@
     }
 
     initWidget(defaultCfg);
-    
-    fetch(configUrl)
-      .then(function(r) { return r.json(); })
-      .then(function(config) {
-        var container = document.querySelector('.gpt-widget');
-        if (container) {
-          container.remove();
-        }
-        var overlay = document.getElementById('gpt-overlay');
-        if (overlay) {
-          overlay.remove();
-        }
-        var styles = document.querySelector('style');
-        if (styles) {
-          styles.remove();
-        }
-        initWidget(config);
-      })
-      .catch(function(err) {
-        console.error('Failed to load widget config, using defaults', err);
-      });
   };
 })(window);
