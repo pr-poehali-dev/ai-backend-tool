@@ -45,7 +45,13 @@ export const useChatsState = () => {
       const response = await fetch('https://functions.poehali.dev/533d0cc9-ea8a-4dc2-94a2-6f0b0850b815');
       if (!response.ok) throw new Error('Failed to load chats');
       const data = await response.json();
-      setChats(data);
+      
+      const updatedChats = data.map((chat: Chat) => ({
+        ...chat,
+        code: generateEmbedCode(chat.id, chat.config)
+      }));
+      
+      setChats(updatedChats);
     } catch (error) {
       console.error('Failed to load chats:', error);
       toast.error('Не удалось загрузить чаты');
