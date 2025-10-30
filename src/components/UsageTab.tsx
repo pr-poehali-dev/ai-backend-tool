@@ -2,13 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-
-interface Assistant {
-  id: string;
-  name: string;
-  type: 'simple' | 'external';
-  model: string;
-}
+import { Assistant } from '@/components/admin/useAssistantsState';
 
 interface UsageStats {
   endpoint: string;

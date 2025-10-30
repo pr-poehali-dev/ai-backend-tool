@@ -10,20 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-
-interface Assistant {
-  id: string;
-  name: string;
-  type: 'simple' | 'external';
-  model: string;
-  created_at: string;
-  status: 'active' | 'inactive';
-  stats?: {
-    totalMessages: number;
-    totalTokens: number;
-    uniqueUsers: number;
-  };
-}
+import { Assistant } from '@/components/admin/useAssistantsState';
 
 interface AssistantsTabProps {
   assistants: Assistant[];

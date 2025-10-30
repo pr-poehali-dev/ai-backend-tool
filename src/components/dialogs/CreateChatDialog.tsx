@@ -94,7 +94,16 @@ export const CreateChatDialog = ({ open, onOpenChange, onSubmit, assistants }: C
                 </div>
               </div>
             ) : (
-              <Select value={config.assistantId} onValueChange={(value) => updateConfig({ assistantId: value })}>
+              <Select 
+                value={config.assistantId} 
+                onValueChange={(value) => {
+                  const selectedAssistant = assistants.find(a => a.id === value);
+                  updateConfig({ 
+                    assistantId: value,
+                    welcomeMessage: selectedAssistant?.firstMessage || DEFAULT_CONFIG.welcomeMessage
+                  });
+                }}
+              >
                 <SelectTrigger id="assistant">
                   <SelectValue placeholder="Выберите ассистента" />
                 </SelectTrigger>

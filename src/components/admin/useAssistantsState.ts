@@ -3,8 +3,23 @@ import { toast } from 'sonner';
 
 const ASSISTANTS_URL = 'https://functions.poehali.dev/abfaab11-c221-448f-9066-0ced0a86705d';
 
+export interface Assistant {
+  id: string;
+  name: string;
+  type: 'simple' | 'external';
+  model: string;
+  firstMessage?: string;
+  created_at: string;
+  status: 'active' | 'inactive';
+  stats?: {
+    totalMessages: number;
+    totalTokens: number;
+    uniqueUsers: number;
+  };
+}
+
 export const useAssistantsState = () => {
-  const [assistants, setAssistants] = useState<any[]>([]);
+  const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [createAssistantOpen, setCreateAssistantOpen] = useState(false);
   const [editAssistantOpen, setEditAssistantOpen] = useState(false);
   const [editAssistantConfig, setEditAssistantConfig] = useState({
