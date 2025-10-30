@@ -67,38 +67,20 @@ export const ChatsTab = ({
       </div>
 
       {chats.length > 0 && (
-        <>
-          <Card className="p-4 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
-            <div className="flex items-start gap-3">
-              <Icon name="AlertTriangle" size={20} className="text-amber-600 dark:text-amber-400 mt-0.5" />
-              <div className="flex-1 text-sm">
-                <p className="font-semibold text-amber-900 dark:text-amber-100 mb-1">
-                  ⚠️ Важное обновление виджета
-                </p>
-                <p className="text-amber-700 dark:text-amber-300 mb-2">
-                  Обновлена логика работы с контекстом диалога. Если виджет "забывает" предыдущие сообщения — скопируйте код заново и обновите его на сайте.
-                </p>
-                <p className="text-xs text-amber-600 dark:text-amber-400">
-                  📅 Обновление от 30.10.2025
-                </p>
-              </div>
+        <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <div className="flex items-start gap-3">
+            <Icon name="Info" size={20} className="text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="flex-1 text-sm">
+              <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                Как использовать чаты
+              </p>
+              <p className="text-blue-700 dark:text-blue-300">
+                Скопируйте код и вставьте перед закрывающим тегом <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded">&lt;/body&gt;</code> на вашем сайте. 
+                Используйте предпросмотр для тестирования.
+              </p>
             </div>
-          </Card>
-          <Card className="p-4 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-            <div className="flex items-start gap-3">
-              <Icon name="Info" size={20} className="text-blue-600 dark:text-blue-400 mt-0.5" />
-              <div className="flex-1 text-sm">
-                <p className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                  Как использовать чаты
-                </p>
-                <p className="text-blue-700 dark:text-blue-300">
-                  Скопируйте код и вставьте перед закрывающим тегом <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded">&lt;/body&gt;</code> на вашем сайте. 
-                  Используйте предпросмотр для тестирования.
-                </p>
-              </div>
-            </div>
-          </Card>
-        </>
+          </div>
+        </Card>
       )}
 
       {chats.length === 0 ? (
