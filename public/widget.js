@@ -251,18 +251,21 @@
         container.style.maxWidth = '90%';
         container.style.padding = '12px';
 
-        if (result.photos && result.photos.length > 0) {
+        var photos = result.photos || [];
+        var photoUrls = photos.map(function(p) { return p.sm || p; });
+
+        if (photoUrls.length > 0) {
           var slider = document.createElement('div');
           slider.className = 'gpt-slider';
           var track = document.createElement('div');
           track.className = 'gpt-slider-track';
           var currentSlide = 0;
 
-          result.photos.forEach(function(photo, idx) {
+          photoUrls.forEach(function(url, idx) {
             var slide = document.createElement('div');
             slide.className = 'gpt-slider-slide';
             var img = document.createElement('img');
-            img.src = photo;
+            img.src = url;
             img.alt = 'Фото ' + (idx + 1);
             slide.appendChild(img);
             track.appendChild(slide);
@@ -270,24 +273,87 @@
 
           var counter = document.createElement('div');
           counter.className = 'gpt-slider-counter';
-          counter.textContent = '1 / ' + result.photos.length;
+          counter.textContent = '1 / ' + photoUrls.length;
 
           slider.appendChild(track);
           slider.appendChild(counter);
           container.appendChild(slider);
 
           slider.addEventListener('click', function() {
-            currentSlide = (currentSlide + 1) % result.photos.length;
+            currentSlide = (currentSlide + 1) % photoUrls.length;
             track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
-            counter.textContent = (currentSlide + 1) + ' / ' + result.photos.length;
+            counter.textContent = (currentSlide + 1) + ' / ' + photoUrls.length;
           });
         }
 
-        var text = document.createElement('div');
-        text.style.marginTop = result.photos && result.photos.length > 0 ? '8px' : '0';
-        text.textContent = result.message;
-        container.appendChild(text);
+        var content = document.createElement('div');
+        content.style.marginTop = '8px';
 
+        if (result.title) {
+          var title = document.createElement('div');
+          title.style.fontWeight = '600';
+          title.style.fontSize = '14px';
+          title.style.marginBottom = '4px';
+          title.textContent = result.title;
+          content.appendChild(title);
+        }
+
+        if (result.full_address) {
+          var address = document.createElement('div');
+          address.style.fontSize = '12px';
+          address.style.color = '#666';
+          address.style.marginBottom = '8px';
+          address.textContent = result.full_address;
+          content.appendChild(address);
+        }
+
+        var info = document.createElement('div');
+        info.style.fontSize = '12px';
+        info.style.marginBottom = '8px';
+        var infoParts = [];
+        if (result.guests) infoParts.push('👥 ' + result.guests + ' гостей');
+        if (result.bedrooms) infoParts.push('🛏️ ' + result.bedrooms + ' спальни');
+        if (result.beds) infoParts.push('🛌 ' + result.beds + ' кровати');
+        if (infoParts.length > 0) {
+          info.textContent = infoParts.join(' • ');
+          content.appendChild(info);
+        }
+
+        if (result.price_total || result.price) {
+          var price = document.createElement('div');
+          price.style.fontSize = '16px';
+          price.style.fontWeight = '700';
+          price.style.color = cfg.primaryColor;
+          price.style.marginBottom = '8px';
+          price.textContent = (result.price_total || result.price) + ' ₽ за весь период';
+          content.appendChild(price);
+        }
+
+        if (result.bookingUrl) {
+          var btn = document.createElement('a');
+          btn.href = result.bookingUrl;
+          btn.target = '_blank';
+          btn.style.display = 'inline-block';
+          btn.style.padding = '8px 16px';
+          btn.style.backgroundColor = cfg.primaryColor;
+          btn.style.color = '#fff';
+          btn.style.borderRadius = '6px';
+          btn.style.textDecoration = 'none';
+          btn.style.fontSize = '13px';
+          btn.style.fontWeight = '600';
+          btn.textContent = 'Забронировать';
+          content.appendChild(btn);
+        }
+
+        if (result.message) {
+          var text = document.createElement('div');
+          text.style.marginTop = '8px';
+          text.style.fontSize = '13px';
+          text.textContent = result.message;
+          content.appendChild(text);
+        }
+
+        container.appendChild(content);
         msgsDiv.appendChild(container);
 
         if (cfg.showTimestamp) {
