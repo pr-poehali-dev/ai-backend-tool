@@ -235,15 +235,18 @@ function addResults(results){
     addMsg('К сожалению, ничего не найдено. Попробуйте изменить параметры поиска.',false);
     return;
   }
+  console.log('[DEBUG] addResults called with',results.length,'items');
+  console.log('[DEBUG] First result:',results[0]);
   var container=document.createElement('div');
   container.style.cssText='display:flex;flex-direction:column;gap:12px;max-width:100%;';
   results.forEach(function(r){
     var card=document.createElement('div');
-    card.style.cssText='background:'+messageBg+';border:1px solid '+borderColor+';border-radius:12px;padding:12px;cursor:pointer;transition:all 0.2s;';
+    card.style.cssText='background:'+messageBg+';border:1px solid '+borderColor+';border-radius:12px;padding:12px;transition:all 0.2s;';
     card.onmouseover=function(){this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';};
     card.onmouseout=function(){this.style.transform='none';this.style.boxShadow='none';};
     
     var photos=r.photos&&r.photos.length>0?r.photos:(r.photo?[r.photo]:[]);
+    console.log('[DEBUG] Photos for result',r.id,':',photos);
     var imgGallery='';
     
     if(photos.length>0){
@@ -262,9 +265,9 @@ function addResults(results){
         });
         imgGallery+='</div>';
         
-        imgGallery+='<div style="position:absolute;top:50%;left:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;" onclick="event.stopPropagation();var g=document.getElementById(\\''+galleryId+'\\');var w=g.offsetWidth;var curr=parseInt(g.dataset.current||0);var prev=(curr-1+'+photos.length+')%'+photos.length+';g.style.transform=\\'translateX(-\\'+(prev*100)+\\'%)\\'g.dataset.current=prev;document.querySelectorAll(\\'.dot-'+galleryId+'\\').forEach(function(d,i){d.style.background=i===prev?\\'#fff\\':\\'rgba(255,255,255,0.5)\\';});">‹</div>';
+        imgGallery+='<div style="position:absolute;top:50%;left:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;" onclick="event.stopPropagation();var g=document.getElementById(\\''+galleryId+'\\');var w=g.offsetWidth;var curr=parseInt(g.dataset.current||0);var prev=(curr-1+'+photos.length+')%'+photos.length+';g.style.transform=\\'translateX(-\\'+(prev*100)+\\'%)\\';g.dataset.current=prev;document.querySelectorAll(\\'.dot-'+galleryId+'\\').forEach(function(d,i){d.style.background=i===prev?\\'#fff\\':\\'rgba(255,255,255,0.5)\\';});">‹</div>';
         
-        imgGallery+='<div style="position:absolute;top:50%;right:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;" onclick="event.stopPropagation();var g=document.getElementById(\\''+galleryId+'\\');var w=g.offsetWidth;var curr=parseInt(g.dataset.current||0);var next=(curr+1)%'+photos.length+';g.style.transform=\\'translateX(-\\'+(next*100)+\\'%)\\'g.dataset.current=next;document.querySelectorAll(\\'.dot-'+galleryId+'\\').forEach(function(d,i){d.style.background=i===next?\\'#fff\\':\\'rgba(255,255,255,0.5)\\';});">›</div>';
+        imgGallery+='<div style="position:absolute;top:50%;right:8px;transform:translateY(-50%);width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;" onclick="event.stopPropagation();var g=document.getElementById(\\''+galleryId+'\\');var w=g.offsetWidth;var curr=parseInt(g.dataset.current||0);var next=(curr+1)%'+photos.length+';g.style.transform=\\'translateX(-\\'+(next*100)+\\'%)\\';g.dataset.current=next;document.querySelectorAll(\\'.dot-'+galleryId+'\\').forEach(function(d,i){d.style.background=i===next?\\'#fff\\':\\'rgba(255,255,255,0.5)\\';});">›</div>';
       }
       imgGallery+='</div>';
     }else{
@@ -274,8 +277,16 @@ function addResults(results){
     var price=r.price?'<div style="font-size:18px;font-weight:700;color:'+cfg.primaryColor+';margin:4px 0;">'+r.price+' ₽/сутки</div>':'';
     var addr=r.full_address?'<div style="font-size:13px;color:'+textColor+';opacity:0.7;margin:4px 0;">'+r.full_address+'</div>':'';
     var cat=r.category?'<div style="font-size:12px;color:'+textColor+';opacity:0.6;margin:4px 0;">'+r.category+'</div>':'';
-    card.innerHTML=imgGallery+price+addr+cat+'<div style="margin-top:8px;padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border-radius:8px;text-align:center;font-weight:600;">Забронировать</div>';
-    card.onclick=function(){window.open(r.bookingUrl||'https://qqrenta.ru/rooms/'+r.id,'_blank');};
+    var btnId='btn-'+r.id;
+    card.innerHTML=imgGallery+price+addr+cat+'<div class="booking-btn" data-url="'+(r.bookingUrl||'https://qqrenta.ru/rooms/'+r.id)+'" style="margin-top:8px;padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border-radius:8px;text-align:center;font-weight:600;cursor:pointer;">Забронировать</div>';
+    
+    card.onclick=function(e){
+      if(e.target.classList.contains('booking-btn')){
+        e.stopPropagation();
+        window.open(e.target.getAttribute('data-url'),'_blank');
+      }
+    };
+    
     container.appendChild(card);
   });
   msgsDiv.appendChild(container);
