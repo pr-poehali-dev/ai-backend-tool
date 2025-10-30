@@ -411,21 +411,51 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         max_price = function_args.pop('max_price', None)
                         exclude_property_types = function_args.pop('exclude_property_types', None)
                         
-                        # Build API URL with parameters (without client-side filters)
-                        search_params = urllib.parse.urlencode(function_args)
-                        api_url = f"{api_config['api_base_url']}?{search_params}"
-                        
-                        print(f"[DEBUG] Calling external API: {api_url}")
+                        # Build cache key from search parameters
+                        import hashlib
+                        cache_params = {k: v for k, v in function_args.items()}
                         if max_price:
-                            print(f"[DEBUG] Client-side filter: max_price={max_price}")
-                        if exclude_property_types:
-                            print(f"[DEBUG] Client-side filter: exclude_property_types={exclude_property_types}")
+                            cache_params['max_price'] = max_price
+                        cache_key = hashlib.md5(json_dumps(cache_params, sort_keys=True).encode()).hexdigest()
                         
-                        # Retry logic with exponential backoff
-                        max_retries = 3
-                        retry_delay = 1
+                        print(f"[DEBUG] Cache key: {cache_key}")
+                        
+                        # Try to get from cache first
+                        conn = psycopg2.connect(database_url)
+                        cursor = conn.cursor()
+                        cursor.execute("""
+                            SELECT search_results 
+                            FROM search_cache 
+                            WHERE cache_key = %s AND expires_at > CURRENT_TIMESTAMP
+                        """, (cache_key,))
+                        cached_result = cursor.fetchone()
+                        
                         api_data = None
-                        last_error = None
+                        
+                        if cached_result:
+                            api_data = cached_result[0]
+                            cursor.close()
+                            conn.close()
+                            print(f"[DEBUG] Cache HIT for key {cache_key}")
+                        else:
+                            cursor.close()
+                            conn.close()
+                            print(f"[DEBUG] Cache MISS for key {cache_key}")
+                            
+                            # Build API URL with parameters (without client-side filters)
+                            search_params = urllib.parse.urlencode(function_args)
+                            api_url = f"{api_config['api_base_url']}?{search_params}"
+                            
+                            print(f"[DEBUG] Calling external API: {api_url}")
+                            if max_price:
+                                print(f"[DEBUG] Client-side filter: max_price={max_price}")
+                            if exclude_property_types:
+                                print(f"[DEBUG] Client-side filter: exclude_property_types={exclude_property_types}")
+                            
+                            # Retry logic with exponential backoff
+                            max_retries = 3
+                            retry_delay = 1
+                            last_error = None
                         
                         for attempt in range(max_retries):
                             try:
@@ -453,13 +483,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                         'isBase64Encoded': False
                                     }
                         
-                        if api_data is None:
-                            return {
-                                'statusCode': 503,
-                                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                                'body': json_dumps({'error': 'External API returned no data'}),
-                                'isBase64Encoded': False
-                            }
+                            if api_data is None:
+                                return {
+                                    'statusCode': 503,
+                                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                    'body': json_dumps({'error': 'External API returned no data'}),
+                                    'isBase64Encoded': False
+                                }
+                            
+                            # Save to cache (30 minutes TTL)
+                            conn = psycopg2.connect(database_url)
+                            cursor = conn.cursor()
+                            cursor.execute("""
+                                INSERT INTO search_cache (id, cache_key, search_params, search_results, expires_at)
+                                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP + INTERVAL '30 minutes')
+                                ON CONFLICT (id) DO NOTHING
+                            """, (str(uuid.uuid4()), cache_key, json_dumps(cache_params), json_dumps(api_data)))
+                            conn.commit()
+                            cursor.close()
+                            conn.close()
+                            print(f"[DEBUG] Saved to cache: key={cache_key}, expires in 30 minutes")
                         
                         print(f"[DEBUG] External API response (first 500 chars): {json_dumps(api_data)[:500]}")
                         print(f"[DEBUG] API response keys: {list(api_data.keys()) if isinstance(api_data, dict) else 'list'}")
