@@ -408,6 +408,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             checkout_date = checkin_date + timedelta(days=nights)
                             function_args['checkout'] = checkout_date.strftime('%Y-%m-%d')
                             print(f"[DEBUG] Calculated checkout: {function_args['checkout']} from checkin={function_args['checkin']} + nights={nights}")
+                            # Remove nights from API request
+                            function_args.pop('nights')
                         
                         # Extract client-side filters (not supported by API)
                         max_price = function_args.pop('max_price', None)
