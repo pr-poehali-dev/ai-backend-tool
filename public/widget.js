@@ -265,6 +265,46 @@
             var img = document.createElement('img');
             img.src = url;
             img.alt = 'Фото ' + (idx + 1);
+            
+            img.addEventListener('error', function() {
+              slide.style.display = 'flex';
+              slide.style.flexDirection = 'column';
+              slide.style.alignItems = 'center';
+              slide.style.justifyContent = 'center';
+              slide.style.gap = '12px';
+              slide.innerHTML = '';
+              
+              var errorIcon = document.createElement('div');
+              errorIcon.style.fontSize = '32px';
+              errorIcon.textContent = '⚠️';
+              slide.appendChild(errorIcon);
+              
+              var errorText = document.createElement('div');
+              errorText.style.fontSize = '12px';
+              errorText.style.color = '#666';
+              errorText.textContent = 'Ошибка загрузки';
+              slide.appendChild(errorText);
+              
+              var retryBtn = document.createElement('button');
+              retryBtn.textContent = '🔄 Обновить';
+              retryBtn.style.padding = '6px 12px';
+              retryBtn.style.fontSize = '12px';
+              retryBtn.style.backgroundColor = '#fff';
+              retryBtn.style.border = '1px solid #ddd';
+              retryBtn.style.borderRadius = '6px';
+              retryBtn.style.cursor = 'pointer';
+              retryBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                slide.innerHTML = '';
+                var newImg = document.createElement('img');
+                newImg.src = url + '?retry=' + Date.now();
+                newImg.alt = 'Фото ' + (idx + 1);
+                newImg.addEventListener('error', arguments.callee);
+                slide.appendChild(newImg);
+              });
+              slide.appendChild(retryBtn);
+            });
+            
             slide.appendChild(img);
             track.appendChild(slide);
           });
