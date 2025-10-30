@@ -379,7 +379,7 @@ sendBtn.onclick=sendMsg;
 input.onkeypress=function(e){if(e.key==='Enter')sendMsg()};
 
 loadHistory();
-if(messages.length===0){
+if(messages.length===0&&msgsDiv.children.length===0){
   addMsg(cfg.welcomeMessage,false);
 }
 ${config.autoOpen ? `setTimeout(openChat,${config.autoOpenDelay})` : ''};
