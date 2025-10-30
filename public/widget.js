@@ -209,6 +209,10 @@
             addMsg(data.message, false);
           } else if (data.type === 'results') {
             addResults(data.results, false);
+          } else if (data.mode === 'json' && data.response) {
+            addResults(data.response, false);
+          } else if (data.mode === 'text' && data.response) {
+            addMsg(data.response, false);
           } else {
             console.warn('[Widget] Unknown response type:', data);
             addMsg('Получен неожиданный формат ответа', false);
