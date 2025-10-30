@@ -395,29 +395,31 @@
       loadHistory();
     }
 
-    console.log('[Widget] Calling initWidget with config:', defaultCfg);
-    initWidget(defaultCfg);
-    console.log('[Widget] Widget initialized successfully');
-    
     fetch(configUrl)
       .then(function(r) { return r.json(); })
       .then(function(config) {
         console.log('[Widget] Chat config loaded:', config);
-        if (config.buttonText) {
-          var headerText = (config.buttonIcon || '💬') + ' ' + config.buttonText;
-          document.getElementById('gpt-header-text').textContent = headerText;
-          document.getElementById('gpt-btn-text').textContent = headerText;
-        }
-        if (config.primaryColor) {
-          cfg.primaryColor = config.primaryColor;
-        }
-        if (config.assistantId) {
-          assistantId = config.assistantId;
-          console.log('[Widget] Assistant ID set:', assistantId);
-        }
+        
+        var finalCfg = Object.assign({}, defaultCfg);
+        if (config.position) finalCfg.position = config.position;
+        if (config.theme) finalCfg.theme = config.theme;
+        if (config.primaryColor) finalCfg.primaryColor = config.primaryColor;
+        if (config.borderRadius) finalCfg.borderRadius = config.borderRadius;
+        if (config.width) finalCfg.width = config.width;
+        if (config.height) finalCfg.height = config.height;
+        if (config.buttonIcon) finalCfg.buttonIcon = config.buttonIcon;
+        if (config.buttonText) finalCfg.buttonText = config.buttonText;
+        if (config.placeholder) finalCfg.placeholder = config.placeholder;
+        if (config.showTimestamp !== undefined) finalCfg.showTimestamp = config.showTimestamp;
+        if (config.assistantId) assistantId = config.assistantId;
+        
+        console.log('[Widget] Final config:', finalCfg);
+        initWidget(finalCfg);
+        console.log('[Widget] Widget initialized successfully');
       })
       .catch(function(err) {
-        console.error('[Widget] Failed to load chat config:', err);
+        console.error('[Widget] Failed to load chat config, using defaults:', err);
+        initWidget(defaultCfg);
       });
   };
   
