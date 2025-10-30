@@ -412,6 +412,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         # Remove nights from API request (always)
                         function_args.pop('nights', None)
                         
+                        # Check if user mentioned "отели" or "отель" in the original message
+                        import re
+                        if re.search(r'\bотел[ьия]\b', message.lower()):
+                            function_args['hotels'] = 1
+                            print(f"[DEBUG] Detected 'отели' in user message, added hotels=1")
+                        
                         # Extract client-side filters (not supported by API)
                         max_price = function_args.pop('max_price', None)
                         exclude_property_types = function_args.pop('exclude_property_types', None)
