@@ -76,9 +76,9 @@ export const useChatsState = () => {
     const messageBg = isDark ? '#2a2a2a' : '#f0f0f0';
     const borderColor = isDark ? '#333333' : '#e0e0e0';
     
-    return `<script>
+    return `<script charset="utf-8">
 (function(){
-var cfg=${JSON.stringify(config)};
+var cfg=${JSON.stringify(config).replace(/[\u007F-\uFFFF]/g, chr => '\\u' + ('0000' + chr.charCodeAt(0).toString(16)).slice(-4))};
 var chatId='${chatId}';
 var apiUrl='https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
 var messages=[];
