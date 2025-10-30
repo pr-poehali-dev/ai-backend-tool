@@ -145,7 +145,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             # Если достигнут лимит сообщений (context_length * 2 для пары запрос-ответ)
             # или прошло больше 20 сообщений (лимит GPTunnel), создаём новую сессию
-            if message_count >= min(context_length * 2, 20):
+            # Используем максимум 5 сообщений для экономии токенов
+            max_context = min(context_length if context_length else 5, 5)
+            if message_count >= min(max_context * 2, 20):
                 chat_id = str(uuid.uuid4())
                 message_count = 0
                 cursor.execute('''
@@ -210,8 +212,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             messages.append({'role': 'system', 'content': instructions})
         
         if len(message_history) > 0:
+            # Ограничиваем историю 5 последними сообщениями для экономии
+            max_context = min(context_length if context_length else 5, 5)
             # Нормализуем сообщения из истории - content должен быть строкой
-            for msg in message_history[-context_length * 2:]:
+            for msg in message_history[-max_context * 2:]:
                 content = msg.get('content', '')
                 # Если content - массив/объект, конвертируем в строку
                 if isinstance(content, (list, dict)):
