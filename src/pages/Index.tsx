@@ -7,7 +7,7 @@ import { ApiKeysTab } from '@/components/ApiKeysTab';
 import { SettingsTab } from '@/components/SettingsTab';
 import { AssistantsTab } from '@/components/AssistantsTab';
 import { UsageTab } from '@/components/UsageTab';
-import { DatabaseTab } from '@/components/DatabaseTab';
+
 import { ChatsTab } from '@/components/ChatsTab';
 import { DeleteKeyDialog } from '@/components/dialogs/DeleteKeyDialog';
 import { EditKeyDialog } from '@/components/dialogs/EditKeyDialog';
@@ -16,8 +16,7 @@ import { EditAssistantDialog } from '@/components/dialogs/EditAssistantDialog';
 import { DeleteAssistantDialog } from '@/components/dialogs/DeleteAssistantDialog';
 import { TestAssistantDialog } from '@/components/dialogs/TestAssistantDialog';
 import { AddSecretDialog } from '@/components/dialogs/AddSecretDialog';
-import { CreateDatabaseDialog } from '@/components/dialogs/CreateDatabaseDialog';
-import { ViewDatabaseDialog } from '@/components/dialogs/ViewDatabaseDialog';
+
 import { CreateChatDialog } from '@/components/dialogs/CreateChatDialog';
 import { EditChatDialog } from '@/components/dialogs/EditChatDialog';
 import { DeleteChatDialog } from '@/components/dialogs/DeleteChatDialog';
@@ -27,7 +26,7 @@ import { useAssistantsState } from '@/components/admin/useAssistantsState';
 import { useSecretsState } from '@/components/admin/useSecretsState';
 
 import { useUsageState } from '@/components/admin/useUsageState';
-import { useDatabaseState } from '@/components/admin/useDatabaseState';
+
 import { useChatsState } from '@/components/admin/useChatsState';
 import { useBalance } from '@/hooks/useBalance';
 
@@ -49,7 +48,6 @@ const Index = () => {
   const secretsState = useSecretsState();
 
   const usageState = useUsageState();
-  const databaseState = useDatabaseState();
   const chatsState = useChatsState();
   const { balance, isLoading: isBalanceLoading, refetch: refetchBalance } = useBalance();
 
@@ -79,11 +77,7 @@ const Index = () => {
 
 
 
-  useEffect(() => {
-    if (activeTab === 'database') {
-      databaseState.fetchDatabases();
-    }
-  }, [activeTab]);
+
 
   useEffect(() => {
     if (activeTab === 'chats') {
@@ -133,8 +127,6 @@ const Index = () => {
             <TabsTrigger value="keys">API Ключи</TabsTrigger>
             <TabsTrigger value="assistants">Ассистенты</TabsTrigger>
             <TabsTrigger value="chats">Чаты</TabsTrigger>
-            <TabsTrigger value="database">База данных</TabsTrigger>
-
             <TabsTrigger value="usage">Статистика</TabsTrigger>
             <TabsTrigger value="settings">Настройки</TabsTrigger>
           </TabsList>
@@ -159,17 +151,6 @@ const Index = () => {
               onTestAssistant={assistantsState.openTestAssistant}
             />
           </TabsContent>
-
-          <TabsContent value="database">
-            <DatabaseTab
-              databases={databaseState.databases}
-              isLoading={databaseState.isLoading}
-              onCreateDatabase={() => databaseState.setCreateDatabaseOpen(true)}
-              onViewDatabase={databaseState.viewDatabase}
-              onDeleteDatabase={(db) => databaseState.deleteDatabase(db.id)}
-            />
-          </TabsContent>
-
 
 
           <TabsContent value="usage">
@@ -289,19 +270,6 @@ const Index = () => {
         open={chatsState.previewChatOpen}
         onOpenChange={chatsState.setPreviewChatOpen}
         chat={chatsState.chatToPreview}
-      />
-
-      <CreateDatabaseDialog
-        open={databaseState.createDatabaseOpen}
-        onOpenChange={databaseState.setCreateDatabaseOpen}
-        onConfirm={databaseState.createDatabase}
-      />
-
-      <ViewDatabaseDialog
-        open={databaseState.viewDatabaseOpen}
-        onOpenChange={databaseState.setViewDatabaseOpen}
-        database={databaseState.selectedDatabase}
-        onFileDeleted={databaseState.fetchDatabases}
       />
     </div>
   );
