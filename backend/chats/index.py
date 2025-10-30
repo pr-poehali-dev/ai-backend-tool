@@ -37,6 +37,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         if method == 'GET':
+            query_params = event.get('queryStringParameters') or {}
+            chat_id = query_params.get('id')
+            
+            if chat_id:
+                cur.execute('SELECT config FROM chats WHERE id = %s', (chat_id,))
+                chat = cur.fetchone()
+                
+                if not chat:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Chat not found'})
+                    }
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps(chat['config'])
+                }
+            
             cur.execute('SELECT id, name, config, code, created_at FROM chats ORDER BY created_at DESC')
             chats = cur.fetchall()
             
