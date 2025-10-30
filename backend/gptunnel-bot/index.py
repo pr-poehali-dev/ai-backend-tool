@@ -554,17 +554,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             
                             # Добавляем параметры бронирования к каждому объекту для ссылок
                             if isinstance(results, list):
-                                from datetime import datetime, timedelta
-                                
-                                # Вычисляем dateEnd из checkin + nights
-                                checkin_date = datetime.strptime(function_args.get('checkin'), '%Y-%m-%d')
-                                nights = function_args.get('nights', 1)
-                                checkout_date = checkin_date + timedelta(days=nights)
-                                
-                                # Параметры бронирования для ссылок
+                                # Параметры бронирования для ссылок (checkout уже в function_args)
                                 url_params = urllib.parse.urlencode({
                                     'dateStart': function_args.get('checkin'),
-                                    'dateEnd': checkout_date.strftime('%Y-%m-%d'),
+                                    'dateEnd': function_args.get('checkout'),
                                     'adults': function_args.get('guests', 1),
                                     'children': function_args.get('children', 0),
                                     'infants': function_args.get('infants', 0),
@@ -572,11 +565,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 })
                                 
                                 # Добавляем готовую ссылку с параметрами к каждому результату
+                                is_hotels = function_args.get('hotels') == 1
+                                print(f"[DEBUG] URL generation: hotels={function_args.get('hotels')}, is_hotels={is_hotels}")
+                                
                                 for result in results:
                                     if isinstance(result, dict) and 'id' in result:
                                         obj_id = str(result['id'])
                                         # Логика формирования ссылки: если hotels=1, то /hotels/, иначе /rooms/
-                                        if function_args.get('hotels') == 1:
+                                        if is_hotels:
                                             result['bookingUrl'] = f"https://qqrenta.ru/hotels/{obj_id}?{url_params}"
                                         else:
                                             result['bookingUrl'] = f"https://qqrenta.ru/rooms/{obj_id}?{url_params}"
