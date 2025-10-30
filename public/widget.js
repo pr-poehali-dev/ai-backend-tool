@@ -5,10 +5,12 @@
     console.log('[Widget] Initializing chat widget with ID:', chatId);
     
     var apiUrl = 'https://functions.poehali.dev/eac81e19-553b-4100-981e-e0202e5cb64d';
+    var configUrl = 'https://functions.poehali.dev/533d0cc9-ea8a-4dc2-94a2-6f0b0850b815?id=' + chatId;
     var messages = [];
     var storageKey = 'gpt-chat-history-' + chatId;
     var cfg = null;
     var isModal = false;
+    var chatName = 'Чат';
 
     var defaultCfg = {
       position: 'bottom-right',
@@ -299,6 +301,20 @@
     console.log('[Widget] Calling initWidget with config:', defaultCfg);
     initWidget(defaultCfg);
     console.log('[Widget] Widget initialized successfully');
+    
+    fetch(configUrl)
+      .then(function(r) { return r.json(); })
+      .then(function(config) {
+        console.log('[Widget] Chat config loaded:', config);
+        if (config.name) {
+          chatName = config.name;
+          document.getElementById('gpt-header-text').textContent = config.buttonIcon ? config.buttonIcon + ' ' + config.name : config.name;
+          document.getElementById('gpt-btn-text').textContent = config.buttonIcon ? config.buttonIcon + ' ' + config.name : config.name;
+        }
+      })
+      .catch(function(err) {
+        console.error('[Widget] Failed to load chat config:', err);
+      });
   };
   
   console.log('[Widget] initChatWidget function created');
