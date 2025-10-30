@@ -7,7 +7,20 @@
     var cfg = null;
     var isModal = false;
 
-    fetch(configUrl).then(function(r) { return r.json(); }).then(function(config) {
+    var defaultCfg = {
+      position: 'bottom-right',
+      theme: 'light',
+      primaryColor: '#3b82f6',
+      borderRadius: 16,
+      width: 400,
+      height: 600,
+      buttonIcon: '💬',
+      buttonText: 'Чат',
+      placeholder: 'Напишите сообщение...',
+      showTimestamp: true
+    };
+
+    function initWidget(config) {
       cfg = config;
       isModal = cfg.position === 'center-modal';
       
@@ -153,192 +166,154 @@
         if (typing) typing.remove();
       }
 
-      async function sendMsg() {
+      function sendMsg() {
         var text = input.value.trim();
         if (!text) return;
-
-        addMsg(text, true);
+        
         input.value = '';
-        sendBtn.disabled = true;
         input.disabled = true;
-
+        sendBtn.disabled = true;
+        
+        addMsg(text, true);
         showTyping();
 
-        try {
-          var contextMessages = messages.filter(function(m) { return m.type === 'message'; }).slice(-cfg.contextLength).map(function(m) {
-            return { role: m.isUser ? 'user' : 'assistant', content: m.text };
-          });
-          contextMessages.push({ role: 'user', content: text });
-
-          var res = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              assistant_id: cfg.assistantId,
-              message: text,
-              chat_id: chatId,
-              history: contextMessages
-            })
-          });
-
-          var data = await res.json();
+        fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, chatId: chatId })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
           hideTyping();
-
-          if (data.response) {
-            if (data.mode === 'json' && Array.isArray(data.response)) {
-              addResults(data.response);
-            } else {
-              addMsg(data.response, false);
-            }
-          } else {
-            addMsg('Извините, произошла ошибка. Попробуйте позже.', false);
-          }
-        } catch (e) {
-          hideTyping();
-          addMsg('Ошибка соединения. Проверьте интернет.', false);
-        } finally {
-          sendBtn.disabled = false;
           input.disabled = false;
+          sendBtn.disabled = false;
           input.focus();
-        }
+          
+          if (data.type === 'text') {
+            addMsg(data.message, false);
+          } else if (data.type === 'results') {
+            addResults(data.results, false);
+          }
+        })
+        .catch(function(err) {
+          hideTyping();
+          input.disabled = false;
+          sendBtn.disabled = false;
+          addMsg('Ошибка при отправке сообщения', false);
+          console.error(err);
+        });
       }
 
       function addResults(results, skipSave) {
         var container = document.createElement('div');
-        container.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:8px 0;width:100%';
+        container.className = 'gpt-msg bot';
+        container.style.maxWidth = '90%';
+        container.style.padding = '12px';
 
-        results.forEach(function(r) {
-          var card = document.createElement('div');
-          card.style.cssText = 'background:' + messageBg + ';border-radius:12px;padding:12px;cursor:pointer;transition:transform 0.2s;border:1px solid ' + borderColor;
-          card.onmouseenter = function() { this.style.transform = 'translateY(-2px)'; };
-          card.onmouseleave = function() { this.style.transform = 'translateY(0)'; };
+        if (results.photos && results.photos.length > 0) {
+          var slider = document.createElement('div');
+          slider.className = 'gpt-slider';
+          var track = document.createElement('div');
+          track.className = 'gpt-slider-track';
+          var currentSlide = 0;
 
-          var photoUrls = [];
-          if (r.photos && Array.isArray(r.photos)) {
-            photoUrls = r.photos.map(function(p) { return typeof p === 'string' ? p : (p.url_1280 || p.url_640 || p.url_320 || ''); }).filter(Boolean);
-          } else if (r.photo) {
-            photoUrls = [r.photo];
-          }
+          results.photos.forEach(function(photo, idx) {
+            var slide = document.createElement('div');
+            slide.className = 'gpt-slider-slide';
+            var img = document.createElement('img');
+            img.src = photo;
+            img.alt = 'Фото ' + (idx + 1);
+            slide.appendChild(img);
+            track.appendChild(slide);
+          });
 
-          var imgGallery = '';
-          if (photoUrls.length > 0) {
-            var sliderId = 'slider-' + r.id;
-            imgGallery = '<div class="gpt-slider" id="' + sliderId + '" data-current="0" data-total="' + photoUrls.length + '">';
-            imgGallery += '<div class="gpt-slider-track" id="' + sliderId + '-track">';
-            for (var j = 0; j < photoUrls.length; j++) {
-              imgGallery += '<div class="gpt-slider-slide"><img src="' + photoUrls[j] + '" alt="Фото ' + j + '"></div>';
-            }
-            imgGallery += '</div>';
-            if (photoUrls.length > 1) {
-              imgGallery += '<div class="gpt-slider-counter" id="' + sliderId + '-counter">1/' + photoUrls.length + '</div>';
-            }
-            imgGallery += '</div>';
-          } else {
-            imgGallery = '<div style="width:100%;height:150px;background:linear-gradient(135deg,' + cfg.primaryColor + '20,' + cfg.primaryColor + '40);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:48px;">🏠</div>';
-          }
+          var counter = document.createElement('div');
+          counter.className = 'gpt-slider-counter';
+          counter.textContent = '1 / ' + results.photos.length;
 
-          var price = r.price ? '<div style="font-size:18px;font-weight:700;color:' + cfg.primaryColor + ';margin:4px 0;">от ' + r.price + ' ₽/сутки</div>' : '';
-          var addr = r.full_address ? '<div style="font-size:13px;color:' + textColor + ';opacity:0.7;margin:4px 0;">' + r.full_address + '</div>' : '';
-          var cat = r.category ? '<div style="font-size:12px;color:' + textColor + ';opacity:0.6;margin:4px 0;">' + r.category + '</div>' : '';
-          var btnText = r.price_total ? 'Забронировать за ' + r.price_total + ' ₽' : 'Забронировать';
-          card.innerHTML = imgGallery + price + addr + cat + '<div class="booking-btn" data-url="' + (r.bookingUrl || 'https://qqrenta.ru/rooms/' + r.id) + '" style="margin-top:8px;padding:8px 16px;background:' + cfg.primaryColor + ';color:#fff;border-radius:8px;text-align:center;font-weight:600;cursor:pointer;">' + btnText + '</div>';
+          slider.appendChild(track);
+          slider.appendChild(counter);
+          container.appendChild(slider);
 
-          if (photoUrls.length > 0) {
-            var images = card.querySelectorAll('.gpt-slider-slide img');
-            images.forEach(function(img) {
-              var originalSrc = img.src;
-              img.onerror = function() {
-                console.log('[ERROR] Failed to load image for object ' + r.id + ':', this.src);
-                this.style.display = 'none';
-                this.parentElement.innerHTML = '<div style="width:100%;height:100%;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;font-size:32px;color:' + cfg.primaryColor + ';"><div>🏠</div><button class="retry-img-btn" data-src="' + originalSrc + '" style="padding:8px 16px;background:' + cfg.primaryColor + ';color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Обновить фото</button></div>';
-                var retryBtn = this.parentElement.querySelector('.retry-img-btn');
-                if (retryBtn) {
-                  retryBtn.onclick = function(e) {
-                    e.stopPropagation();
-                    var src = this.getAttribute('data-src');
-                    this.parentElement.parentElement.innerHTML = '<img src="' + src + '?retry=' + Date.now() + '" alt="Фото" style="width:100%;height:100%;object-fit:cover;">';
-                    var newImg = this.parentElement.parentElement.querySelector('img');
-                    newImg.onerror = function() {
-                      this.style.display = 'none';
-                      this.parentElement.innerHTML = '<div style="width:100%;height:100%;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;font-size:24px;color:#999;"><div>🏠</div><div style="font-size:12px;">Фото недоступно</div></div>';
-                    };
-                  };
-                }
-              };
-            });
-          }
+          slider.addEventListener('click', function() {
+            currentSlide = (currentSlide + 1) % results.photos.length;
+            track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
+            counter.textContent = (currentSlide + 1) + ' / ' + results.photos.length;
+          });
+        }
 
-          card.onclick = function(e) {
-            if (e.target.classList.contains('booking-btn')) {
-              e.stopPropagation();
-              window.open(e.target.getAttribute('data-url'), '_blank');
-            }
-          };
+        var text = document.createElement('div');
+        text.style.marginTop = results.photos && results.photos.length > 0 ? '8px' : '0';
+        text.textContent = results.message;
+        container.appendChild(text);
 
-          if (photoUrls.length > 1) {
-            var sliderEl = card.querySelector('.gpt-slider');
-            if (sliderEl) {
-              sliderEl.onclick = function(e) {
-                if (e.target.classList.contains('retry-img-btn')) {
-                  return;
-                }
-                e.stopPropagation();
-                var current = parseInt(this.getAttribute('data-current') || '0');
-                var total = parseInt(this.getAttribute('data-total') || '1');
-                var next = (current + 1) % total;
-                this.setAttribute('data-current', next);
-                var track = this.querySelector('.gpt-slider-track');
-                track.style.transform = 'translateX(-' + (next * 100) + '%)';
-                var counter = this.querySelector('.gpt-slider-counter');
-                if (counter) counter.textContent = (next + 1) + '/' + total;
-              };
-            }
-          }
-
-          container.appendChild(card);
-        });
         msgsDiv.appendChild(container);
+
+        if (cfg.showTimestamp) {
+          var time = document.createElement('div');
+          time.className = 'gpt-time';
+          time.textContent = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+          msgsDiv.appendChild(time);
+        }
+
         msgsDiv.scrollTop = msgsDiv.scrollHeight;
+
         if (!skipSave) {
-          messages.push({ type: 'result', data: results, time: new Date() });
+          messages.push({ data: results, time: new Date(), type: 'result' });
           saveHistory();
         }
       }
 
       function openChat() {
-        if (overlay) {
-          overlay.style.display = 'block';
-          setTimeout(function() { overlay.classList.add('open'); }, 10);
+        win.classList.add('open');
+        if (isModal && overlay) {
+          overlay.classList.add('open');
         }
-        win.style.display = isModal ? 'flex' : 'flex';
-        setTimeout(function() { win.classList.add('open'); }, 10);
         input.focus();
       }
 
       function closeChat() {
-        if (overlay) {
-          overlay.classList.remove('open');
-          setTimeout(function() { overlay.style.display = 'none'; }, 300);
-        }
         win.classList.remove('open');
-        setTimeout(function() { win.style.display = 'none'; }, 300);
+        if (isModal && overlay) {
+          overlay.classList.remove('open');
+        }
       }
 
-      document.getElementById('gpt-open-btn').onclick = openChat;
-      document.getElementById('gpt-close-btn').onclick = closeChat;
-      if (overlay) overlay.onclick = closeChat;
-      sendBtn.onclick = sendMsg;
-      input.onkeypress = function(e) { if (e.key === 'Enter') sendMsg(); };
+      document.getElementById('gpt-open-btn').addEventListener('click', openChat);
+      document.getElementById('gpt-close-btn').addEventListener('click', closeChat);
+      if (overlay) {
+        overlay.addEventListener('click', closeChat);
+      }
+
+      sendBtn.addEventListener('click', sendMsg);
+      input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !input.disabled) sendMsg();
+      });
 
       loadHistory();
-      if (messages.length === 0 && msgsDiv.children.length === 0) {
-        addMsg(cfg.welcomeMessage, false);
-      }
-      if (cfg.autoOpen) {
-        setTimeout(openChat, cfg.autoOpenDelay);
-      }
-    }).catch(function(err) {
-      console.error('Failed to load chat config:', err);
-    });
+    }
+
+    initWidget(defaultCfg);
+    
+    fetch(configUrl)
+      .then(function(r) { return r.json(); })
+      .then(function(config) {
+        var container = document.querySelector('.gpt-widget');
+        if (container) {
+          container.remove();
+        }
+        var overlay = document.getElementById('gpt-overlay');
+        if (overlay) {
+          overlay.remove();
+        }
+        var styles = document.querySelector('style');
+        if (styles) {
+          styles.remove();
+        }
+        initWidget(config);
+      })
+      .catch(function(err) {
+        console.error('Failed to load widget config, using defaults', err);
+      });
   };
 })(window);
