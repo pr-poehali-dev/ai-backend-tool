@@ -310,7 +310,7 @@ function addResults(results,skipSave){
       imgGallery='<div style="width:100%;height:150px;background:linear-gradient(135deg,'+cfg.primaryColor+'20,'+cfg.primaryColor+'40);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:48px;">🏠</div>';
     }
     
-    var price=r.price?'<div style="font-size:18px;font-weight:700;color:'+cfg.primaryColor+';margin:4px 0;">'+r.price+' ₽/сутки</div>':'';
+    var price=r.price?'<div style="font-size:18px;font-weight:700;color:'+cfg.primaryColor+';margin:4px 0;">от '+r.price+' ₽/сутки</div>':'';
     var addr=r.full_address?'<div style="font-size:13px;color:'+textColor+';opacity:0.7;margin:4px 0;">'+r.full_address+'</div>':'';
     var cat=r.category?'<div style="font-size:12px;color:'+textColor+';opacity:0.6;margin:4px 0;">'+r.category+'</div>':'';
     var btnText=r.price_total?'Забронировать за '+r.price_total+' ₽':'Забронировать';
