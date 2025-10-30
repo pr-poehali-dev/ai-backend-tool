@@ -599,6 +599,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             tokens_total = api_response.get('spendTokenCount') or usage.get('total_tokens', 0)
             tokens_prompt = usage.get('prompt_tokens', 0)
             tokens_completion = usage.get('completion_tokens', 0)
+            total_cost = usage.get('total_cost', 0.0)
             model_name = api_response.get('model') or model or 'unknown'
         else:
             # Simple API возвращает стандартный OpenAI формат
@@ -606,6 +607,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             tokens_total = usage.get('total_tokens', len(message.split()) + len(response_text.split() if response_text else []))
             tokens_prompt = usage.get('prompt_tokens', len(message.split()))
             tokens_completion = usage.get('completion_tokens', len(response_text.split() if response_text else []))
+            total_cost = usage.get('total_cost', 0.0)
             model_name = model or 'gpt-4o'
         
         try:
@@ -618,16 +620,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 ''', (assistant_id, user_id, 1, tokens_total))
                 
                 cursor.execute('''
-                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens, total_prompt_tokens, total_completion_tokens)
-                    VALUES (%s, %s, 1, %s, %s, %s)
+                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens, total_prompt_tokens, total_completion_tokens, total_cost)
+                    VALUES (%s, %s, 1, %s, %s, %s, %s)
                     ON CONFLICT (endpoint, model, date) 
                     DO UPDATE SET 
                         request_count = usage_stats.request_count + 1,
                         total_tokens = usage_stats.total_tokens + EXCLUDED.total_tokens,
                         total_prompt_tokens = usage_stats.total_prompt_tokens + EXCLUDED.total_prompt_tokens,
                         total_completion_tokens = usage_stats.total_completion_tokens + EXCLUDED.total_completion_tokens,
+                        total_cost = usage_stats.total_cost + EXCLUDED.total_cost,
                         updated_at = CURRENT_TIMESTAMP
-                ''', ('/gptunnel-bot', model_name, tokens_total, tokens_prompt, tokens_completion))
+                ''', ('/gptunnel-bot', model_name, tokens_total, tokens_prompt, tokens_completion, total_cost))
                 
                 cursor.execute('''
                     INSERT INTO messages (assistant_id, user_id, role, content, tokens_used)

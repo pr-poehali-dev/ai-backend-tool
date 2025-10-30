@@ -11,6 +11,7 @@ interface UsageStats {
   total_tokens: number;
   total_prompt_tokens: number;
   total_completion_tokens: number;
+  total_cost: number;
 }
 
 interface UsageTabProps {
@@ -23,6 +24,9 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
   const totalRequests = usageStats.reduce((sum, stat) => sum + stat.request_count, 0);
   const totalPromptTokens = usageStats.reduce((sum, stat) => sum + stat.total_prompt_tokens, 0);
   const totalCompletionTokens = usageStats.reduce((sum, stat) => sum + stat.total_completion_tokens, 0);
+  const totalCost = usageStats.reduce((sum, stat) => sum + stat.total_cost, 0);
+  
+  const sortedByCost = [...usageStats].sort((a, b) => b.total_cost - a.total_cost);
 
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('ru-RU').format(num);
@@ -50,7 +54,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Всего запросов</CardTitle>
@@ -90,12 +94,51 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
             <div className="text-2xl font-bold">{formatNumber(totalCompletionTokens)}</div>
           </CardContent>
         </Card>
+
+        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-amber-900 dark:text-amber-100">Общие расходы</CardTitle>
+            <Icon name="DollarSign" className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-900 dark:text-amber-100">{totalCost.toFixed(2)} ₽</div>
+          </CardContent>
+        </Card>
       </div>
+
+      {sortedByCost.length > 0 && sortedByCost[0].total_cost > 0 && (
+        <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950">
+          <CardHeader>
+            <CardTitle className="text-red-900 dark:text-red-100">💸 Самые дорогие запросы</CardTitle>
+            <CardDescription className="text-red-700 dark:text-red-300">Топ-5 по расходам</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {sortedByCost.slice(0, 5).map((stat, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="outline" className="bg-red-100 dark:bg-red-900">{stat.model}</Badge>
+                      <span className="text-sm text-muted-foreground">{getEndpointName(stat.endpoint)}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(stat.date).toLocaleDateString('ru-RU')} • {formatNumber(stat.request_count)} запросов • {formatNumber(stat.total_tokens)} токенов
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-red-600 dark:text-red-400">{stat.total_cost.toFixed(2)} ₽</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
           <CardTitle>Детальная статистика по эндпоинтам</CardTitle>
-          <CardDescription>Использование токенов и количество запросов</CardDescription>
+          <CardDescription>Использование токенов и расходы</CardDescription>
         </CardHeader>
         <CardContent>
           {usageStats.length === 0 ? (
@@ -114,11 +157,12 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
                   <TableHead className="text-right">Промпт токены</TableHead>
                   <TableHead className="text-right">Ответ токены</TableHead>
                   <TableHead className="text-right">Всего токенов</TableHead>
+                  <TableHead className="text-right">Стоимость</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {usageStats.map((stat, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={index} className={stat.total_cost > 10 ? 'bg-amber-50 dark:bg-amber-950/20' : ''}>
                     <TableCell className="font-medium">
                       {getEndpointName(stat.endpoint)}
                     </TableCell>
@@ -130,6 +174,11 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
                     <TableCell className="text-right">{formatNumber(stat.total_prompt_tokens)}</TableCell>
                     <TableCell className="text-right">{formatNumber(stat.total_completion_tokens)}</TableCell>
                     <TableCell className="text-right font-medium">{formatNumber(stat.total_tokens)}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={stat.total_cost > 10 ? 'font-bold text-amber-600 dark:text-amber-400' : ''}>
+                        {stat.total_cost.toFixed(2)} ₽
+                      </span>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

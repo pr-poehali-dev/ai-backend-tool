@@ -58,7 +58,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 request_count,
                 total_tokens,
                 total_prompt_tokens,
-                total_completion_tokens
+                total_completion_tokens,
+                COALESCE(total_cost, 0) as total_cost
             FROM usage_stats
             WHERE date >= CURRENT_DATE - INTERVAL '%s days'
             ORDER BY date DESC, endpoint, model
@@ -75,7 +76,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'request_count': row['request_count'] or 0,
                 'total_tokens': row['total_tokens'] or 0,
                 'total_prompt_tokens': row['total_prompt_tokens'] or 0,
-                'total_completion_tokens': row['total_completion_tokens'] or 0
+                'total_completion_tokens': row['total_completion_tokens'] or 0,
+                'total_cost': float(row['total_cost']) if row['total_cost'] else 0.0
             })
         
         cursor.close()

@@ -117,12 +117,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         latency_ms = int((time.time() - start_time) * 1000)
         
         tokens_total = 0
+        total_cost = 0.0
         
         if response.status_code == 200:
             try:
                 response_json = response.json()
                 usage = response_json.get('usage', {})
                 tokens_total = usage.get('total_tokens', 0)
+                total_cost = usage.get('total_cost', 0.0)
             except:
                 pass
         
@@ -136,14 +138,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 ''', ('/v1/embeddings', 'POST', response.status_code, latency_ms, tokens_total, model))
                 
                 cursor.execute('''
-                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens)
-                    VALUES (%s, %s, 1, %s)
+                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens, total_cost)
+                    VALUES (%s, %s, 1, %s, %s)
                     ON CONFLICT (endpoint, model, date) 
                     DO UPDATE SET 
                         request_count = usage_stats.request_count + 1,
                         total_tokens = usage_stats.total_tokens + EXCLUDED.total_tokens,
+                        total_cost = usage_stats.total_cost + EXCLUDED.total_cost,
                         updated_at = CURRENT_TIMESTAMP
-                ''', ('/v1/embeddings', model, tokens_total))
+                ''', ('/v1/embeddings', model, tokens_total, total_cost))
                 
                 conn.commit()
                 cursor.close()

@@ -116,6 +116,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         latency_ms = int((time.time() - start_time) * 1000)
         
+        total_cost = 0.0
+        
+        if response.status_code == 200:
+            try:
+                response_json = response.json()
+                usage = response_json.get('usage', {})
+                total_cost = usage.get('total_cost', 0.0)
+            except:
+                pass
+        
         if database_url:
             try:
                 conn = psycopg2.connect(database_url)
@@ -126,13 +136,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 ''', ('/v1/moderations', 'POST', response.status_code, latency_ms, model))
                 
                 cursor.execute('''
-                    INSERT INTO usage_stats (endpoint, model, request_count)
-                    VALUES (%s, %s, 1)
+                    INSERT INTO usage_stats (endpoint, model, request_count, total_cost)
+                    VALUES (%s, %s, 1, %s)
                     ON CONFLICT (endpoint, model, date) 
                     DO UPDATE SET 
                         request_count = usage_stats.request_count + 1,
+                        total_cost = usage_stats.total_cost + EXCLUDED.total_cost,
                         updated_at = CURRENT_TIMESTAMP
-                ''', ('/v1/moderations', model))
+                ''', ('/v1/moderations', model, total_cost))
                 
                 conn.commit()
                 cursor.close()

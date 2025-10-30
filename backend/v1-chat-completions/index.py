@@ -139,6 +139,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         tokens_prompt = 0
         tokens_completion = 0
         tokens_total = 0
+        total_cost = 0.0
         
         if response.status_code == 200:
             try:
@@ -147,6 +148,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 tokens_prompt = usage.get('prompt_tokens', 0)
                 tokens_completion = usage.get('completion_tokens', 0)
                 tokens_total = usage.get('total_tokens', 0)
+                total_cost = usage.get('total_cost', 0.0)
             except:
                 pass
         
@@ -160,16 +162,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 ''', ('/v1/chat/completions', 'POST', response.status_code, latency_ms, tokens_prompt, tokens_completion, tokens_total, model))
                 
                 cursor.execute('''
-                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens, total_prompt_tokens, total_completion_tokens)
-                    VALUES (%s, %s, 1, %s, %s, %s)
+                    INSERT INTO usage_stats (endpoint, model, request_count, total_tokens, total_prompt_tokens, total_completion_tokens, total_cost)
+                    VALUES (%s, %s, 1, %s, %s, %s, %s)
                     ON CONFLICT (endpoint, model, date) 
                     DO UPDATE SET 
                         request_count = usage_stats.request_count + 1,
                         total_tokens = usage_stats.total_tokens + EXCLUDED.total_tokens,
                         total_prompt_tokens = usage_stats.total_prompt_tokens + EXCLUDED.total_prompt_tokens,
                         total_completion_tokens = usage_stats.total_completion_tokens + EXCLUDED.total_completion_tokens,
+                        total_cost = usage_stats.total_cost + EXCLUDED.total_cost,
                         updated_at = CURRENT_TIMESTAMP
-                ''', ('/v1/chat/completions', model, tokens_total, tokens_prompt, tokens_completion))
+                ''', ('/v1/chat/completions', model, tokens_total, tokens_prompt, tokens_completion, total_cost))
                 
                 conn.commit()
                 cursor.close()
