@@ -162,7 +162,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
               </TableHeader>
               <TableBody>
                 {usageStats.map((stat, index) => (
-                  <TableRow key={index} className={stat.total_cost > 10 ? 'bg-amber-500/10' : ''}>
+                  <TableRow key={index}>
                     <TableCell className="font-medium">
                       {getEndpointName(stat.endpoint)}
                     </TableCell>
@@ -175,9 +175,7 @@ export const UsageTab = ({ usageStats, isLoading }: UsageTabProps) => {
                     <TableCell className="text-right">{formatNumber(stat.total_completion_tokens)}</TableCell>
                     <TableCell className="text-right font-medium">{formatNumber(stat.total_tokens)}</TableCell>
                     <TableCell className="text-right">
-                      <span className={stat.total_cost > 10 ? 'font-bold text-amber-400' : ''}>
-                        {stat.total_cost.toFixed(2)} ₽
-                      </span>
+                      {stat.total_cost.toFixed(2)} ₽
                     </TableCell>
                   </TableRow>
                 ))}
