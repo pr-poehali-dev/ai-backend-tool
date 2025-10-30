@@ -560,6 +560,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                         else:
                                             result['bookingUrl'] = f"https://qqrenta.ru/rooms/{obj_id}?{url_params}"
                                         print(f"[DEBUG] Added bookingUrl for {obj_id}: {result['bookingUrl']}")
+                                        
+                                        # Маппинг фотографий: если есть preview_img, добавляем в массив photos
+                                        if 'preview_img' in result and result['preview_img']:
+                                            result['photos'] = [result['preview_img']]
+                                            print(f"[DEBUG] Added photo for {obj_id}: {result['preview_img']}")
                             
                             print(f"[DEBUG] Returning to frontend: {len(results) if isinstance(results, list) else 1} items")
                             
