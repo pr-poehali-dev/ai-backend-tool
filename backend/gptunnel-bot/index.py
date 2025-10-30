@@ -131,19 +131,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Получаем или создаём chat_id для сессии с GPTunnel
         cursor.execute('''
-            SELECT chat_id, message_count, collected_params FROM chat_sessions
+            SELECT chat_id, message_count FROM chat_sessions
             WHERE assistant_id = %s AND user_id = %s
         ''', (assistant_id, user_id))
         session = cursor.fetchone()
         
         chat_id: Optional[str] = None
         message_count = 0
-        collected_params = {}
         
         if session:
             chat_id = session[0]
             message_count = session[1]
-            collected_params = session[2] if session[2] else {}
             
             # Если достигнут лимит сообщений (context_length * 2 для пары запрос-ответ)
             # или прошло больше 20 сообщений (лимит GPTunnel), создаём новую сессию
@@ -154,11 +152,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 message_count = 0
                 cursor.execute('''
                     UPDATE chat_sessions 
-                    SET chat_id = %s, message_count = 0, collected_params = '{}'::jsonb, updated_at = CURRENT_TIMESTAMP
+                    SET chat_id = %s, message_count = 0, updated_at = CURRENT_TIMESTAMP
                     WHERE assistant_id = %s AND user_id = %s
                 ''', (chat_id, assistant_id, user_id))
                 conn.commit()
-                collected_params = {}
                 print(f"[DEBUG] Created new chat session: {chat_id}")
             # НЕ обновляем счётчик здесь - обновим после успешного ответа от GPT
         else:
@@ -170,158 +167,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             ''', (str(uuid.uuid4()), assistant_id, user_id, chat_id))
             conn.commit()
             print(f"[DEBUG] Created first chat session: {chat_id}")
-        
-        # ПРОВЕРКА ОБЯЗАТЕЛЬНЫХ ПАРАМЕТРОВ (только для ассистентов с API интеграцией)
-        if api_integration_id:
-            import re
-            from datetime import datetime
-            
-            # Извлекаем параметры из сообщения
-            message_lower = message.lower()
-            
-            # 1. Город
-            if not collected_params.get('city'):
-                city_patterns = [
-                    r'в\s+(москве|москву|москва)',
-                    r'в\s+(санкт-петербурге|петербурге|спб)',
-                    r'город\s+(\w+)',
-                    r'^(\w+)\s+\d+'
-                ]
-                for pattern in city_patterns:
-                    match = re.search(pattern, message_lower)
-                    if match:
-                        city_raw = match.group(1)
-                        if city_raw in ['москве', 'москву', 'москва']:
-                            collected_params['city'] = 'Москва'
-                        elif city_raw in ['санкт-петербурге', 'петербурге', 'спб']:
-                            collected_params['city'] = 'Санкт-Петербург'
-                        else:
-                            collected_params['city'] = city_raw.capitalize()
-                        break
-            
-            # 2. Дата заезда
-            if not collected_params.get('checkin'):
-                date_patterns = [
-                    r'(\d{1,2})\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)',
-                    r'(\d{4})-(\d{2})-(\d{2})',
-                    r'(\d{1,2})\.(\d{1,2})\.(\d{4})'
-                ]
-                month_map = {
-                    'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04',
-                    'мая': '05', 'июня': '06', 'июля': '07', 'августа': '08',
-                    'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12'
-                }
-                
-                for pattern in date_patterns:
-                    match = re.search(pattern, message_lower)
-                    if match:
-                        if pattern == date_patterns[0]:  # Русский формат
-                            day = match.group(1).zfill(2)
-                            month = month_map.get(match.group(2))
-                            if month:
-                                collected_params['checkin'] = f'2025-{month}-{day}'
-                        elif pattern == date_patterns[1]:  # YYYY-MM-DD
-                            collected_params['checkin'] = match.group(0)
-                        elif pattern == date_patterns[2]:  # DD.MM.YYYY
-                            day, month, year = match.groups()
-                            collected_params['checkin'] = f'{year}-{month.zfill(2)}-{day.zfill(2)}'
-                        break
-            
-            # 3. Количество ночей
-            if not collected_params.get('nights'):
-                nights_patterns = [
-                    r'(\d+)\s+(ночь|ночей|ночи)',
-                    r'на\s+(\d+)\s+(ночь|ночей|ночи)'
-                ]
-                for pattern in nights_patterns:
-                    match = re.search(pattern, message_lower)
-                    if match:
-                        collected_params['nights'] = int(match.group(1))
-                        break
-            
-            # 4. Количество гостей
-            if not collected_params.get('guests'):
-                guests_patterns = [
-                    r'(\d+)\s+(гость|гостя|гостей|человек|человека)',
-                    r'для\s+(\d+)'
-                ]
-                for pattern in guests_patterns:
-                    match = re.search(pattern, message_lower)
-                    if match:
-                        collected_params['guests'] = int(match.group(1))
-                        break
-            
-            print(f"[DEBUG] Collected params: {json_dumps(collected_params)}")
-            
-            # Проверяем, есть ли все обязательные параметры
-            required_params = ['city', 'checkin', 'nights', 'guests']
-            missing_params = [p for p in required_params if not collected_params.get(p)]
-            
-            if missing_params:
-                # Сохраняем собранные параметры в БД
-                conn = psycopg2.connect(database_url)
-                cursor = conn.cursor()
-                cursor.execute('''
-                    UPDATE chat_sessions 
-                    SET collected_params = %s, updated_at = CURRENT_TIMESTAMP
-                    WHERE assistant_id = %s AND user_id = %s
-                ''', (json_dumps(collected_params), assistant_id, user_id))
-                conn.commit()
-                cursor.close()
-                conn.close()
-                
-                # Формируем ответ с просьбой дополнить данные
-                missing_text = []
-                if 'city' in missing_params:
-                    missing_text.append('город')
-                if 'checkin' in missing_params:
-                    missing_text.append('дату заезда')
-                if 'nights' in missing_params:
-                    missing_text.append('количество ночей')
-                if 'guests' in missing_params:
-                    missing_text.append('количество гостей')
-                
-                collected_text = []
-                if collected_params.get('city'):
-                    collected_text.append(f"Город: {collected_params['city']}")
-                if collected_params.get('checkin'):
-                    collected_text.append(f"Дата заезда: {collected_params['checkin']}")
-                if collected_params.get('nights'):
-                    collected_text.append(f"Количество ночей: {collected_params['nights']}")
-                if collected_params.get('guests'):
-                    collected_text.append(f"Количество гостей: {collected_params['guests']}")
-                
-                response_parts = []
-                if collected_text:
-                    response_parts.append("Понял, у меня есть:\n" + "\n".join(collected_text))
-                
-                response_parts.append(f"Пожалуйста, укажите ещё: {', '.join(missing_text)}.")
-                
-                response_text = "\n\n".join(response_parts)
-                
-                print(f"[DEBUG] Missing params: {missing_params}, returning early")
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json_dumps({'response': response_text, 'mode': 'text'}),
-                    'isBase64Encoded': False
-                }
-            else:
-                # Все параметры собраны - очищаем collected_params и продолжаем
-                print(f"[DEBUG] All required params collected: {json_dumps(collected_params)}")
-                conn = psycopg2.connect(database_url)
-                cursor = conn.cursor()
-                cursor.execute('''
-                    UPDATE chat_sessions 
-                    SET collected_params = '{}'::jsonb, updated_at = CURRENT_TIMESTAMP
-                    WHERE assistant_id = %s AND user_id = %s
-                ''', (assistant_id, user_id))
-                conn.commit()
-                cursor.close()
-                conn.close()
-                
-                # Добавляем собранные параметры в сообщение
-                message = f"{message}\n\nПараметры поиска: город={collected_params['city']}, заезд={collected_params['checkin']}, ночей={collected_params['nights']}, гостей={collected_params['guests']}"
         
         # Load API integration config if exists
         api_config = None
