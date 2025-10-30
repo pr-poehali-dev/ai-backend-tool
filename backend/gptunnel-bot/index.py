@@ -400,6 +400,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 'isBase64Encoded': False
                             }
                         
+                        # Calculate checkout date from checkin + nights
+                        if 'checkin' in function_args and 'nights' in function_args:
+                            from datetime import datetime, timedelta
+                            checkin_date = datetime.strptime(function_args['checkin'], '%Y-%m-%d')
+                            nights = int(function_args['nights'])
+                            checkout_date = checkin_date + timedelta(days=nights)
+                            function_args['checkout'] = checkout_date.strftime('%Y-%m-%d')
+                            print(f"[DEBUG] Calculated checkout: {function_args['checkout']} from checkin={function_args['checkin']} + nights={nights}")
+                        
                         # Extract client-side filters (not supported by API)
                         max_price = function_args.pop('max_price', None)
                         exclude_property_types = function_args.pop('exclude_property_types', None)
