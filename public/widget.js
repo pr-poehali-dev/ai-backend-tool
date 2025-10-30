@@ -204,12 +204,14 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           console.log('[Widget] Backend response:', data);
-          console.log('[Widget] Response type:', typeof data.response);
-          console.log('[Widget] Is array?', Array.isArray(data.response));
-          if (data.response && data.response[0]) {
-            console.log('[Widget] First item type:', typeof data.response[0]);
-            console.log('[Widget] First item:', data.response[0]);
+          
+          if (data.mode === 'json' && data.response && Array.isArray(data.response)) {
+            console.log('[Widget] Total results:', data.response.length);
+            data.response.forEach(function(item, idx) {
+              console.log('[Widget] Item ' + idx + ' - ID:', item.id, 'price_total:', item.price_total, 'price:', item.price);
+            });
           }
+          
           hideTyping();
           input.disabled = false;
           sendBtn.disabled = false;
