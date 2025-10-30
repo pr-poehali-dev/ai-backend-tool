@@ -227,13 +227,19 @@ async function sendMsg(){
   showTyping();
   
   try{
+    var contextMessages=messages.filter(function(m){return m.type==='message';}).slice(-cfg.contextLength).map(function(m){
+      return{role:m.isUser?'user':'assistant',content:m.text};
+    });
+    contextMessages.push({role:'user',content:text});
+    
     var res=await fetch(apiUrl,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         assistant_id:cfg.assistantId,
         message:text,
-        chat_id:chatId
+        chat_id:chatId,
+        history:contextMessages
       })
     });
     
