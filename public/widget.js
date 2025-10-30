@@ -187,15 +187,19 @@
           return { role: m.isUser ? 'user' : 'assistant', content: m.text };
         });
         
+        var requestData = { 
+          message: text, 
+          chatId: chatId,
+          assistant_id: assistantId,
+          history: history
+        };
+        
+        console.log('[Widget] Sending request:', requestData);
+        
         fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            message: text, 
-            chatId: chatId,
-            assistant_id: assistantId,
-            history: history
-          })
+          body: JSON.stringify(requestData)
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -414,7 +418,12 @@
         if (config.buttonText) finalCfg.buttonText = config.buttonText;
         if (config.placeholder) finalCfg.placeholder = config.placeholder;
         if (config.showTimestamp !== undefined) finalCfg.showTimestamp = config.showTimestamp;
-        if (config.assistantId) assistantId = config.assistantId;
+        if (config.assistantId) {
+          assistantId = config.assistantId;
+          console.log('[Widget] Assistant ID loaded:', assistantId);
+        } else {
+          console.warn('[Widget] No assistantId in config!');
+        }
         
         console.log('[Widget] Final config:', finalCfg);
         initWidget(finalCfg);
