@@ -279,20 +279,30 @@ function addResults(results,skipSave){
     card.onmouseout=function(){this.style.transform='none';this.style.boxShadow='none';};
     
     var photos=r.photos&&r.photos.length>0?r.photos:(r.photo?[r.photo]:[]);
-    console.log('[DEBUG] Photos for result',r.id,':',photos);
+    console.log('[DEBUG] Object',r.id,'photos field:',r.photos);
+    console.log('[DEBUG] Photos array for result',r.id,':',photos,'length:',photos.length);
     var imgGallery='';
     var photoUrls=[];
     
     for(var i=0;i<photos.length;i++){
       var photo=photos[i];
+      console.log('[DEBUG] Processing photo',i,'for object',r.id,':',photo,'type:',typeof photo);
       var url='';
       if(typeof photo==='string'){
         url=photo;
+        console.log('[DEBUG] Photo is string:',url);
       }else if(photo&&typeof photo==='object'){
         url=photo.sm||photo.md||photo.lg||photo.url||'';
+        console.log('[DEBUG] Photo is object, extracted URL:',url,'from fields sm/md/lg/url');
       }
-      if(url)photoUrls.push(url);
+      if(url){
+        photoUrls.push(url);
+        console.log('[DEBUG] Added photo URL to array:',url);
+      }else{
+        console.log('[DEBUG] No URL found for photo',i);
+      }
     }
+    console.log('[DEBUG] Final photoUrls for object',r.id,':',photoUrls);
     
     if(photoUrls.length>0){
       var sliderId='slider-'+r.id;
