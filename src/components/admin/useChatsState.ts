@@ -128,16 +128,19 @@ if(isModal){
 }
 
 var html='<div class="gpt-window'+(isModal?' modal':'')+'" id="gpt-win">'
-+'<div class="gpt-header"><span>'+cfg.buttonIcon+' '+cfg.buttonText+'</span><button class="gpt-close" id="gpt-close-btn">×</button></div>'
++'<div class="gpt-header"><span id="gpt-header-text"></span><button class="gpt-close" id="gpt-close-btn">×</button></div>'
 +'<div class="gpt-messages" id="gpt-msgs"></div>'
 +'<div class="gpt-input-area"><input type="text" class="gpt-input" id="gpt-input" placeholder="'+cfg.placeholder+'"/><button class="gpt-send" id="gpt-send-btn">Отправить</button></div>'
 +'</div>'
-+'<button class="gpt-btn" id="gpt-open-btn">'+cfg.buttonIcon+' '+cfg.buttonText+'</button>';
++'<button class="gpt-btn" id="gpt-open-btn"><span id="gpt-btn-text"></span></button>';
 
 var container=document.createElement('div');
 container.className='gpt-widget';
 container.innerHTML=html;
 document.body.appendChild(container);
+
+document.getElementById('gpt-header-text').textContent=cfg.buttonIcon+' '+cfg.buttonText;
+document.getElementById('gpt-btn-text').textContent=cfg.buttonIcon+' '+cfg.buttonText;
 
 var win=document.getElementById('gpt-win');
 var msgsDiv=document.getElementById('gpt-msgs');
