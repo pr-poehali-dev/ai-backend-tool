@@ -73,7 +73,11 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
       
       if (data.response) {
         if (Array.isArray(data.response)) {
-          responseText = `Найдено ${data.response.length} вариантов жилья. В реальном виджете они отобразятся в виде красивых карточек с фото и ценами.`;
+          if (data.response.length === 0) {
+            responseText = 'К сожалению, по запросу ничего не найдено. Измените критерии поиска.';
+          } else {
+            responseText = `Найдено ${data.response.length} вариантов жилья. В реальном виджете они отобразятся в виде красивых карточек с фото и ценами.`;
+          }
         } else if (typeof data.response === 'string') {
           responseText = data.response;
         } else if (typeof data.response === 'object') {
@@ -93,7 +97,7 @@ export const PreviewChatDialog = ({ open, onOpenChange, chat }: PreviewChatDialo
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Ошибка соединения. Проверьте настройки ассистента.',
+        text: 'Упс, что-то сломалось, попробуйте еще раз!',
         isUser: false,
         timestamp: new Date(),
       };
