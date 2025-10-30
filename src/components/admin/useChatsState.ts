@@ -251,7 +251,7 @@ function addResults(results){
     
     if(photos.length>0){
       imgGallery='<div style="width:100%;height:150px;border-radius:8px;margin-bottom:8px;overflow:hidden;">';
-      imgGallery+='<img src="'+photos[0]+'" alt="Фото объекта" onerror="this.style.display=\\'none\\'" style="width:100%;height:100%;object-fit:cover;">';
+      imgGallery+='<img src="'+photos[0]+'" alt="Фото объекта" style="width:100%;height:100%;object-fit:cover;">';
       imgGallery+='</div>';
     }else{
       imgGallery='<div style="width:100%;height:150px;background:linear-gradient(135deg,'+cfg.primaryColor+'20,'+cfg.primaryColor+'40);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:48px;">🏠</div>';
