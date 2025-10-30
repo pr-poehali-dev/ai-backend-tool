@@ -228,19 +228,34 @@
       }
 
       function addResults(results, skipSave) {
+        if (Array.isArray(results)) {
+          results.forEach(function(item) {
+            addSingleResult(item);
+          });
+        } else {
+          addSingleResult(results);
+        }
+
+        if (!skipSave) {
+          messages.push({ data: results, time: new Date(), type: 'result' });
+          saveHistory();
+        }
+      }
+
+      function addSingleResult(result) {
         var container = document.createElement('div');
         container.className = 'gpt-msg bot';
         container.style.maxWidth = '90%';
         container.style.padding = '12px';
 
-        if (results.photos && results.photos.length > 0) {
+        if (result.photos && result.photos.length > 0) {
           var slider = document.createElement('div');
           slider.className = 'gpt-slider';
           var track = document.createElement('div');
           track.className = 'gpt-slider-track';
           var currentSlide = 0;
 
-          results.photos.forEach(function(photo, idx) {
+          result.photos.forEach(function(photo, idx) {
             var slide = document.createElement('div');
             slide.className = 'gpt-slider-slide';
             var img = document.createElement('img');
@@ -252,22 +267,22 @@
 
           var counter = document.createElement('div');
           counter.className = 'gpt-slider-counter';
-          counter.textContent = '1 / ' + results.photos.length;
+          counter.textContent = '1 / ' + result.photos.length;
 
           slider.appendChild(track);
           slider.appendChild(counter);
           container.appendChild(slider);
 
           slider.addEventListener('click', function() {
-            currentSlide = (currentSlide + 1) % results.photos.length;
+            currentSlide = (currentSlide + 1) % result.photos.length;
             track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
-            counter.textContent = (currentSlide + 1) + ' / ' + results.photos.length;
+            counter.textContent = (currentSlide + 1) + ' / ' + result.photos.length;
           });
         }
 
         var text = document.createElement('div');
-        text.style.marginTop = results.photos && results.photos.length > 0 ? '8px' : '0';
-        text.textContent = results.message;
+        text.style.marginTop = result.photos && result.photos.length > 0 ? '8px' : '0';
+        text.textContent = result.message;
         container.appendChild(text);
 
         msgsDiv.appendChild(container);
@@ -280,11 +295,6 @@
         }
 
         msgsDiv.scrollTop = msgsDiv.scrollHeight;
-
-        if (!skipSave) {
-          messages.push({ data: results, time: new Date(), type: 'result' });
-          saveHistory();
-        }
       }
 
       function openChat() {
