@@ -260,8 +260,9 @@ function addResults(results){
     var price=r.price?'<div style="font-size:18px;font-weight:700;color:'+cfg.primaryColor+';margin:4px 0;">'+r.price+' ₽/сутки</div>':'';
     var addr=r.full_address?'<div style="font-size:13px;color:'+textColor+';opacity:0.7;margin:4px 0;">'+r.full_address+'</div>':'';
     var cat=r.category?'<div style="font-size:12px;color:'+textColor+';opacity:0.6;margin:4px 0;">'+r.category+'</div>':'';
+    var btnText=r.price_total?'Забронировать за '+r.price_total+' ₽':'Забронировать';
     var btnId='btn-'+r.id;
-    card.innerHTML=imgGallery+price+addr+cat+'<div class="booking-btn" data-url="'+(r.bookingUrl||'https://qqrenta.ru/rooms/'+r.id)+'" style="margin-top:8px;padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border-radius:8px;text-align:center;font-weight:600;cursor:pointer;">Забронировать</div>';
+    card.innerHTML=imgGallery+price+addr+cat+'<div class="booking-btn" data-url="'+(r.bookingUrl||'https://qqrenta.ru/rooms/'+r.id)+'" style="margin-top:8px;padding:8px 16px;background:'+cfg.primaryColor+';color:#fff;border-radius:8px;text-align:center;font-weight:600;cursor:pointer;">'+btnText+'</div>';
     
     card.onclick=function(e){
       if(e.target.classList.contains('booking-btn')){
