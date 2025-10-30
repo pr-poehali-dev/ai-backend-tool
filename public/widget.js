@@ -200,20 +200,11 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           console.log('[Widget] Backend response:', data);
+          console.log('[Widget] Response type:', typeof data.response);
+          console.log('[Widget] Is array?', Array.isArray(data.response));
           if (data.response && data.response[0]) {
-            console.log('[Widget] First result item:', JSON.stringify(data.response[0], null, 2));
-          }
-          if (data.response && Array.isArray(data.response)) {
-            var obj12298 = null;
-            for (var i = 0; i < data.response.length; i++) {
-              if (data.response[i].id === 12298) {
-                obj12298 = data.response[i];
-                break;
-              }
-            }
-            if (obj12298) {
-              console.log('[Widget] Object 12298 found:', JSON.stringify(obj12298, null, 2));
-            }
+            console.log('[Widget] First item type:', typeof data.response[0]);
+            console.log('[Widget] First item:', data.response[0]);
           }
           hideTyping();
           input.disabled = false;
