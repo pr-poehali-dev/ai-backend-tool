@@ -276,10 +276,20 @@ function addResults(results,skipSave){
     var photos=r.photos&&r.photos.length>0?r.photos:(r.photo?[r.photo]:[]);
     console.log('[DEBUG] Photos for result',r.id,':',photos);
     var imgGallery='';
+    var photoUrl='';
     
     if(photos.length>0){
+      var firstPhoto=photos[0];
+      if(typeof firstPhoto==='string'){
+        photoUrl=firstPhoto;
+      }else if(firstPhoto&&typeof firstPhoto==='object'){
+        photoUrl=firstPhoto.sm||firstPhoto.md||firstPhoto.lg||firstPhoto.url||'';
+      }
+    }
+    
+    if(photoUrl){
       imgGallery='<div style="width:100%;height:150px;border-radius:8px;margin-bottom:8px;overflow:hidden;">';
-      imgGallery+='<img src="'+photos[0]+'" alt="Фото объекта" style="width:100%;height:100%;object-fit:cover;">';
+      imgGallery+='<img src="'+photoUrl+'" alt="Фото объекта" style="width:100%;height:100%;object-fit:cover;">';
       imgGallery+='</div>';
     }else{
       imgGallery='<div style="width:100%;height:150px;background:linear-gradient(135deg,'+cfg.primaryColor+'20,'+cfg.primaryColor+'40);border-radius:8px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-size:48px;">🏠</div>';
