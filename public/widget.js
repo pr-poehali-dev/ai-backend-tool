@@ -200,6 +200,9 @@
         .then(function(r) { return r.json(); })
         .then(function(data) {
           console.log('[Widget] Backend response:', data);
+          if (data.response && data.response[0]) {
+            console.log('[Widget] First result item:', JSON.stringify(data.response[0], null, 2));
+          }
           hideTyping();
           input.disabled = false;
           sendBtn.disabled = false;
