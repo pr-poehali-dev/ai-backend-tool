@@ -265,6 +265,9 @@
             var img = document.createElement('img');
             img.src = url;
             img.alt = 'Фото ' + (idx + 1);
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
             
             img.addEventListener('error', function() {
               slide.style.display = 'flex';
@@ -296,9 +299,18 @@
               retryBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 slide.innerHTML = '';
+                slide.style.display = '';
+                slide.style.flexDirection = '';
+                slide.style.alignItems = '';
+                slide.style.justifyContent = '';
+                slide.style.gap = '';
+                
                 var newImg = document.createElement('img');
                 newImg.src = url + '?retry=' + Date.now();
                 newImg.alt = 'Фото ' + (idx + 1);
+                newImg.style.width = '100%';
+                newImg.style.height = '100%';
+                newImg.style.objectFit = 'cover';
                 newImg.addEventListener('error', arguments.callee);
                 slide.appendChild(newImg);
               });
